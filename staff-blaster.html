@@ -393,16 +393,76 @@ function buildNebula(){
 }
 function buildShip(){
   ship=new THREE.Group();
-  const bM=new THREE.MeshStandardMaterial({color:0xd0e8ff,metalness:.7,roughness:.28});
-  const aM=new THREE.MeshStandardMaterial({color:0x5BE8C4,emissive:0x1B9D92,emissiveIntensity:1,metalness:.5,roughness:.4});
-  const dM=new THREE.MeshStandardMaterial({color:0x2E3F5C,metalness:.6,roughness:.5});
-  const nose=new THREE.Mesh(new THREE.ConeGeometry(.32,1.5,14),bM);nose.rotation.x=-Math.PI/2;nose.position.z=-.7;ship.add(nose);
-  const body=new THREE.Mesh(new THREE.CylinderGeometry(.32,.42,1.3,14),bM);body.rotation.x=Math.PI/2;body.position.z=.4;ship.add(body);
-  const cock=new THREE.Mesh(new THREE.SphereGeometry(.24,14,10),aM);cock.scale.set(1,.68,1.25);cock.position.set(0,.14,-.05);ship.add(cock);
-  [-1,1].forEach(side=>{const wg=new THREE.Mesh(new THREE.BoxGeometry(1.6,.06,.68),dM);wg.position.set(side*.88,-.02,.45);wg.rotation.z=side*.18;ship.add(wg);
-    const tip=new THREE.Mesh(new THREE.BoxGeometry(.11,.3,.38),aM);tip.position.set(side*1.62,.05,.56);ship.add(tip);});
-  ship.userData.thrusters=[];const tM=new THREE.MeshBasicMaterial({color:0x5BE8C4,transparent:true,opacity:.95});
-  [.22,-.22].forEach(ox=>{const th=new THREE.Mesh(new THREE.ConeGeometry(.18,.7,10),tM.clone());th.rotation.x=Math.PI/2;th.position.set(ox,-.02,1.2);ship.add(th);ship.userData.thrusters.push(th);});
+  // Materials
+  const hull=new THREE.MeshStandardMaterial({color:0xe8f0f8,metalness:.85,roughness:.18});
+  const hullDark=new THREE.MeshStandardMaterial({color:0x4a5568,metalness:.7,roughness:.3});
+  const accent=new THREE.MeshStandardMaterial({color:0x5BE8C4,emissive:0x2BA899,emissiveIntensity:.8,metalness:.6,roughness:.3});
+  const glass=new THREE.MeshStandardMaterial({color:0x88ddff,metalness:.1,roughness:.05,transparent:true,opacity:.85});
+  const engine=new THREE.MeshStandardMaterial({color:0x2d3748,metalness:.9,roughness:.2});
+
+  // Main fuselage - sleek pointed nose
+  const nose=new THREE.Mesh(new THREE.ConeGeometry(.22,1.8,8),hull);
+  nose.rotation.x=-Math.PI/2;nose.position.z=-1.1;ship.add(nose);
+
+  // Body sections
+  const bodyFront=new THREE.Mesh(new THREE.CylinderGeometry(.22,.32,.8,8),hull);
+  bodyFront.rotation.x=Math.PI/2;bodyFront.position.z=-.1;ship.add(bodyFront);
+  const bodyMid=new THREE.Mesh(new THREE.CylinderGeometry(.32,.38,.9,8),hull);
+  bodyMid.rotation.x=Math.PI/2;bodyMid.position.z=.55;ship.add(bodyMid);
+  const bodyRear=new THREE.Mesh(new THREE.CylinderGeometry(.38,.28,.5,8),hull);
+  bodyRear.rotation.x=Math.PI/2;bodyRear.position.z=1.05;ship.add(bodyRear);
+
+  // Cockpit canopy
+  const canopy=new THREE.Mesh(new THREE.SphereGeometry(.2,12,8,0,Math.PI*2,0,Math.PI/2),glass);
+  canopy.scale.set(1.1,.7,1.6);canopy.position.set(0,.22,-.25);ship.add(canopy);
+  const canopyRim=new THREE.Mesh(new THREE.TorusGeometry(.22,.025,8,16),accent);
+  canopyRim.scale.set(1,.6,1.4);canopyRim.rotation.x=Math.PI/2;canopyRim.position.set(0,.16,-.25);ship.add(canopyRim);
+
+  // Wings - swept back delta style
+  [-1,1].forEach(side=>{
+    // Main wing
+    const wingShape=new THREE.Shape();
+    wingShape.moveTo(0,0);wingShape.lineTo(1.4,-.4);wingShape.lineTo(1.5,-.35);
+    wingShape.lineTo(.6,.3);wingShape.lineTo(0,.15);wingShape.closePath();
+    const wingGeo=new THREE.ExtrudeGeometry(wingShape,{depth:.04,bevelEnabled:false});
+    const wing=new THREE.Mesh(wingGeo,hullDark);
+    wing.rotation.x=Math.PI/2;wing.rotation.y=side>0?0:Math.PI;
+    wing.position.set(side*.15,-.08,.35);ship.add(wing);
+
+    // Wing accent stripe
+    const stripe=new THREE.Mesh(new THREE.BoxGeometry(.9,.06,.03),accent);
+    stripe.position.set(side*.75,-.04,.5);stripe.rotation.z=side*-.15;ship.add(stripe);
+
+    // Wingtip
+    const tip=new THREE.Mesh(new THREE.SphereGeometry(.06,8,6),accent);
+    tip.scale.set(1,1,2);tip.position.set(side*1.55,-.12,.28);ship.add(tip);
+  });
+
+  // Engine nacelles
+  [-1,1].forEach(side=>{
+    const nacelle=new THREE.Mesh(new THREE.CylinderGeometry(.12,.14,.7,8),engine);
+    nacelle.rotation.x=Math.PI/2;nacelle.position.set(side*.42,-.15,.85);ship.add(nacelle);
+    const intake=new THREE.Mesh(new THREE.TorusGeometry(.11,.025,6,12),hullDark);
+    intake.rotation.y=Math.PI/2;intake.position.set(side*.42,-.15,.5);ship.add(intake);
+  });
+
+  // Thrusters with glow
+  ship.userData.thrusters=[];
+  const thrustMat=new THREE.MeshBasicMaterial({color:0x5BE8C4,transparent:true,opacity:.9});
+  const thrustGlow=new THREE.MeshBasicMaterial({color:0x5BE8C4,transparent:true,opacity:.4});
+  [-.42,0,.42].forEach(ox=>{
+    const th=new THREE.Mesh(new THREE.ConeGeometry(ox===0?.14:.1,ox===0?.9:.65,10),thrustMat.clone());
+    th.rotation.x=Math.PI/2;th.position.set(ox,ox===0?-.02:-.15,ox===0?1.35:1.22);ship.add(th);ship.userData.thrusters.push(th);
+    const gl=new THREE.Mesh(new THREE.ConeGeometry(ox===0?.22:.16,.4,10),thrustGlow.clone());
+    gl.rotation.x=Math.PI/2;gl.position.set(ox,ox===0?-.02:-.15,ox===0?1.55:1.42);ship.add(gl);ship.userData.thrusters.push(gl);
+  });
+
+  // Rear fins
+  [-1,1].forEach(side=>{
+    const fin=new THREE.Mesh(new THREE.BoxGeometry(.03,.35,.4),hullDark);
+    fin.position.set(side*.52,.08,.9);fin.rotation.z=side*.2;ship.add(fin);
+  });
+
   ship.position.set(0,BASE_Y,SHIP_Z);scene.add(ship);
 }
 function buildReticle(){
@@ -867,9 +927,11 @@ function gameStep(dt){
     const d=camera.position.z-t.z;             // distance from camera
     const p=worldAtNDC(t.ndcX,ROW_NDC,t.z);    // keep it locked to its screen lane
     t.group.position.copy(p);
-    const s=ORB_K*d;                           // scale ∝ distance → constant apparent size
+    const baseS=ORB_K*d;                        // scale ∝ distance → constant apparent size
+    const pulse=1+Math.sin(now*4+t.ndcX*5)*.08; // gentle pulsing
+    const s=baseS*pulse;
     t.spr.scale.set(s,s,1);
-    t.spr.material.rotation+=dt*.35;
+    t.spr.material.rotation+=dt*1.2;            // faster spin
     if(t.z>PASS){t.passed=t.dead=true;scene.remove(t.group);if(t.correct)missed=true;}else alive=true;
   });
   if(missed)doPenalty();else if(!alive)G.needWave=true;
