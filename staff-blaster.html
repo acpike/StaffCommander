@@ -358,20 +358,19 @@ function clefFor(step,mode){
    (#333 lines, lineSpacing 18, bold serif clef, notehead 10/7/-0.2,
     stem +9 / len 40 / lineWidth 3)
    ================================================================ */
-const sc=$('staff'),sx=sc.getContext('2d');
-// Handle high-DPI displays
-(function initStaffCanvas(){
+let sc,sx,staffReady=false;
+function initStaffCanvas(){
+  sc=$('staff');sx=sc.getContext('2d');
   const dpr=window.devicePixelRatio||1;
-  const rect=sc.getBoundingClientRect();
-  sc.width=rect.width*dpr;
-  sc.height=rect.height*dpr;
-  sc.style.width=rect.width+'px';
-  sc.style.height=rect.height+'px';
+  const w=260,h=170; // fixed canvas size
+  sc.width=w*dpr;sc.height=h*dpr;
+  sc.style.width=w+'px';sc.style.height=h+'px';
   sx.scale(dpr,dpr);
-})();
+  staffReady=true;
+}
 function drawCard(note){
-  const rect=sc.getBoundingClientRect();
-  const w=rect.width,h=rect.height,STK='#333',ls=18;
+  if(!staffReady)return;
+  const w=260,h=170,STK='#333',ls=18;
   const dpr=window.devicePixelRatio||1;
   sx.setTransform(dpr,0,0,dpr,0,0);sx.clearRect(0,0,w,h);
   const cl=STAFF[note.clef];
@@ -1341,7 +1340,7 @@ function bindMenu(){
    ================================================================ */
 window.addEventListener('load',()=>{
   if(typeof THREE==='undefined'){document.body.innerHTML='<div style="padding:40px;color:#fff;font-family:monospace">3D engine failed to load (needs internet).</div>';return;}
-  initThree();setupInput();bindMenu();buildPresetList();initStudentUI();
+  initThree();setupInput();bindMenu();buildPresetList();initStudentUI();initStaffCanvas();
   const prev=noteFromStep(stepOf('G',4));prev.clef='treble';drawCard(prev);
   // default designer selection = on-staff treble
   const c=STAFF.treble;for(let s=c.bottomLine;s<=c.topLine;s++)dSel.add(noteKey(noteFromStep(s)));
