@@ -692,6 +692,71 @@ const sfxHit=()=>{beep(900,.16,'triangle',.07);setTimeout(()=>beep(1350,.14,'sin
 const sfxWrong=()=>beep(140,.32,'square',.08);
 function sfxTier(){beep(660,.12,'sine',.08);setTimeout(()=>beep(880,.12,'sine',.08),120);setTimeout(()=>beep(1100,.22,'sine',.09),240);}
 
+/* ---- Adaptive Music System ---- */
+const music={
+  ctx:null, stems:{}, loaded:false, playing:false,
+  config:[
+    {name:'melody', url:'music/melody.mp3', startTier:1},
+    {name:'bass',   url:'music/bass.mp3',   startTier:3},
+    {name:'drums',  url:'music/drums.mp3',  startTier:6}
+  ]
+};
+
+async function loadMusic(){
+  if(music.loaded)return;
+  try{
+    music.ctx=music.ctx||new(window.AudioContext||window.webkitAudioContext)();
+    await Promise.all(music.config.map(async cfg=>{
+      const resp=await fetch(cfg.url);
+      const buf=await music.ctx.decodeAudioData(await resp.arrayBuffer());
+      const gain=music.ctx.createGain();
+      gain.connect(music.ctx.destination);
+      gain.gain.value=0; // start silent
+      music.stems[cfg.name]={buffer:buf,gain:gain,source:null,startTier:cfg.startTier};
+    }));
+    music.loaded=true;
+  }catch(e){console.warn('Music load failed:',e);}
+}
+
+function startMusic(){
+  if(!music.loaded||music.playing)return;
+  const now=music.ctx.currentTime;
+  Object.entries(music.stems).forEach(([name,stem])=>{
+    stem.source=music.ctx.createBufferSource();
+    stem.source.buffer=stem.buffer;
+    stem.source.loop=true;
+    stem.source.playbackRate.value=1.0;
+    stem.source.connect(stem.gain);
+    stem.source.start(now);
+    // Start melody immediately, others silent
+    stem.gain.gain.setValueAtTime(stem.startTier===1?0.7:0, now);
+  });
+  music.playing=true;
+}
+
+function stopMusic(){
+  if(!music.playing)return;
+  Object.values(music.stems).forEach(stem=>{
+    if(stem.source){try{stem.source.stop();}catch(e){}}
+    stem.source=null;
+  });
+  music.playing=false;
+}
+
+function updateMusicLayers(tier){
+  if(!music.playing)return;
+  const now=music.ctx.currentTime;
+  Object.values(music.stems).forEach(stem=>{
+    const shouldPlay=tier>=stem.startTier;
+    stem.gain.gain.linearRampToValueAtTime(shouldPlay?0.7:0, now+0.5);
+  });
+  // Slight tempo increase per tier (2% per tier after tier 1)
+  const tempo=1.0+((tier-1)*0.02);
+  Object.values(music.stems).forEach(stem=>{
+    if(stem.source)stem.source.playbackRate.linearRampToValueAtTime(Math.min(tempo,1.25), now+0.3);
+  });
+}
+
 /* ================================================================
    GAME STATE
    ================================================================ */
@@ -853,6 +918,7 @@ function tierUp(){
   $('lvlBannerName').textContent='TIER '+G.tier;
   const b=$('lvlBanner');b.classList.add('show');setTimeout(()=>b.classList.remove('show'),1400);
   G.needWave=true;updateHUD();
+  updateMusicLayers(G.tier);
 }
 function doPenalty(){
   G.streak=0;G.shields--;updateHUD();
@@ -951,9 +1017,11 @@ function startGame(pool,label){
   targets.forEach(t=>scene.remove(t.group));targets.length=0;
   updateHUD();
   try{actx=actx||new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
+  startMusic();
 }
 function gameOver(){
-  G.running=false;const acc=G.shots?Math.round(G.hits/G.shots*100):0;
+  G.running=false;stopMusic();
+  const acc=G.shots?Math.round(G.hits/G.shots*100):0;
   $('finalScore').textContent=G.score;$('finalAcc').textContent=acc+'%';$('finalTier').textContent=G.tier;
   const gr=acc>=90?'S':acc>=78?'A':acc>=62?'B':acc>=46?'C':'D';$('grade').textContent=gr;
   $('overMsg').textContent={S:'Perfect aim. Perfect pitch.',A:'Sharp flying, sharper ears.',B:'Solid run through the void.',C:'You survived. Barely.',D:'Recalibrate and relaunch.'}[gr];
@@ -1058,7 +1126,7 @@ function bindMenu(){
    ================================================================ */
 window.addEventListener('load',()=>{
   if(typeof THREE==='undefined'){document.body.innerHTML='<div style="padding:40px;color:#fff;font-family:monospace">3D engine failed to load (needs internet).</div>';return;}
-  initThree();setupInput();bindMenu();buildPresetList();
+  initThree();setupInput();bindMenu();buildPresetList();loadMusic();
   const prev=noteFromStep(stepOf('G',4));prev.clef='treble';drawCard(prev);
   // default designer selection = on-staff treble
   const c=STAFF.treble;for(let s=c.bottomLine;s<=c.topLine;s++)dSel.add(noteKey(noteFromStep(s)));
