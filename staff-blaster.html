@@ -994,7 +994,7 @@ function gameStep(dt){
     const p=worldAtNDC(t.ndcX,ROW_NDC,t.z);    // keep it locked to its screen lane
     t.group.position.copy(p);
     const baseS=ORB_K*d;                        // scale ∝ distance → constant apparent size
-    const pulse=1+Math.sin(now*4+t.ndcX*5)*.08; // gentle pulsing
+    const pulse=1+Math.sin(performance.now()/250+t.ndcX*5)*.08; // gentle pulsing
     const s=baseS*pulse;
     t.spr.scale.set(s,s,1);
     t.spr.material.rotation+=dt*1.2;            // faster spin
