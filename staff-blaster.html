@@ -202,9 +202,8 @@ html,body{height:100%;overflow:hidden;background:var(--night);
 
 <!-- MENU -->
 <div class="overlay" id="menu">
-  <div class="heroCard">
-    <img src="images/splash.png" alt="Staff Commander - Command the Staff, Master the Notes">
-  </div>
+  <div class="eyebrow">DEEP SPACE · NOTE TRAINING</div>
+  <div class="logo">STAFF<span class="sub">BLASTER 3D</span></div>
 
   <div id="studentSection">
     <div id="currentPlayer">NO PLAYER SELECTED</div>
@@ -798,7 +797,33 @@ function explode(pos,color){
 /* ---- AUDIO ---- */
 let actx;
 function beep(f,d,t,v){try{if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();const o=actx.createOscillator(),g=actx.createGain();o.type=t||'square';o.frequency.value=f;g.gain.value=v||.06;o.connect(g);g.connect(actx.destination);o.start();o.frequency.exponentialRampToValueAtTime(Math.max(40,f*.5),actx.currentTime+d);g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+d);o.stop(actx.currentTime+d+.01);}catch(e){}}
-const sfxFire=()=>beep(600,.12,'sawtooth',.05);
+
+// Beefy laser blast sound
+function sfxFire(){
+  try{
+    if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();
+    const now=actx.currentTime;
+    // High zap
+    const o1=actx.createOscillator(),g1=actx.createGain();
+    o1.type='sawtooth';o1.frequency.setValueAtTime(1800,now);
+    o1.frequency.exponentialRampToValueAtTime(200,now+0.15);
+    g1.gain.setValueAtTime(0.12,now);g1.gain.exponentialRampToValueAtTime(0.001,now+0.15);
+    o1.connect(g1);g1.connect(actx.destination);o1.start(now);o1.stop(now+0.16);
+    // Mid punch
+    const o2=actx.createOscillator(),g2=actx.createGain();
+    o2.type='square';o2.frequency.setValueAtTime(400,now);
+    o2.frequency.exponentialRampToValueAtTime(80,now+0.1);
+    g2.gain.setValueAtTime(0.08,now);g2.gain.exponentialRampToValueAtTime(0.001,now+0.1);
+    o2.connect(g2);g2.connect(actx.destination);o2.start(now);o2.stop(now+0.11);
+    // Noise burst
+    const buf=actx.createBuffer(1,actx.sampleRate*0.06,actx.sampleRate);
+    const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2);
+    const ns=actx.createBufferSource();ns.buffer=buf;
+    const nf=actx.createBiquadFilter();nf.type='bandpass';nf.frequency.value=3000;nf.Q.value=1;
+    const ng=actx.createGain();ng.gain.value=0.06;
+    ns.connect(nf);nf.connect(ng);ng.connect(actx.destination);ns.start(now);
+  }catch(e){}
+}
 const sfxHit=()=>{beep(900,.16,'triangle',.07);setTimeout(()=>beep(1350,.14,'sine',.05),55);};
 const sfxWrong=()=>beep(140,.32,'square',.08);
 function sfxTier(){beep(660,.12,'sine',.08);setTimeout(()=>beep(880,.12,'sine',.08),120);setTimeout(()=>beep(1100,.22,'sine',.09),240);}
