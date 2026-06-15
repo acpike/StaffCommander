@@ -416,13 +416,9 @@ const planets=[], meteors=[];
 function buildPlanets(){
   // Large background planets - positioned at screen edges, not center
   const planetData=[
-    {x:-70, y:35, z:-150, r:22, color:0x8B5CF6, ring:true},    // top-left: purple gas giant with rings
-    {x:80, y:-25, z:-200, r:15, color:0xF97316, ring:false},   // bottom-right: orange planet
-    {x:-85, y:-35, z:-260, r:28, color:0x3B82F6, ring:false},  // bottom-left: blue ice giant
-    {x:90, y:40, z:-300, r:10, color:0xEF4444, ring:false},    // top-right: red dwarf
-    {x:-60, y:55, z:-380, r:40, color:0x22D3EE, ring:true},    // far top-left: cyan giant with rings
-    {x:75, y:-50, z:-420, r:18, color:0xA855F7, ring:false},   // far bottom-right: violet planet
-    {x:100, y:10, z:-350, r:12, color:0xFBBF24, ring:false},   // right edge: gold planet
+    {x:-65, y:40, z:-180, r:28, color:0x8B5CF6, ring:true},   // large planet, upper-left corner
+    {x:70, y:-30, z:-280, r:14, color:0xF97316, ring:false},  // midsize, lower-right
+    {x:50, y:50, z:-450, r:8, color:0x22D3EE, ring:false},    // small distant one, upper-right
   ];
   planetData.forEach(p=>{
     const geo=new THREE.SphereGeometry(p.r,32,24);
