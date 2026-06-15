@@ -360,13 +360,13 @@ function initThree(){
   renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
   renderer.setSize(innerWidth,innerHeight);
   scene=new THREE.Scene();
-  scene.fog=new THREE.FogExp2(0x050210,0.0024);
-  camera=new THREE.PerspectiveCamera(68,innerWidth/innerHeight,0.1,460);
+  scene.fog=new THREE.FogExp2(0x050210,0.0018);
+  camera=new THREE.PerspectiveCamera(68,innerWidth/innerHeight,0.1,500);
   camera.position.set(0,2.2,9);camera.lookAt(0,0.5,-20);
   scene.add(new THREE.AmbientLight(0x3a3a70,0.85));
   const key=new THREE.DirectionalLight(0xbbd8ff,1.1);key.position.set(3,6,5);scene.add(key);
   const rim=new THREE.PointLight(0x5B3FA0,1.2,60);rim.position.set(-5,-2,-6);scene.add(rim);
-  buildStars();buildNebula();buildShip();buildReticle();
+  buildStars();buildNebula();buildPlanets();buildMeteors();buildShip();buildReticle();
   addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 }
 function buildStars(){
@@ -411,25 +411,198 @@ function buildReticle(){
   reticle.scale.set(2.1,2.1,1);scene.add(reticle);
 }
 
-/* ---- Orb sprites (accidental-aware label) ---- */
-function makeOrbTex(label){
-  const cv2=document.createElement('canvas');cv2.width=cv2.height=512;const g2=cv2.getContext('2d');
-  g2.fillStyle='rgba(18,12,42,0.96)';g2.beginPath();g2.arc(256,256,230,0,Math.PI*2);g2.fill();
-  g2.strokeStyle='rgba(91,232,196,0.95)';g2.lineWidth=18;g2.shadowColor='#5BE8C4';g2.shadowBlur=30;
-  g2.beginPath();g2.arc(256,256,208,0,Math.PI*2);g2.stroke();g2.shadowBlur=0;
-  const fs=label.length>1?180:240;
-  g2.font='bold '+fs+'px -apple-system,"Arial Rounded MT Bold",Arial,sans-serif';
-  g2.textAlign='center';g2.textBaseline='middle';g2.fillStyle='#fff';
-  g2.shadowColor='rgba(91,232,196,0.8)';g2.shadowBlur=20;g2.fillText(label,256,272);
-  return new THREE.CanvasTexture(cv2);
+/* ---- Planets & Meteors ---- */
+const planets=[], meteors=[];
+function buildPlanets(){
+  // Large background planets
+  const planetData=[
+    {x:-45, y:15, z:-180, r:18, color:0x8B5CF6, ring:true},   // purple gas giant with rings
+    {x:55, y:-10, z:-220, r:12, color:0xF97316, ring:false},  // orange planet
+    {x:-30, y:-20, z:-280, r:25, color:0x3B82F6, ring:false}, // blue ice giant
+    {x:70, y:25, z:-320, r:8, color:0xEF4444, ring:false},    // red dwarf
+    {x:0, y:40, z:-400, r:35, color:0x22D3EE, ring:true},     // cyan giant with rings
+  ];
+  planetData.forEach(p=>{
+    const geo=new THREE.SphereGeometry(p.r,32,24);
+    // Create gradient texture for planet
+    const cv=document.createElement('canvas');cv.width=cv.height=256;
+    const g=cv.getContext('2d');
+    const grd=g.createLinearGradient(0,0,256,256);
+    const c=new THREE.Color(p.color);
+    grd.addColorStop(0,`hsl(${c.getHSL({}).h*360},${c.getHSL({}).s*100}%,${Math.min(70,c.getHSL({}).l*100+20)}%)`);
+    grd.addColorStop(0.5,`#${c.getHexString()}`);
+    grd.addColorStop(1,`hsl(${c.getHSL({}).h*360},${c.getHSL({}).s*100}%,${Math.max(10,c.getHSL({}).l*100-30)}%)`);
+    g.fillStyle=grd;g.fillRect(0,0,256,256);
+    // Add some bands/stripes
+    g.globalAlpha=0.15;
+    for(let i=0;i<8;i++){
+      g.fillStyle=i%2?'#fff':'#000';
+      g.fillRect(0,i*32+Math.random()*10,256,12+Math.random()*8);
+    }
+    const tex=new THREE.CanvasTexture(cv);
+    const mat=new THREE.MeshStandardMaterial({map:tex,metalness:0.1,roughness:0.8});
+    const mesh=new THREE.Mesh(geo,mat);
+    mesh.position.set(p.x,p.y,p.z);
+    mesh.rotation.z=Math.random()*0.3;
+    scene.add(mesh);
+    planets.push({mesh,speed:0.02+Math.random()*0.03});
+    // Add rings to some planets
+    if(p.ring){
+      const ringGeo=new THREE.RingGeometry(p.r*1.4,p.r*2.2,48);
+      const ringMat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.3,side:THREE.DoubleSide});
+      const ring=new THREE.Mesh(ringGeo,ringMat);
+      ring.rotation.x=Math.PI/2.2;
+      ring.position.copy(mesh.position);
+      scene.add(ring);
+    }
+    // Add atmosphere glow
+    const glowGeo=new THREE.SphereGeometry(p.r*1.15,32,24);
+    const glowMat=new THREE.MeshBasicMaterial({color:p.color,transparent:true,opacity:0.12,side:THREE.BackSide});
+    const glow=new THREE.Mesh(glowGeo,glowMat);
+    glow.position.copy(mesh.position);
+    scene.add(glow);
+  });
 }
+
+function buildMeteors(){
+  // Floating asteroids/meteors
+  for(let i=0;i<20;i++){
+    const size=0.4+Math.random()*1.2;
+    const geo=new THREE.IcosahedronGeometry(size,0);
+    // Distort vertices for rocky look
+    const pos=geo.attributes.position;
+    for(let j=0;j<pos.count;j++){
+      pos.setXYZ(j,
+        pos.getX(j)*(0.8+Math.random()*0.4),
+        pos.getY(j)*(0.8+Math.random()*0.4),
+        pos.getZ(j)*(0.8+Math.random()*0.4)
+      );
+    }
+    geo.computeVertexNormals();
+    const shade=0.15+Math.random()*0.25;
+    const mat=new THREE.MeshStandardMaterial({
+      color:new THREE.Color(shade,shade*0.9,shade*0.85),
+      metalness:0.3,roughness:0.9,flatShading:true
+    });
+    const mesh=new THREE.Mesh(geo,mat);
+    mesh.position.set(
+      (Math.random()-0.5)*100,
+      (Math.random()-0.5)*60,
+      -50-Math.random()*300
+    );
+    mesh.rotation.set(Math.random()*Math.PI,Math.random()*Math.PI,Math.random()*Math.PI);
+    scene.add(mesh);
+    meteors.push({
+      mesh,
+      rotSpeed:{x:Math.random()*0.5-0.25,y:Math.random()*0.5-0.25,z:Math.random()*0.3-0.15},
+      drift:{x:(Math.random()-0.5)*2,y:(Math.random()-0.5)*1,z:8+Math.random()*12}
+    });
+  }
+}
+
+function updateScenery(dt){
+  // Rotate planets slowly
+  planets.forEach(p=>{p.mesh.rotation.y+=p.speed*dt;});
+  // Drift meteors
+  meteors.forEach(m=>{
+    m.mesh.rotation.x+=m.rotSpeed.x*dt;
+    m.mesh.rotation.y+=m.rotSpeed.y*dt;
+    m.mesh.rotation.z+=m.rotSpeed.z*dt;
+    m.mesh.position.z+=m.drift.z*dt;
+    m.mesh.position.x+=m.drift.x*dt;
+    m.mesh.position.y+=m.drift.y*dt;
+    // Reset when past camera
+    if(m.mesh.position.z>15){
+      m.mesh.position.z=-300-Math.random()*100;
+      m.mesh.position.x=(Math.random()-0.5)*100;
+      m.mesh.position.y=(Math.random()-0.5)*60;
+    }
+  });
+}
+
+/* ---- 3D Orbs with glow ---- */
+function makeLabelTex(label){
+  const cv=document.createElement('canvas');cv.width=cv.height=256;const g=cv.getContext('2d');
+  g.clearRect(0,0,256,256);
+  const fs=label.length>1?100:140;
+  g.font='bold '+fs+'px -apple-system,"Arial Rounded MT Bold",Arial,sans-serif';
+  g.textAlign='center';g.textBaseline='middle';
+  g.fillStyle='#fff';
+  g.shadowColor='rgba(91,232,196,1)';g.shadowBlur=15;
+  g.fillText(label,128,138);
+  return new THREE.CanvasTexture(cv);
+}
+
+function createOrb(label){
+  const grp=new THREE.Group();
+
+  // Inner glowing sphere
+  const coreGeo=new THREE.SphereGeometry(1,24,18);
+  const coreMat=new THREE.MeshStandardMaterial({
+    color:0x140E2E,
+    emissive:0x1a1440,
+    emissiveIntensity:0.3,
+    metalness:0.4,
+    roughness:0.3
+  });
+  const core=new THREE.Mesh(coreGeo,coreMat);
+  grp.add(core);
+
+  // Glowing ring around the orb
+  const ringGeo=new THREE.TorusGeometry(1.15,0.06,8,32);
+  const ringMat=new THREE.MeshBasicMaterial({
+    color:0x5BE8C4,
+    transparent:true,
+    opacity:0.9
+  });
+  const ring=new THREE.Mesh(ringGeo,ringMat);
+  ring.rotation.x=Math.PI/2;
+  grp.add(ring);
+
+  // Second ring at angle
+  const ring2=ring.clone();
+  ring2.rotation.x=Math.PI/3;
+  ring2.rotation.z=Math.PI/4;
+  grp.add(ring2);
+
+  // Outer glow sphere
+  const glowGeo=new THREE.SphereGeometry(1.4,16,12);
+  const glowMat=new THREE.MeshBasicMaterial({
+    color:0x5BE8C4,
+    transparent:true,
+    opacity:0.15,
+    side:THREE.BackSide
+  });
+  const glow=new THREE.Mesh(glowGeo,glowMat);
+  grp.add(glow);
+
+  // Label sprite facing camera
+  const labelTex=makeLabelTex(label);
+  const labelMat=new THREE.SpriteMaterial({
+    map:labelTex,
+    transparent:true,
+    depthWrite:false
+  });
+  const labelSprite=new THREE.Sprite(labelMat);
+  labelSprite.scale.set(2,2,1);
+  grp.add(labelSprite);
+
+  // Point light for local illumination
+  const light=new THREE.PointLight(0x5BE8C4,0.8,12);
+  grp.add(light);
+
+  grp.userData={ring,ring2,core};
+  return grp;
+}
+
 // Orbs are pinned to fixed SCREEN lanes (left/center/right columns) and kept
 // at near-constant apparent size as they approach — like the racer's lane boxes.
 const LANE_NDC=[-0.58,0,0.58];   // screen columns
 const ROW_NDC=0.10;              // screen row (just above centre, below the card)
-const ORB_K=0.14;                // scale ∝ distance  → constant apparent size
+const ORB_K=0.18;                // scale ∝ distance  → constant apparent size
+
 function spawnTargets(note){
-  targets.forEach(t=>{if(!t.dead)scene.remove(t.group);});targets.length=0;
+  targets.forEach(t=>{if(!t.dead){scene.remove(t.group);}});targets.length=0;
   const correctName=spelled(note);
   let names=G.poolNames.filter(x=>x!==correctName);
   for(let i=names.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[names[i],names[j]]=[names[j],names[i]];}
@@ -440,12 +613,10 @@ function spawnTargets(note){
 
   const spawnZ=-(G.speed*3.0);   // constant ~3s reaction time
   opts.forEach((L,i)=>{
-    const grp=new THREE.Group();
-    const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:makeOrbTex(L),transparent:true,depthWrite:false}));
-    grp.add(spr);
-    grp.add(new THREE.PointLight(0x5BE8C4,.5,9));
-    grp.position.set(0,0,spawnZ);scene.add(grp);
-    targets.push({group:grp,spr,name:L,correct:L===correctName,dead:false,passed:false,z:spawnZ,ndcX:LANE_NDC[i]});
+    const grp=createOrb(L);
+    grp.position.set(0,0,spawnZ);
+    scene.add(grp);
+    targets.push({group:grp,name:L,correct:L===correctName,dead:false,passed:false,z:spawnZ,ndcX:LANE_NDC[i],spin:Math.random()*Math.PI*2});
   });
 }
 
@@ -678,6 +849,7 @@ function loop(t){
   const sp=(G.running?G.speed:14)*dt;
   for(let i=0;i<starPos.length;i+=3){starPos[i+2]+=sp;if(starPos[i+2]>14){starPos[i+2]=-400;starPos[i]=(Math.random()-.5)*140;starPos[i+1]=(Math.random()-.5)*95;}}
   starGeo.attributes.position.needsUpdate=true;
+  updateScenery(dt);
   if(G.running)gameStep(dt);
   fx=fx.filter(e=>{const a=e.update(dt);if(!a)e.dispose();return a;});
   renderer.render(scene,camera);
@@ -713,8 +885,17 @@ function gameStep(dt){
     const p=worldAtNDC(t.ndcX,ROW_NDC,t.z);    // keep it locked to its screen lane
     t.group.position.copy(p);
     const s=ORB_K*d;                           // scale ∝ distance → constant apparent size
-    t.spr.scale.set(s,s,1);
-    t.spr.material.rotation+=dt*.35;
+    t.group.scale.set(s,s,s);
+    // Animate the rings
+    t.spin+=dt*1.2;
+    if(t.group.userData.ring){
+      t.group.userData.ring.rotation.z=t.spin;
+      t.group.userData.ring2.rotation.z=-t.spin*0.7;
+    }
+    // Pulse the glow
+    if(t.group.userData.core){
+      t.group.userData.core.rotation.y+=dt*0.3;
+    }
     if(t.z>PASS){t.passed=t.dead=true;scene.remove(t.group);if(t.correct)missed=true;}else alive=true;
   });
   if(missed)doPenalty();else if(!alive)G.needWave=true;
