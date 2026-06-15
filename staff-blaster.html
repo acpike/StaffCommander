@@ -55,6 +55,18 @@ html,body{height:100%;overflow:hidden;background:var(--night);
   display:flex;align-items:center;justify-content:center;font-size:11px;letter-spacing:3px;
   font-weight:800;color:var(--mint);text-shadow:0 0 8px var(--mint);}
 #fireBtn:active{transform:scale(.92);}
+
+/* Steering pad */
+#steerPad{position:absolute;left:max(22px,env(safe-area-inset-left));
+  bottom:max(28px,env(safe-area-inset-bottom));width:120px;height:120px;
+  pointer-events:auto;display:none;}
+#steerPad .base{position:absolute;inset:0;border-radius:50%;
+  background:rgba(20,14,46,.5);border:2px solid rgba(91,232,196,.3);
+  box-shadow:inset 0 0 20px rgba(0,0,0,.4);}
+#steerPad .knob{position:absolute;width:50px;height:50px;border-radius:50%;
+  left:50%;top:50%;transform:translate(-50%,-50%);
+  background:radial-gradient(circle at 35% 30%,rgba(234,246,255,.9),rgba(127,168,201,.8));
+  border:2px solid rgba(20,14,46,.6);box-shadow:0 4px 12px rgba(0,0,0,.4);}
 #hint{position:absolute;left:50%;bottom:calc(max(28px,env(safe-area-inset-bottom)) + 6px);
   transform:translateX(-50%);font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.5);text-align:center;}
 #flash{position:absolute;inset:0;pointer-events:none;opacity:0;}
@@ -153,6 +165,7 @@ html,body{height:100%;overflow:hidden;background:var(--night);
     <div id="cardLabel">IDENTIFY THE NOTE</div>
     <div id="lvlBar"></div>
   </div>
+  <div id="steerPad"><div class="base"></div><div class="knob" id="steerKnob"></div></div>
   <div id="fireBtn">FIRE</div>
   <div id="hint">TILT TO AIM &bull; TAP TO FIRE</div>
   <div id="flash"></div>
@@ -483,16 +496,108 @@ const MAX_SH=3, TIER_EVERY=10;
    INPUT
    ================================================================ */
 const keys={};
+let steerTouchId=null, steerAnchorX=0, steerAnchorY=0, steerKnobX=0, steerKnobY=0;
+const STEER_RADIUS=60; // half the pad size
+
 function setupInput(){
   addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='Space'){e.preventDefault();tryFire();}});
   addEventListener('keyup',e=>{keys[e.code]=false;});
-  addEventListener('mousemove',e=>{if(G.steer!=='touch')return;G.rx=(e.clientX/innerWidth)*2-1;G.ry=-((e.clientY/innerHeight)*2-1);});
+
+  // Mouse fallback for desktop testing
+  addEventListener('mousemove',e=>{if(G.steer!=='touch'||!G.running)return;G.rx=(e.clientX/innerWidth)*2-1;G.ry=-((e.clientY/innerHeight)*2-1);});
   $('scene').addEventListener('mousedown',()=>{if(G.running)tryFire();});
-  let ts=null,moved=false,tx=0,ty=0;const s=$('scene');
-  s.addEventListener('touchstart',e=>{const t=e.touches[0];ts={x:t.clientX,y:t.clientY,time:performance.now()};tx=t.clientX;ty=t.clientY;moved=false;},{passive:true});
-  s.addEventListener('touchmove',e=>{const t=e.touches[0];const dx=t.clientX-tx,dy=t.clientY-ty;tx=t.clientX;ty=t.clientY;if(Math.abs(t.clientX-ts.x)+Math.abs(t.clientY-ts.y)>10)moved=true;if(G.steer==='touch'){G.rx=Math.max(-1,Math.min(1,G.rx+dx/(innerWidth*.38)));G.ry=Math.max(-1,Math.min(1,G.ry-dy/(innerHeight*.38)));}},{passive:true});
-  s.addEventListener('touchend',()=>{if(!moved&&ts&&performance.now()-ts.time<260&&G.running)tryFire();},{passive:true});
-  addEventListener('deviceorientation',e=>{if(G.steer!=='tilt'||!G.running||e.gamma==null)return;if(G.baseGamma==null){G.baseGamma=e.gamma;G.baseBeta=e.beta;}G.rx=Math.max(-1,Math.min(1,(e.gamma-G.baseGamma)/22));G.ry=Math.max(-1,Math.min(1,-(e.beta-G.baseBeta)/24));});
+
+  // Touch steering pad
+  const pad=$('steerPad'), knob=$('steerKnob');
+
+  function updateKnobVisual(){
+    const maxOff=35;
+    const ox=G.rx*maxOff, oy=-G.ry*maxOff;
+    knob.style.transform='translate(calc(-50% + '+ox+'px), calc(-50% + '+oy+'px))';
+  }
+
+  function inSteerZone(x,y){
+    const rect=pad.getBoundingClientRect();
+    return x>=rect.left-20 && x<=rect.right+20 && y>=rect.top-20 && y<=rect.bottom+20;
+  }
+
+  addEventListener('touchstart',e=>{
+    if(!G.running||G.steer!=='touch')return;
+    for(const t of e.changedTouches){
+      if(t.target&&(t.target.id==='fireBtn'||t.target.closest('#fireBtn')))continue;
+      if(steerTouchId!==null)continue;
+      if(inSteerZone(t.clientX,t.clientY)){
+        steerTouchId=t.identifier;
+        const rect=pad.getBoundingClientRect();
+        const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+        steerAnchorX=cx; steerAnchorY=cy;
+        steerKnobX=t.clientX; steerKnobY=t.clientY;
+        G.rx=Math.max(-1,Math.min(1,(steerKnobX-steerAnchorX)/STEER_RADIUS));
+        G.ry=Math.max(-1,Math.min(1,-(steerKnobY-steerAnchorY)/STEER_RADIUS));
+        updateKnobVisual();
+        e.preventDefault();
+      }
+    }
+  },{passive:false});
+
+  addEventListener('touchmove',e=>{
+    if(steerTouchId===null)return;
+    for(const t of e.changedTouches){
+      if(t.identifier===steerTouchId){
+        steerKnobX=t.clientX; steerKnobY=t.clientY;
+        G.rx=Math.max(-1,Math.min(1,(steerKnobX-steerAnchorX)/STEER_RADIUS));
+        G.ry=Math.max(-1,Math.min(1,-(steerKnobY-steerAnchorY)/STEER_RADIUS));
+        updateKnobVisual();
+        e.preventDefault();
+      }
+    }
+  },{passive:false});
+
+  addEventListener('touchend',e=>{
+    for(const t of e.changedTouches){
+      if(t.identifier===steerTouchId){
+        steerTouchId=null;
+        // Don't reset G.rx/G.ry - keep last position
+      }
+    }
+  },{passive:true});
+
+  // Tilt controls with deadzone and smoothing
+  let tiltSmooth={x:0,y:0};
+  addEventListener('deviceorientation',e=>{
+    if(G.steer!=='tilt'||!G.running||e.gamma==null)return;
+
+    // Set base position on first read
+    if(G.baseGamma==null){G.baseGamma=e.gamma;G.baseBeta=e.beta;}
+
+    // Get orientation-aware values
+    const isLandscape=innerWidth>innerHeight;
+    let rawX, rawY;
+    if(isLandscape){
+      rawX=(e.beta-G.baseBeta)/35;   // beta controls X in landscape
+      rawY=-(e.gamma-G.baseGamma)/35; // gamma controls Y in landscape
+    }else{
+      rawX=(e.gamma-G.baseGamma)/35;  // gamma controls X in portrait
+      rawY=-(e.beta-G.baseBeta)/35;   // beta controls Y in portrait
+    }
+
+    // Deadzone of 0.08
+    const dead=0.08;
+    if(Math.abs(rawX)<dead)rawX=0; else rawX-=Math.sign(rawX)*dead;
+    if(Math.abs(rawY)<dead)rawY=0; else rawY-=Math.sign(rawY)*dead;
+
+    // Clamp
+    rawX=Math.max(-1,Math.min(1,rawX/(1-dead)));
+    rawY=Math.max(-1,Math.min(1,rawY/(1-dead)));
+
+    // Smooth
+    tiltSmooth.x+=(rawX-tiltSmooth.x)*0.15;
+    tiltSmooth.y+=(rawY-tiltSmooth.y)*0.15;
+
+    G.rx=tiltSmooth.x;
+    G.ry=tiltSmooth.y;
+  });
+
   $('fireBtn').addEventListener('touchstart',e=>{e.preventDefault();if(G.running)tryFire();},{passive:false});
   $('fireBtn').addEventListener('mousedown',e=>{e.preventDefault();if(G.running)tryFire();});
 }
@@ -644,7 +749,9 @@ async function launchWith(pool,label){
     try{const r=await DeviceOrientationEvent.requestPermission();if(r!=='granted'){$('perm').textContent='Motion denied — using DRAG.';G.steer='touch';setSteerUI();}}
     catch(e){$('perm').textContent='Motion unavailable — using DRAG.';G.steer='touch';setSteerUI();}
   }
-  $('hint').textContent=G.steer==='tilt'?'TILT TO AIM \u2022 TAP TO FIRE':'DRAG TO AIM \u2022 TAP TO FIRE';
+  // Show/hide steering pad based on mode
+  $('steerPad').style.display=G.steer==='touch'?'block':'none';
+  $('hint').textContent=G.steer==='tilt'?'TILT TO AIM \u2022 TAP FIRE':'LEFT THUMB STEERS \u2022 RIGHT THUMB FIRES';
   startGame(pool,label);
 }
 
