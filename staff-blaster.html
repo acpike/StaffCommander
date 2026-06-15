@@ -122,6 +122,21 @@ html,body{height:100%;overflow:hidden;background:var(--night);
 .designerTools button.on{background:rgba(91,232,196,.25);border-color:var(--mint);}
 #dCount{text-align:center;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:10px;letter-spacing:1px;}
 
+/* Splash screen */
+#splash{position:fixed;inset:0;z-index:100;background:var(--night);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;transition:opacity 0.5s ease-out;}
+#splash.fade{opacity:0;pointer-events:none;}
+#splash img{max-width:90%;max-height:70vh;object-fit:contain;border-radius:20px;
+  box-shadow:0 10px 60px rgba(91,232,196,.3);}
+#splash .loading{margin-top:24px;color:var(--mint);font-size:14px;font-weight:600;letter-spacing:3px;
+  animation:pulse 1.2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:0.5;}50%{opacity:1;}}
+
+/* Hero card for menu */
+.heroCard{width:100%;max-width:420px;border-radius:16px;overflow:hidden;margin-bottom:16px;
+  border:1.5px solid rgba(91,232,196,.3);box-shadow:0 8px 32px rgba(0,0,0,.4);}
+.heroCard img{width:100%;display:block;}
+
 .cta{margin:6px 0 18px;padding:15px 44px;border:none;border-radius:14px;cursor:pointer;
   font-family:inherit;font-size:15px;font-weight:800;letter-spacing:3px;color:var(--ink);
   background:linear-gradient(160deg,var(--mint),#3bbba8);box-shadow:0 0 28px rgba(91,232,196,.4);}
@@ -154,6 +169,12 @@ html,body{height:100%;overflow:hidden;background:var(--night);
 </style>
 </head>
 <body>
+<!-- Splash Screen -->
+<div id="splash">
+  <img src="images/splash.png" alt="Staff Commander">
+  <div class="loading">LOADING</div>
+</div>
+
 <canvas id="scene"></canvas>
 
 <!-- HUD -->
@@ -181,8 +202,9 @@ html,body{height:100%;overflow:hidden;background:var(--night);
 
 <!-- MENU -->
 <div class="overlay" id="menu">
-  <div class="eyebrow">DEEP SPACE · NOTE TRAINING</div>
-  <div class="logo">STAFF<span class="sub">BLASTER</span></div>
+  <div class="heroCard">
+    <img src="images/splash.png" alt="Staff Commander - Command the Staff, Master the Notes">
+  </div>
 
   <div id="studentSection">
     <div id="currentPlayer">NO PLAYER SELECTED</div>
@@ -1491,6 +1513,11 @@ window.addEventListener('load',()=>{
   // default designer selection = on-staff treble
   const c=STAFF.treble;for(let s=c.bottomLine;s<=c.topLine;s++)dSel.add(noteKey(noteFromStep(s)));
   requestAnimationFrame(loop);
+  // Fade out splash screen after brief delay
+  setTimeout(()=>{
+    const splash=$('splash');
+    if(splash){splash.classList.add('fade');setTimeout(()=>splash.remove(),600);}
+  },800);
 });
 </script>
 </body>
