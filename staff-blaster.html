@@ -106,6 +106,8 @@ html,body{height:100%;overflow:hidden;background:var(--night);
   border:1.5px solid rgba(63,169,245,.35);border-radius:16px;padding:10px 14px;cursor:pointer;
   transition:.15s;pointer-events:auto;}
 .preset:active{transform:scale(.98);background:rgba(63,169,245,.28);}
+.preset.locked{opacity:0.4;pointer-events:none;}
+.preset.locked .badge::after{content:'🔒';position:absolute;font-size:18px;}
 .preset .badge{flex:none;width:54px;height:54px;border-radius:50%;background:var(--sky);
   display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;
   box-shadow:0 0 0 3px rgba(255,255,255,.25), 0 4px 10px rgba(0,0,0,.4);}
@@ -145,6 +147,22 @@ html,body{height:100%;overflow:hidden;background:var(--night);
   text-shadow:0 0 30px rgba(255,209,102,.5);}
 .hidden{display:none!important;}
 #perm{font-size:11px;color:rgba(255,255,255,.45);margin-top:6px;max-width:320px;line-height:1.5;text-align:center;}
+
+/* Student profiles */
+#studentSection{width:100%;max-width:420px;margin-bottom:14px;}
+#studentList{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+#studentList button{padding:10px 16px;border-radius:10px;border:1.5px solid rgba(255,209,102,.3);
+  background:rgba(20,14,46,.5);color:var(--gold);font-family:inherit;font-size:13px;font-weight:600;
+  cursor:pointer;transition:.15s;}
+#studentList button.on{background:rgba(255,209,102,.2);border-color:var(--gold);box-shadow:0 0 12px rgba(255,209,102,.25);}
+#studentList button .best{display:block;font-size:10px;color:var(--dim);margin-top:3px;}
+#addStudentRow{display:flex;gap:8px;}
+#newStudentInput{flex:1;padding:10px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,.2);
+  background:rgba(20,14,46,.5);color:#fff;font-family:inherit;font-size:13px;}
+#newStudentInput::placeholder{color:rgba(255,255,255,.4);}
+#addStudentBtn{padding:10px 18px;border-radius:10px;border:none;background:var(--gold);color:var(--ink);
+  font-family:inherit;font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;}
+#currentPlayer{text-align:center;font-size:12px;color:var(--mint);margin-bottom:8px;letter-spacing:1px;}
 </style>
 </head>
 <body>
@@ -177,6 +195,15 @@ html,body{height:100%;overflow:hidden;background:var(--night);
 <div class="overlay" id="menu">
   <div class="eyebrow">DEEP SPACE · NOTE TRAINING</div>
   <div class="logo">STAFF<span class="sub">BLASTER</span></div>
+
+  <div id="studentSection">
+    <div id="currentPlayer">NO PLAYER SELECTED</div>
+    <div id="studentList"></div>
+    <div id="addStudentRow">
+      <input type="text" id="newStudentInput" placeholder="Add new player..." maxlength="14">
+      <button id="addStudentBtn">ADD</button>
+    </div>
+  </div>
 
   <div class="row">
     <div class="glabel">CLEF</div>
@@ -237,6 +264,65 @@ const $=id=>document.getElementById(id);
 const SH='\u266F', FL='\u266D';   // ♯ ♭
 
 /* ================================================================
+   STUDENT PROFILES
+   ================================================================ */
+function loadStudents(){
+  try{ const a=JSON.parse(localStorage.getItem("sb_students")||"[]"); return Array.isArray(a)?a:[]; }
+  catch(e){ return []; }
+}
+function saveStudents(a){ try{ localStorage.setItem("sb_students",JSON.stringify(a)); }catch(e){} }
+function normStudent(s){
+  s.best=s.best||0; s.bestTier=s.bestTier||1; s.totalGames=s.totalGames||0;
+  s.unlocked=s.unlocked||0; // Index of highest unlocked preset (0 = first level only)
+  return s;
+}
+function getUnlockedLevel(){
+  const cur=currentStudent();
+  return cur?cur.unlocked:0;
+}
+function getStudent(name){ return loadStudents().map(normStudent).find(s=>s.name===name)||null; }
+function currentStudent(){
+  let n=null; try{ n=localStorage.getItem("sb_current"); }catch(e){}
+  return n?getStudent(n):null;
+}
+function setCurrentStudent(name){ try{ localStorage.setItem("sb_current",name); }catch(e){} renderStudentUI(); buildPresetList(); }
+function addStudent(name){
+  name=(name||"").trim().slice(0,14); if(!name)return null;
+  const a=loadStudents().map(normStudent);
+  if(a.some(s=>s.name.toLowerCase()===name.toLowerCase()))return a.find(s=>s.name.toLowerCase()===name.toLowerCase());
+  const s=normStudent({name}); a.push(s); saveStudents(a); return s;
+}
+function updateStudent(mut){
+  const cur=currentStudent(); if(!cur)return;
+  const a=loadStudents().map(normStudent);
+  const i=a.findIndex(s=>s.name===cur.name); if(i<0)return;
+  mut(a[i]); saveStudents(a);
+}
+function renderStudentUI(){
+  const list=$('studentList');
+  const cur=currentStudent();
+  const all=loadStudents().map(normStudent);
+  list.innerHTML='';
+  all.forEach(s=>{
+    const btn=document.createElement('button');
+    btn.className=cur&&cur.name===s.name?'on':'';
+    btn.innerHTML=`${s.name}<span class="best">Best: ${s.best}</span>`;
+    btn.onclick=()=>{ setCurrentStudent(s.name); };
+    list.appendChild(btn);
+  });
+  $('currentPlayer').textContent=cur?`PLAYER: ${cur.name.toUpperCase()}`:'NO PLAYER SELECTED';
+}
+function initStudentUI(){
+  renderStudentUI();
+  $('addStudentBtn').onclick=()=>{
+    const inp=$('newStudentInput');
+    const s=addStudent(inp.value);
+    if(s){ setCurrentStudent(s.name); inp.value=''; }
+  };
+  $('newStudentInput').onkeydown=e=>{if(e.key==='Enter')$('addStudentBtn').click();};
+}
+
+/* ================================================================
    MUSIC MODEL (accidental-aware)
    step = diatonic position (vertical), independent of accidental.
    ================================================================ */
@@ -273,9 +359,21 @@ function clefFor(step,mode){
     stem +9 / len 40 / lineWidth 3)
    ================================================================ */
 const sc=$('staff'),sx=sc.getContext('2d');
+// Handle high-DPI displays
+(function initStaffCanvas(){
+  const dpr=window.devicePixelRatio||1;
+  const rect=sc.getBoundingClientRect();
+  sc.width=rect.width*dpr;
+  sc.height=rect.height*dpr;
+  sc.style.width=rect.width+'px';
+  sc.style.height=rect.height+'px';
+  sx.scale(dpr,dpr);
+})();
 function drawCard(note){
-  const w=sc.width,h=sc.height,STK='#333',ls=18;
-  sx.setTransform(1,0,0,1,0,0);sx.clearRect(0,0,w,h);
+  const rect=sc.getBoundingClientRect();
+  const w=rect.width,h=rect.height,STK='#333',ls=18;
+  const dpr=window.devicePixelRatio||1;
+  sx.setTransform(dpr,0,0,dpr,0,0);sx.clearRect(0,0,w,h);
   const cl=STAFF[note.clef];
   const staffLeft=44,staffRight=w-24;
   const staffTop=(h-4*ls)/2, bottomLineY=staffTop+4*ls;
@@ -635,20 +733,27 @@ function makeOrbTex(label){
   return new THREE.CanvasTexture(cv);
 }
 
-// Orbs are pinned to fixed SCREEN lanes (left/center/right columns) and kept
+// Orbs are pinned to fixed SCREEN lanes (columns) and kept
 // at near-constant apparent size as they approach — like the racer's lane boxes.
-const LANE_NDC=[-0.58,0,0.58];   // screen columns
+const LANES_3=[-0.58,0,0.58];
+const LANES_4=[-0.65,-0.22,0.22,0.65];
+const LANES_5=[-0.70,-0.35,0,0.35,0.70];
+function getLanes(){ return G.lanes===5?LANES_5:G.lanes===4?LANES_4:LANES_3; }
 const ROW_NDC=0.10;              // screen row (just above centre, below the card)
 const ORB_K=0.14;                // scale ∝ distance  → constant apparent size
 
 function spawnTargets(note){
   targets.forEach(t=>{if(!t.dead)scene.remove(t.group);});targets.length=0;
   const correctName=spelled(note);
+  const lanes=getLanes();
+  const numOrbs=lanes.length;
+
+  // Build distractor options
   let names=G.poolNames.filter(x=>x!==correctName);
   for(let i=names.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[names[i],names[j]]=[names[j],names[i]];}
-  let opts=[correctName,...names.slice(0,2)];
+  let opts=[correctName,...names.slice(0,numOrbs-1)];
   const fill=['A','B','C','D','E','F','G'];
-  while(opts.length<3){const r=fill[Math.floor(Math.random()*7)];if(!opts.includes(r))opts.push(r);}
+  while(opts.length<numOrbs){const r=fill[Math.floor(Math.random()*7)];if(!opts.includes(r))opts.push(r);}
   for(let i=opts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]];}
 
   const spawnZ=-(G.speed*3.0);   // constant ~3s reaction time
@@ -658,7 +763,7 @@ function spawnTargets(note){
     grp.add(spr);
     grp.add(new THREE.PointLight(0x5BE8C4,.6,12));
     grp.position.set(0,0,spawnZ);scene.add(grp);
-    targets.push({group:grp,spr,name:L,correct:L===correctName,dead:false,passed:false,z:spawnZ,ndcX:LANE_NDC[i]});
+    targets.push({group:grp,spr,name:L,correct:L===correctName,dead:false,passed:false,z:spawnZ,ndcX:lanes[i]});
   });
 }
 
@@ -692,69 +797,152 @@ const sfxHit=()=>{beep(900,.16,'triangle',.07);setTimeout(()=>beep(1350,.14,'sin
 const sfxWrong=()=>beep(140,.32,'square',.08);
 function sfxTier(){beep(660,.12,'sine',.08);setTimeout(()=>beep(880,.12,'sine',.08),120);setTimeout(()=>beep(1100,.22,'sine',.09),240);}
 
-/* ---- Adaptive Music System ---- */
+/* ---- Procedural Space Music ---- */
 const music={
-  ctx:null, stems:{}, loaded:false, playing:false,
-  config:[
-    {name:'melody', url:'music/melody.mp3', startTier:1},
-    {name:'bass',   url:'music/bass.mp3',   startTier:3},
-    {name:'drums',  url:'music/drums.mp3',  startTier:6}
-  ]
+  ctx:null, playing:false, tier:1, bpm:90,
+  bass:null, bassGain:null,
+  arp:null, arpGain:null, arpFilter:null, arpLFO:null,
+  pad:null, padGain:null,
+  kick:null, kickGain:null,
+  seq:null, step:0
 };
 
-async function loadMusic(){
-  if(music.loaded)return;
-  try{
-    music.ctx=music.ctx||new(window.AudioContext||window.webkitAudioContext)();
-    await Promise.all(music.config.map(async cfg=>{
-      const resp=await fetch(cfg.url);
-      const buf=await music.ctx.decodeAudioData(await resp.arrayBuffer());
-      const gain=music.ctx.createGain();
-      gain.connect(music.ctx.destination);
-      gain.gain.value=0; // start silent
-      music.stems[cfg.name]={buffer:buf,gain:gain,source:null,startTier:cfg.startTier};
-    }));
-    music.loaded=true;
-  }catch(e){console.warn('Music load failed:',e);}
+function initMusic(){
+  if(music.ctx)return;
+  music.ctx=new(window.AudioContext||window.webkitAudioContext)();
+
+  // Master compressor
+  const comp=music.ctx.createDynamicsCompressor();
+  comp.threshold.value=-24;comp.ratio.value=4;
+  comp.connect(music.ctx.destination);
+  music.master=comp;
+
+  // Bass drone - deep space rumble
+  music.bassGain=music.ctx.createGain();music.bassGain.gain.value=0;
+  music.bassGain.connect(music.master);
+
+  // Arp synth with filter
+  music.arpGain=music.ctx.createGain();music.arpGain.gain.value=0;
+  music.arpFilter=music.ctx.createBiquadFilter();
+  music.arpFilter.type='lowpass';music.arpFilter.frequency.value=800;music.arpFilter.Q.value=8;
+  music.arpGain.connect(music.arpFilter);music.arpFilter.connect(music.master);
+
+  // Pad - ethereal background
+  music.padGain=music.ctx.createGain();music.padGain.gain.value=0;
+  music.padGain.connect(music.master);
+
+  // Kick
+  music.kickGain=music.ctx.createGain();music.kickGain.gain.value=0;
+  music.kickGain.connect(music.master);
+}
+
+const SPACE_SCALE=[55,65.41,73.42,82.41,98,110,130.81]; // Am pentatonic low
+const ARP_NOTES=[220,261.63,329.63,392,440,523.25,659.25]; // Am arp higher
+
+function playBass(){
+  if(!music.playing)return;
+  const ctx=music.ctx,now=ctx.currentTime;
+  const freq=SPACE_SCALE[Math.floor(Math.random()*3)]; // low notes only
+  const osc=ctx.createOscillator();
+  const gain=ctx.createGain();
+  osc.type='sawtooth';osc.frequency.value=freq;
+  const filter=ctx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=120;
+  osc.connect(filter);filter.connect(gain);gain.connect(music.bassGain);
+  gain.gain.setValueAtTime(0.3,now);
+  gain.gain.exponentialRampToValueAtTime(0.001,now+2);
+  osc.start(now);osc.stop(now+2);
+}
+
+function playArp(){
+  if(!music.playing||music.tier<2)return;
+  const ctx=music.ctx,now=ctx.currentTime;
+  const freq=ARP_NOTES[music.step%ARP_NOTES.length];
+  const osc=ctx.createOscillator();
+  const gain=ctx.createGain();
+  osc.type='triangle';osc.frequency.value=freq;
+  osc.connect(gain);gain.connect(music.arpGain);
+  gain.gain.setValueAtTime(0.15,now);
+  gain.gain.exponentialRampToValueAtTime(0.001,now+0.15);
+  osc.start(now);osc.stop(now+0.2);
+  music.step++;
+}
+
+function playKick(){
+  if(!music.playing||music.tier<4)return;
+  const ctx=music.ctx,now=ctx.currentTime;
+  const osc=ctx.createOscillator();
+  const gain=ctx.createGain();
+  osc.type='sine';osc.frequency.setValueAtTime(150,now);
+  osc.frequency.exponentialRampToValueAtTime(30,now+0.12);
+  osc.connect(gain);gain.connect(music.kickGain);
+  gain.gain.setValueAtTime(0.4,now);
+  gain.gain.exponentialRampToValueAtTime(0.001,now+0.25);
+  osc.start(now);osc.stop(now+0.3);
+}
+
+function startPad(){
+  if(music.pad)return;
+  const ctx=music.ctx;
+  music.pad=[];
+  [55,82.41,110,164.81].forEach(f=>{ // Am chord
+    const osc=ctx.createOscillator();
+    osc.type='sine';osc.frequency.value=f;
+    const gain=ctx.createGain();gain.gain.value=0.06;
+    osc.connect(gain);gain.connect(music.padGain);
+    osc.start();music.pad.push({osc,gain});
+  });
+}
+
+function stopPad(){
+  if(!music.pad)return;
+  music.pad.forEach(p=>{try{p.osc.stop();}catch(e){}});
+  music.pad=null;
 }
 
 function startMusic(){
-  if(!music.loaded||music.playing)return;
-  const now=music.ctx.currentTime;
-  Object.entries(music.stems).forEach(([name,stem])=>{
-    stem.source=music.ctx.createBufferSource();
-    stem.source.buffer=stem.buffer;
-    stem.source.loop=true;
-    stem.source.playbackRate.value=1.0;
-    stem.source.connect(stem.gain);
-    stem.source.start(now);
-    // Start melody immediately, others silent
-    stem.gain.gain.setValueAtTime(stem.startTier===1?0.7:0, now);
-  });
-  music.playing=true;
+  if(music.playing)return;
+  initMusic();
+  if(music.ctx.state==='suspended')music.ctx.resume();
+  music.playing=true;music.tier=1;music.step=0;
+  music.bassGain.gain.setValueAtTime(0.5,music.ctx.currentTime);
+  music.padGain.gain.setValueAtTime(0.4,music.ctx.currentTime);
+  startPad();
+  // Sequence loop
+  const beatTime=60/music.bpm;
+  let beat=0;
+  music.seq=setInterval(()=>{
+    if(!music.playing)return;
+    if(beat%4===0)playBass();
+    if(beat%2===0)playArp();
+    if(beat%4===0)playKick();
+    beat++;
+  },beatTime*500); // 8th notes
 }
 
 function stopMusic(){
   if(!music.playing)return;
-  Object.values(music.stems).forEach(stem=>{
-    if(stem.source){try{stem.source.stop();}catch(e){}}
-    stem.source=null;
-  });
   music.playing=false;
+  if(music.seq){clearInterval(music.seq);music.seq=null;}
+  stopPad();
+  const now=music.ctx.currentTime;
+  music.bassGain.gain.linearRampToValueAtTime(0,now+0.3);
+  music.arpGain.gain.linearRampToValueAtTime(0,now+0.3);
+  music.padGain.gain.linearRampToValueAtTime(0,now+0.3);
+  music.kickGain.gain.linearRampToValueAtTime(0,now+0.3);
 }
 
 function updateMusicLayers(tier){
   if(!music.playing)return;
+  music.tier=tier;
   const now=music.ctx.currentTime;
-  Object.values(music.stems).forEach(stem=>{
-    const shouldPlay=tier>=stem.startTier;
-    stem.gain.gain.linearRampToValueAtTime(shouldPlay?0.7:0, now+0.5);
-  });
-  // Slight tempo increase per tier (2% per tier after tier 1)
-  const tempo=1.0+((tier-1)*0.02);
-  Object.values(music.stems).forEach(stem=>{
-    if(stem.source)stem.source.playbackRate.linearRampToValueAtTime(Math.min(tempo,1.25), now+0.3);
-  });
+  // Tier 2+: arp comes in
+  music.arpGain.gain.linearRampToValueAtTime(tier>=2?0.35:0,now+0.5);
+  // Tier 3+: filter opens up
+  if(tier>=3)music.arpFilter.frequency.linearRampToValueAtTime(1600,now+1);
+  // Tier 4+: kick drum
+  music.kickGain.gain.linearRampToValueAtTime(tier>=4?0.5:0,now+0.5);
+  // Speed up slightly each tier
+  music.bpm=90+((tier-1)*5);
 }
 
 /* ================================================================
@@ -763,10 +951,11 @@ function updateMusicLayers(tier){
 const G={
   clefMode:'grand',steer:'tilt',running:false,
   score:0,streak:0,bestStreak:0,shields:3,shots:0,hits:0,
-  speed:34,tier:1,tierProg:0,
+  speed:34,tier:1,tierProg:0,lanes:3,
   pool:[],poolNames:[],label:'STARTER',
   rx:0,ry:0,rxS:0,ryS:0,baseGamma:null,baseBeta:null,lastFire:0,
-  currentNote:null,needWave:true
+  currentNote:null,needWave:true,
+  currentPresetIdx:0 // Track which preset is being played
 };
 const MAX_SH=3, TIER_EVERY=10;
 
@@ -904,7 +1093,7 @@ function tryFire(){
     best.dead=true;scene.remove(best.group);explode(best.group.position.clone(),best.correct?0x5BE8C4:0xFF5566);
     if(best.correct){
       G.hits++;G.streak++;G.bestStreak=Math.max(G.bestStreak,G.streak);
-      G.score+=Math.round(100*(1+G.streak*.12)*G.tier);G.speed+=0.5;
+      G.score+=Math.round(100*(1+G.streak*.12)*G.tier);G.speed+=0.25;
       G.tierProg++;sfxHit();
       if(G.tierProg>=TIER_EVERY){tierUp();}else{G.needWave=true;}
       updateHUD();
@@ -914,9 +1103,13 @@ function tryFire(){
   }
 }
 function tierUp(){
-  G.tier++;G.tierProg=0;G.speed+=8;sfxTier();
-  $('lvlBannerName').textContent='TIER '+G.tier;
-  const b=$('lvlBanner');b.classList.add('show');setTimeout(()=>b.classList.remove('show'),1400);
+  G.tier++;G.tierProg=0;G.speed+=5;sfxTier();
+  // Add more orbs at certain tiers
+  let extra='';
+  if(G.tier===3&&G.lanes<4){G.lanes=4;extra=' • 4 ORBS!';}
+  if(G.tier===5&&G.lanes<5){G.lanes=5;extra=' • 5 ORBS!';}
+  $('lvlBannerName').textContent='TIER '+G.tier+extra;
+  const b=$('lvlBanner');b.classList.add('show');setTimeout(()=>b.classList.remove('show'),1600);
   G.needWave=true;updateHUD();
   updateMusicLayers(G.tier);
 }
@@ -997,7 +1190,7 @@ function gameStep(dt){
     const pulse=1+Math.sin(performance.now()/250+t.ndcX*5)*.08; // gentle pulsing
     const s=baseS*pulse;
     t.spr.scale.set(s,s,1);
-    t.spr.material.rotation+=dt*1.2;            // faster spin
+    // Don't rotate - keeps letters readable
     if(t.z>PASS){t.passed=t.dead=true;scene.remove(t.group);if(t.correct)missed=true;}else alive=true;
   });
   if(missed)doPenalty();else if(!alive)G.needWave=true;
@@ -1012,7 +1205,7 @@ function startGame(pool,label){
   const names=[...new Set(pool.map(spelled))];
   $('menu').classList.add('hidden');$('over').classList.add('hidden');$('hud').style.display='block';
   Object.assign(G,{running:true,score:0,streak:0,bestStreak:0,shields:MAX_SH,shots:0,hits:0,
-    speed:34,tier:1,tierProg:0,pool:pool.slice(),poolNames:names,label:label.toUpperCase(),
+    speed:26,tier:1,tierProg:0,lanes:3,pool:pool.slice(),poolNames:names,label:label.toUpperCase(),
     rx:0,ry:0,rxS:0,ryS:0,baseGamma:null,baseBeta:null,needWave:true});
   targets.forEach(t=>scene.remove(t.group));targets.length=0;
   updateHUD();
@@ -1024,8 +1217,24 @@ function gameOver(){
   const acc=G.shots?Math.round(G.hits/G.shots*100):0;
   $('finalScore').textContent=G.score;$('finalAcc').textContent=acc+'%';$('finalTier').textContent=G.tier;
   const gr=acc>=90?'S':acc>=78?'A':acc>=62?'B':acc>=46?'C':'D';$('grade').textContent=gr;
-  $('overMsg').textContent={S:'Perfect aim. Perfect pitch.',A:'Sharp flying, sharper ears.',B:'Solid run through the void.',C:'You survived. Barely.',D:'Recalibrate and relaunch.'}[gr];
+
+  let unlockMsg='';
+  // Save student score and check for level unlock
+  updateStudent(s=>{
+    s.totalGames++;
+    if(G.score>s.best)s.best=G.score;
+    if(G.tier>s.bestTier)s.bestTier=G.tier;
+    // Unlock next level if reached tier 3+ and playing current highest unlocked
+    if(G.tier>=3 && G.currentPresetIdx===s.unlocked && s.unlocked<PRESETS.length-1){
+      s.unlocked++;
+      unlockMsg='\n✓ Unlocked: '+PRESETS[s.unlocked].n+'!';
+    }
+  });
+
+  const baseMsg={S:'Perfect aim. Perfect pitch.',A:'Sharp flying, sharper ears.',B:'Solid run through the void.',C:'You survived. Barely.',D:'Recalibrate and relaunch.'}[gr];
+  $('overMsg').textContent=baseMsg+unlockMsg;
   $('hud').style.display='none';$('over').classList.remove('hidden');
+  buildPresetList(); // Refresh to show newly unlocked levels
 }
 
 /* request motion permission (iOS) then start */
@@ -1047,16 +1256,22 @@ function setSteerUI(){$('steerSeg').querySelectorAll('button').forEach(b=>b.clas
 
 function buildPresetList(){
   const list=$('presetList');list.innerHTML='';
+  const unlocked=getUnlockedLevel();
   PRESETS.forEach((p,i)=>{
-    const el=document.createElement('div');el.className='preset'+(p.amber?' amberBadge':'');
-    el.innerHTML='<div class="badge">'+i+'</div><div class="txt"><div class="nm">'+p.n+'</div><div class="ds">'+p.d+'</div></div>';
-    el.addEventListener('click',()=>{
-      let pool=p.build(G.clefMode);
-      // clamp to active clef range for treble/bass modes
-      if(G.clefMode!=='grand'){const c=STAFF[G.clefMode];pool=pool.filter(n=>n.step>=c.lo&&n.step<=c.hi);}
-      if(!pool.length){pool=p.build('grand');}
-      launchWith(pool,p.n);
-    });
+    const isLocked=i>unlocked && currentStudent(); // Lock if above unlocked level (only if logged in)
+    const el=document.createElement('div');
+    el.className='preset'+(p.amber?' amberBadge':'')+(isLocked?' locked':'');
+    el.innerHTML='<div class="badge">'+(i+1)+'</div><div class="txt"><div class="nm">'+p.n+'</div><div class="ds">'+p.d+'</div></div>';
+    if(!isLocked){
+      el.addEventListener('click',()=>{
+        G.currentPresetIdx=i; // Track which preset we're playing
+        let pool=p.build(G.clefMode);
+        // clamp to active clef range for treble/bass modes
+        if(G.clefMode!=='grand'){const c=STAFF[G.clefMode];pool=pool.filter(n=>n.step>=c.lo&&n.step<=c.hi);}
+        if(!pool.length){pool=p.build('grand');}
+        launchWith(pool,p.n);
+      });
+    }
     list.appendChild(el);
   });
 }
@@ -1126,7 +1341,7 @@ function bindMenu(){
    ================================================================ */
 window.addEventListener('load',()=>{
   if(typeof THREE==='undefined'){document.body.innerHTML='<div style="padding:40px;color:#fff;font-family:monospace">3D engine failed to load (needs internet).</div>';return;}
-  initThree();setupInput();bindMenu();buildPresetList();loadMusic();
+  initThree();setupInput();bindMenu();buildPresetList();initStudentUI();
   const prev=noteFromStep(stepOf('G',4));prev.clef='treble';drawCard(prev);
   // default designer selection = on-staff treble
   const c=STAFF.treble;for(let s=c.bottomLine;s<=c.topLine;s++)dSel.add(noteKey(noteFromStep(s)));
