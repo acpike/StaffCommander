@@ -352,7 +352,7 @@ const PRESETS=[
    ================================================================ */
 let renderer,scene,camera,ship,reticle,stars,starPos,starGeo;
 const targets=[];let fx=[];
-const PLAY_X=8,PLAY_Y=3.2,BASE_Y=0,PASS_Z=4,SHIP_Z=2;
+const PLAY_X=4,PLAY_Y=2,BASE_Y=0,PASS_Z=4,SHIP_Z=2;
 
 function initThree(){
   const cv=$('scene');
@@ -574,11 +574,11 @@ function setupInput(){
     const isLandscape=innerWidth>innerHeight;
     let rawX, rawY;
     if(isLandscape){
-      rawX=(e.beta-G.baseBeta)/35;   // beta controls X in landscape
-      rawY=-(e.gamma-G.baseGamma)/35; // gamma controls Y in landscape
+      rawX=(e.beta-G.baseBeta)/18;   // beta controls X in landscape
+      rawY=-(e.gamma-G.baseGamma)/18; // gamma controls Y in landscape
     }else{
-      rawX=(e.gamma-G.baseGamma)/35;  // gamma controls X in portrait
-      rawY=-(e.beta-G.baseBeta)/35;   // beta controls Y in portrait
+      rawX=(e.gamma-G.baseGamma)/18;  // gamma controls X in portrait
+      rawY=-(e.beta-G.baseBeta)/18;   // beta controls Y in portrait
     }
 
     // Deadzone of 0.08
