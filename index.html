@@ -30,13 +30,49 @@
       padding: max(24px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right))
                max(24px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
     }
+
+    /* Splash screen */
+    #splash {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.6s ease-out;
+    }
+    #splash.fade { opacity: 0; pointer-events: none; }
+    #splash .logo {
+      font-size: clamp(42px, 12vw, 72px);
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    #splash .logo .accent { color: var(--accent); }
+    #splash .tagline {
+      color: var(--dim);
+      font-size: 16px;
+      margin-bottom: 32px;
+    }
+    #splash .loader {
+      width: 48px;
+      height: 48px;
+      border: 3px solid var(--surface2);
+      border-top-color: var(--mint);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     .container {
       max-width: 600px;
       margin: 0 auto;
     }
     .header {
       text-align: center;
-      margin-bottom: 40px;
+      margin-bottom: 32px;
     }
     .eyebrow {
       font-size: 11px;
@@ -58,67 +94,57 @@
       font-size: 15px;
       line-height: 1.5;
     }
+
+    /* Game cards with images */
     .games {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 20px;
     }
     .game-card {
       display: block;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 20px;
-      padding: 24px;
+      overflow: hidden;
       text-decoration: none;
       color: inherit;
-      transition: transform 0.1s, border-color 0.15s, background 0.15s;
+      transition: transform 0.1s, border-color 0.15s, box-shadow 0.2s;
     }
     .game-card:hover {
-      background: var(--surface2);
-      border-color: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.25);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
     }
     .game-card:active {
       transform: scale(0.98);
     }
-    .game-header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 12px;
+    .game-card .card-image {
+      width: 100%;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      display: block;
     }
-    .game-icon {
-      width: 56px;
-      height: 56px;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      flex-shrink: 0;
+    .game-card .card-content {
+      padding: 20px 24px;
     }
-    .game-icon.racing {
-      background: linear-gradient(135deg, #FF4E2E, #FF8F6B);
-    }
-    .game-icon.space {
-      background: linear-gradient(135deg, #5BE8C4, #3BBBA8);
-    }
-    .game-title {
-      font-size: 20px;
+    .game-card .card-title {
+      font-size: 22px;
       font-weight: 700;
-      margin-bottom: 2px;
+      margin-bottom: 4px;
     }
-    .game-type {
+    .game-card .card-type {
       font-size: 12px;
       font-weight: 600;
-      letter-spacing: 1px;
-      color: var(--dim);
+      letter-spacing: 1.5px;
+      color: var(--mint);
       text-transform: uppercase;
+      margin-bottom: 10px;
     }
-    .game-desc {
+    .game-card .card-desc {
       color: var(--dim);
       font-size: 14px;
       line-height: 1.5;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
     .game-features {
       display: flex;
@@ -133,18 +159,38 @@
       font-weight: 500;
       color: var(--dim);
     }
-    .badge {
+
+    /* Coming soon cards */
+    .game-card.coming-soon {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .game-card.coming-soon .card-title::after {
+      content: "COMING SOON";
       display: inline-block;
-      background: var(--accent);
-      color: white;
-      font-size: 10px;
+      background: var(--surface2);
+      color: var(--dim);
+      font-size: 9px;
       font-weight: 700;
       letter-spacing: 1px;
-      padding: 4px 8px;
-      border-radius: 6px;
-      margin-left: 8px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      margin-left: 10px;
       vertical-align: middle;
     }
+    .game-card.coming-soon .card-image {
+      filter: grayscale(0.5);
+    }
+    .game-card.coming-soon .placeholder-img {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: linear-gradient(135deg, var(--surface2), var(--surface));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+    }
+
     .footer {
       margin-top: 48px;
       text-align: center;
@@ -160,28 +206,16 @@
       font-size: 11px;
       color: rgba(255,255,255,0.3);
     }
-
-    /* Coming soon cards */
-    .game-card.coming-soon {
-      opacity: 0.5;
-      pointer-events: none;
-    }
-    .game-card.coming-soon .game-title::after {
-      content: "COMING SOON";
-      display: inline-block;
-      background: var(--surface2);
-      color: var(--dim);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      padding: 3px 6px;
-      border-radius: 4px;
-      margin-left: 10px;
-      vertical-align: middle;
-    }
   </style>
 </head>
 <body>
+  <!-- Splash Screen -->
+  <div id="splash">
+    <div class="logo">Practice<span class="accent">Pal</span></div>
+    <div class="tagline">Music Theory Arcade</div>
+    <div class="loader"></div>
+  </div>
+
   <div class="container">
     <header class="header">
       <div class="eyebrow">Music Theory Arcade</div>
@@ -191,76 +225,79 @@
 
     <div class="games">
       <a href="grand-staff-prix.html" class="game-card">
-        <div class="game-header">
-          <div class="game-icon racing">🏎️</div>
-          <div>
-            <div class="game-title">Grand Staff Prix</div>
-            <div class="game-type">Note Reading + Racing</div>
+        <img class="card-image" src="images/grand-staff-prix.jpg" alt="Grand Staff Prix">
+        <div class="card-content">
+          <div class="card-title">Grand Staff Prix</div>
+          <div class="card-type">Note Reading + Racing</div>
+          <p class="card-desc">
+            Race through gates labeled with note names. Steer to the correct answer before time runs out.
+            Includes both Racing mode and Shooter mode.
+          </p>
+          <div class="game-features">
+            <span class="feature">5 Environments</span>
+            <span class="feature">5 Cars</span>
+            <span class="feature">Tilt or Touch</span>
+            <span class="feature">Student Profiles</span>
           </div>
-        </div>
-        <p class="game-desc">
-          Race through gates labeled with note names. Steer to the correct answer before time runs out.
-          Includes both Racing mode and Shooter mode.
-        </p>
-        <div class="game-features">
-          <span class="feature">5 Environments</span>
-          <span class="feature">5 Cars</span>
-          <span class="feature">Tilt or Touch</span>
-          <span class="feature">Student Profiles</span>
         </div>
       </a>
 
       <a href="staff-blaster.html" class="game-card">
-        <div class="game-header">
-          <div class="game-icon space">🚀</div>
-          <div>
-            <div class="game-title">Staff Blaster</div>
-            <div class="game-type">Note Reading + 3D Shooter</div>
+        <img class="card-image" src="images/splash.png" alt="Staff Commander">
+        <div class="card-content">
+          <div class="card-title">Staff Commander</div>
+          <div class="card-type">Note Reading + 3D Space Shooter</div>
+          <p class="card-desc">
+            Fly through deep space and blast the asteroid with the correct note name.
+            Full 3D graphics with immersive visuals and energetic music.
+          </p>
+          <div class="game-features">
+            <span class="feature">3D Graphics</span>
+            <span class="feature">Level Designer</span>
+            <span class="feature">Sharps & Flats</span>
+            <span class="feature">Tier Progression</span>
           </div>
-        </div>
-        <p class="game-desc">
-          Fly through deep space and blast the asteroid with the correct note name.
-          Full 3D graphics with immersive visuals.
-        </p>
-        <div class="game-features">
-          <span class="feature">3D Graphics</span>
-          <span class="feature">Level Designer</span>
-          <span class="feature">Sharps & Flats</span>
-          <span class="feature">Tier Progression</span>
         </div>
       </a>
 
       <div class="game-card coming-soon">
-        <div class="game-header">
-          <div class="game-icon" style="background: linear-gradient(135deg, #FFD166, #FFB347);">🥁</div>
-          <div>
-            <div class="game-title">Rhythm Racer</div>
-            <div class="game-type">Rhythm Reading</div>
-          </div>
+        <div class="placeholder-img">🥁</div>
+        <div class="card-content">
+          <div class="card-title">Rhythm Racer</div>
+          <div class="card-type">Rhythm Reading</div>
+          <p class="card-desc">
+            Tap and hold in time with rhythmic notation. Guitar Hero meets music notation.
+          </p>
         </div>
-        <p class="game-desc">
-          Tap and hold in time with rhythmic notation. Guitar Hero meets music notation.
-        </p>
       </div>
 
       <div class="game-card coming-soon">
-        <div class="game-header">
-          <div class="game-icon" style="background: linear-gradient(135deg, #9B8CFF, #6E55E0);">👾</div>
-          <div>
-            <div class="game-title">Interval Invaders</div>
-            <div class="game-type">Ear Training</div>
-          </div>
+        <div class="placeholder-img">👾</div>
+        <div class="card-content">
+          <div class="card-title">Interval Invaders</div>
+          <div class="card-type">Ear Training</div>
+          <p class="card-desc">
+            Aliens descend with interval labels. Shoot the one that matches what you hear.
+          </p>
         </div>
-        <p class="game-desc">
-          Aliens descend with interval labels. Shoot the one that matches what you hear.
-        </p>
       </div>
     </div>
 
     <footer class="footer">
       <p>Built for music teachers and students</p>
-      <p class="version">v0.1.0 Beta</p>
+      <p class="version">v0.2.0 Beta</p>
     </footer>
   </div>
+
+  <script>
+    // Fade out splash screen after page loads
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const splash = document.getElementById('splash');
+        splash.classList.add('fade');
+        setTimeout(() => splash.remove(), 700);
+      }, 1000);
+    });
+  </script>
 </body>
 </html>
