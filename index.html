@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>PracticePal Arcade</title>
+  <style>
+    :root {
+      --bg: #0A0910;
+      --surface: rgba(255,255,255,0.04);
+      --surface2: rgba(255,255,255,0.08);
+      --border: rgba(255,255,255,0.12);
+      --text: #F3F2F7;
+      --dim: #8B8896;
+      --accent: #FF4E2E;
+      --mint: #5BE8C4;
+      --gold: #FFD166;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      font-family: -apple-system, "SF Pro Rounded", system-ui, sans-serif;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      padding: max(24px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right))
+               max(24px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      color: var(--mint);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: clamp(32px, 8vw, 48px);
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+    h1 .accent { color: var(--accent); }
+    .subtitle {
+      color: var(--dim);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .games {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .game-card {
+      display: block;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.1s, border-color 0.15s, background 0.15s;
+    }
+    .game-card:hover {
+      background: var(--surface2);
+      border-color: rgba(255,255,255,0.2);
+    }
+    .game-card:active {
+      transform: scale(0.98);
+    }
+    .game-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+    .game-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+    .game-icon.racing {
+      background: linear-gradient(135deg, #FF4E2E, #FF8F6B);
+    }
+    .game-icon.space {
+      background: linear-gradient(135deg, #5BE8C4, #3BBBA8);
+    }
+    .game-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .game-type {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: var(--dim);
+      text-transform: uppercase;
+    }
+    .game-desc {
+      color: var(--dim);
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    .game-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .feature {
+      background: rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--dim);
+    }
+    .badge {
+      display: inline-block;
+      background: var(--accent);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .footer {
+      margin-top: 48px;
+      text-align: center;
+      color: var(--dim);
+      font-size: 13px;
+    }
+    .footer a {
+      color: var(--mint);
+      text-decoration: none;
+    }
+    .version {
+      margin-top: 8px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.3);
+    }
+
+    /* Coming soon cards */
+    .game-card.coming-soon {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .game-card.coming-soon .game-title::after {
+      content: "COMING SOON";
+      display: inline-block;
+      background: var(--surface2);
+      color: var(--dim);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="eyebrow">Music Theory Arcade</div>
+      <h1>Practice<span class="accent">Pal</span></h1>
+      <p class="subtitle">Games that teach music theory.<br>Actually fun to play.</p>
+    </header>
+
+    <div class="games">
+      <a href="grand-staff-prix.html" class="game-card">
+        <div class="game-header">
+          <div class="game-icon racing">🏎️</div>
+          <div>
+            <div class="game-title">Grand Staff Prix</div>
+            <div class="game-type">Note Reading + Racing</div>
+          </div>
+        </div>
+        <p class="game-desc">
+          Race through gates labeled with note names. Steer to the correct answer before time runs out.
+          Includes both Racing mode and Shooter mode.
+        </p>
+        <div class="game-features">
+          <span class="feature">5 Environments</span>
+          <span class="feature">5 Cars</span>
+          <span class="feature">Tilt or Touch</span>
+          <span class="feature">Student Profiles</span>
+        </div>
+      </a>
+
+      <a href="staff-blaster.html" class="game-card">
+        <div class="game-header">
+          <div class="game-icon space">🚀</div>
+          <div>
+            <div class="game-title">Staff Blaster</div>
+            <div class="game-type">Note Reading + 3D Shooter</div>
+          </div>
+        </div>
+        <p class="game-desc">
+          Fly through deep space and blast the asteroid with the correct note name.
+          Full 3D graphics with immersive visuals.
+        </p>
+        <div class="game-features">
+          <span class="feature">3D Graphics</span>
+          <span class="feature">Level Designer</span>
+          <span class="feature">Sharps & Flats</span>
+          <span class="feature">Tier Progression</span>
+        </div>
+      </a>
+
+      <div class="game-card coming-soon">
+        <div class="game-header">
+          <div class="game-icon" style="background: linear-gradient(135deg, #FFD166, #FFB347);">🥁</div>
+          <div>
+            <div class="game-title">Rhythm Racer</div>
+            <div class="game-type">Rhythm Reading</div>
+          </div>
+        </div>
+        <p class="game-desc">
+          Tap and hold in time with rhythmic notation. Guitar Hero meets music notation.
+        </p>
+      </div>
+
+      <div class="game-card coming-soon">
+        <div class="game-header">
+          <div class="game-icon" style="background: linear-gradient(135deg, #9B8CFF, #6E55E0);">👾</div>
+          <div>
+            <div class="game-title">Interval Invaders</div>
+            <div class="game-type">Ear Training</div>
+          </div>
+        </div>
+        <p class="game-desc">
+          Aliens descend with interval labels. Shoot the one that matches what you hear.
+        </p>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>Built for music teachers and students</p>
+      <p class="version">v0.1.0 Beta</p>
+    </footer>
+  </div>
+</body>
+</html>
