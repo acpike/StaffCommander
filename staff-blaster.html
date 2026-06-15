@@ -106,8 +106,6 @@ html,body{height:100%;overflow:hidden;background:var(--night);
   border:1.5px solid rgba(63,169,245,.35);border-radius:16px;padding:10px 14px;cursor:pointer;
   transition:.15s;pointer-events:auto;}
 .preset:active{transform:scale(.98);background:rgba(63,169,245,.28);}
-.preset.locked{opacity:0.4;pointer-events:none;}
-.preset.locked .badge::after{content:'🔒';position:absolute;font-size:18px;}
 .preset .badge{flex:none;width:54px;height:54px;border-radius:50%;background:var(--sky);
   display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;
   box-shadow:0 0 0 3px rgba(255,255,255,.25), 0 4px 10px rgba(0,0,0,.4);}
@@ -115,24 +113,14 @@ html,body{height:100%;overflow:hidden;background:var(--night);
 .preset .txt .nm{font-size:18px;font-weight:800;color:#fff;}
 .preset .txt .ds{font-size:11px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;}
 
-/* level designer */
-#designer{width:100%;max-width:420px;display:none;flex-direction:column;}
-.accToggles{display:flex;gap:8px;margin-bottom:10px;}
-.accToggles button{flex:1;padding:10px;border-radius:10px;border:1.5px solid rgba(255,209,102,.4);
-  background:rgba(20,14,46,.5);color:var(--gold);font-family:inherit;font-size:14px;font-weight:700;
-  cursor:pointer;transition:.15s;}
-.accToggles button.on{background:rgba(255,209,102,.22);border-color:var(--gold);box-shadow:0 0 12px rgba(255,209,102,.25);}
-.dRowTools{display:flex;gap:8px;margin-bottom:10px;}
-.dRowTools button{flex:1;padding:9px;border-radius:9px;border:1.5px solid rgba(255,255,255,.2);
-  background:rgba(255,255,255,.06);color:#fff;font-family:inherit;font-size:11px;letter-spacing:1px;cursor:pointer;}
-#noteGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;max-height:42vh;overflow-y:auto;
-  padding:4px;border:1px solid rgba(255,255,255,.12);border-radius:12px;margin-bottom:12px;}
-.noteChip{padding:11px 4px;border-radius:9px;border:1.5px solid rgba(91,232,196,.25);
-  background:rgba(20,14,46,.55);color:#cfe;font-family:inherit;font-size:14px;font-weight:700;
-  cursor:pointer;text-align:center;transition:.12s;}
-.noteChip.on{background:rgba(91,232,196,.25);border-color:var(--mint);color:#fff;box-shadow:0 0 8px rgba(91,232,196,.3);}
-.noteChip .led{display:block;font-size:8px;letter-spacing:1px;color:var(--amber);opacity:.85;margin-top:2px;}
-#dCount{text-align:center;font-size:11px;color:rgba(255,255,255,.6);margin-bottom:10px;letter-spacing:1px;}
+/* level designer - NoteRush style visual staff */
+#designer{width:100%;max-width:420px;display:none;flex-direction:column;align-items:center;}
+#staffDesigner{background:#4a9eb8;border-radius:16px;touch-action:none;cursor:pointer;margin-bottom:12px;}
+.designerTools{display:flex;gap:10px;margin-bottom:10px;width:100%;}
+.designerTools button{flex:1;padding:10px;border-radius:10px;border:1.5px solid rgba(255,255,255,.3);
+  background:rgba(255,255,255,.1);color:#fff;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;}
+.designerTools button.on{background:rgba(91,232,196,.25);border-color:var(--mint);}
+#dCount{text-align:center;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:10px;letter-spacing:1px;}
 
 .cta{margin:6px 0 18px;padding:15px 44px;border:none;border-radius:14px;cursor:pointer;
   font-family:inherit;font-size:15px;font-weight:800;letter-spacing:3px;color:var(--ink);
@@ -227,18 +215,15 @@ html,body{height:100%;overflow:hidden;background:var(--night);
   <div id="presetList"></div>
 
   <div id="designer">
-    <div class="glabel">ACCIDENTALS</div>
-    <div class="accToggles">
-      <button id="sharpBtn">♯ SHARPS</button>
-      <button id="flatBtn">♭ FLATS</button>
-    </div>
-    <div class="glabel">CHOOSE NOTES &mdash; up to 3 ledger lines each way</div>
-    <div class="dRowTools">
-      <button id="selAll">SELECT ALL</button>
-      <button id="selStaff">ON-STAFF ONLY</button>
+    <div class="glabel">TAP NOTES TO SELECT · TAP AGAIN TO DESELECT</div>
+    <canvas id="staffDesigner" width="340" height="420"></canvas>
+    <div class="designerTools">
+      <button id="selAll">ALL</button>
+      <button id="selStaff">STAFF ONLY</button>
       <button id="selClear">CLEAR</button>
+      <button id="sharpBtn">♯</button>
+      <button id="flatBtn">♭</button>
     </div>
-    <div id="noteGrid"></div>
     <div id="dCount">0 notes selected</div>
     <button class="cta" id="playCustom" disabled>PLAY CUSTOM</button>
   </div>
@@ -796,9 +781,9 @@ const sfxHit=()=>{beep(900,.16,'triangle',.07);setTimeout(()=>beep(1350,.14,'sin
 const sfxWrong=()=>beep(140,.32,'square',.08);
 function sfxTier(){beep(660,.12,'sine',.08);setTimeout(()=>beep(880,.12,'sine',.08),120);setTimeout(()=>beep(1100,.22,'sine',.09),240);}
 
-/* ---- Procedural Space Music ---- */
+/* ---- Procedural Space Music (energetic arcade style) ---- */
 const music={
-  ctx:null, playing:false, tier:1, bpm:90,
+  ctx:null, playing:false, tier:1, bpm:145,
   bass:null, bassGain:null,
   arp:null, arpGain:null, arpFilter:null, arpLFO:null,
   pad:null, padGain:null,
@@ -835,60 +820,82 @@ function initMusic(){
   music.kickGain.connect(music.master);
 }
 
-const SPACE_SCALE=[55,65.41,73.42,82.41,98,110,130.81]; // Am pentatonic low
-const ARP_NOTES=[220,261.63,329.63,392,440,523.25,659.25]; // Am arp higher
+const BASS_NOTES=[55,73.42,82.41,110]; // Power bass notes
+const ARP_NOTES=[330,392,440,523.25,659.25,784,880]; // Higher energy arp
 
 function playBass(){
   if(!music.playing)return;
   const ctx=music.ctx,now=ctx.currentTime;
-  const freq=SPACE_SCALE[Math.floor(Math.random()*3)]; // low notes only
+  const freq=BASS_NOTES[music.step%BASS_NOTES.length];
   const osc=ctx.createOscillator();
+  const osc2=ctx.createOscillator(); // sub bass
   const gain=ctx.createGain();
   osc.type='sawtooth';osc.frequency.value=freq;
-  const filter=ctx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=120;
-  osc.connect(filter);filter.connect(gain);gain.connect(music.bassGain);
-  gain.gain.setValueAtTime(0.3,now);
-  gain.gain.exponentialRampToValueAtTime(0.001,now+2);
-  osc.start(now);osc.stop(now+2);
+  osc2.type='sine';osc2.frequency.value=freq/2;
+  const filter=ctx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=200;filter.Q.value=5;
+  osc.connect(filter);osc2.connect(filter);filter.connect(gain);gain.connect(music.bassGain);
+  gain.gain.setValueAtTime(0.35,now);
+  gain.gain.exponentialRampToValueAtTime(0.001,now+0.25);
+  osc.start(now);osc.stop(now+0.3);
+  osc2.start(now);osc2.stop(now+0.3);
 }
 
 function playArp(){
-  if(!music.playing||music.tier<2)return;
+  if(!music.playing)return; // Arp plays from start now
   const ctx=music.ctx,now=ctx.currentTime;
-  const freq=ARP_NOTES[music.step%ARP_NOTES.length];
+  // Fast arpeggio pattern
+  const pattern=[0,2,4,5,4,2,3,1];
+  const idx=pattern[music.step%pattern.length];
+  const freq=ARP_NOTES[idx%ARP_NOTES.length]*(music.tier>=3?1.5:1);
   const osc=ctx.createOscillator();
   const gain=ctx.createGain();
-  osc.type='triangle';osc.frequency.value=freq;
+  osc.type='square';osc.frequency.value=freq;
   osc.connect(gain);gain.connect(music.arpGain);
-  gain.gain.setValueAtTime(0.15,now);
-  gain.gain.exponentialRampToValueAtTime(0.001,now+0.15);
-  osc.start(now);osc.stop(now+0.2);
+  gain.gain.setValueAtTime(0.12,now);
+  gain.gain.exponentialRampToValueAtTime(0.001,now+0.08);
+  osc.start(now);osc.stop(now+0.1);
   music.step++;
 }
 
 function playKick(){
-  if(!music.playing||music.tier<4)return;
+  if(!music.playing)return; // Kick plays from start now
   const ctx=music.ctx,now=ctx.currentTime;
   const osc=ctx.createOscillator();
   const gain=ctx.createGain();
-  osc.type='sine';osc.frequency.setValueAtTime(150,now);
-  osc.frequency.exponentialRampToValueAtTime(30,now+0.12);
+  osc.type='sine';osc.frequency.setValueAtTime(180,now);
+  osc.frequency.exponentialRampToValueAtTime(40,now+0.06);
   osc.connect(gain);gain.connect(music.kickGain);
-  gain.gain.setValueAtTime(0.4,now);
-  gain.gain.exponentialRampToValueAtTime(0.001,now+0.25);
-  osc.start(now);osc.stop(now+0.3);
+  gain.gain.setValueAtTime(0.5,now);
+  gain.gain.exponentialRampToValueAtTime(0.001,now+0.12);
+  osc.start(now);osc.stop(now+0.15);
+}
+
+function playHihat(){
+  if(!music.playing||music.tier<2)return;
+  const ctx=music.ctx,now=ctx.currentTime;
+  const bufferSize=ctx.sampleRate*0.03;
+  const buffer=ctx.createBuffer(1,bufferSize,ctx.sampleRate);
+  const data=buffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++)data[i]=(Math.random()*2-1)*Math.pow(1-i/bufferSize,3);
+  const src=ctx.createBufferSource();src.buffer=buffer;
+  const filter=ctx.createBiquadFilter();filter.type='highpass';filter.frequency.value=8000;
+  const gain=ctx.createGain();gain.gain.value=0.15;
+  src.connect(filter);filter.connect(gain);gain.connect(music.master);
+  src.start(now);
 }
 
 function startPad(){
   if(music.pad)return;
   const ctx=music.ctx;
   music.pad=[];
-  [55,82.41,110,164.81].forEach(f=>{ // Am chord
+  // Power chord with subtle detuning for width
+  [55,110,165,220].forEach((f,i)=>{
     const osc=ctx.createOscillator();
-    osc.type='sine';osc.frequency.value=f;
-    const gain=ctx.createGain();gain.gain.value=0.06;
-    osc.connect(gain);gain.connect(music.padGain);
-    osc.start();music.pad.push({osc,gain});
+    osc.type='sawtooth';osc.frequency.value=f*(1+(i%2?0.003:-0.003)); // slight detune
+    const filter=ctx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=400;
+    const gain=ctx.createGain();gain.gain.value=0.04;
+    osc.connect(filter);filter.connect(gain);gain.connect(music.padGain);
+    osc.start();music.pad.push({osc,gain,filter});
   });
 }
 
@@ -903,19 +910,26 @@ function startMusic(){
   initMusic();
   if(music.ctx.state==='suspended')music.ctx.resume();
   music.playing=true;music.tier=1;music.step=0;
-  music.bassGain.gain.setValueAtTime(0.5,music.ctx.currentTime);
-  music.padGain.gain.setValueAtTime(0.4,music.ctx.currentTime);
+  music.bassGain.gain.setValueAtTime(0.6,music.ctx.currentTime);
+  music.arpGain.gain.setValueAtTime(0.35,music.ctx.currentTime);
+  music.kickGain.gain.setValueAtTime(0.55,music.ctx.currentTime);
+  music.padGain.gain.setValueAtTime(0.2,music.ctx.currentTime);
   startPad();
-  // Sequence loop
+  // Fast energetic sequence
   const beatTime=60/music.bpm;
   let beat=0;
   music.seq=setInterval(()=>{
     if(!music.playing)return;
-    if(beat%4===0)playBass();
-    if(beat%2===0)playArp();
-    if(beat%4===0)playKick();
+    // Bass on beats 1 & 3
+    if(beat%4===0||beat%4===2)playBass();
+    // Arp on every 8th note for energy
+    playArp();
+    // Kick on 1, 2, 3, 4 (four on floor)
+    if(beat%2===0)playKick();
+    // Hihat on offbeats
+    if(beat%2===1)playHihat();
     beat++;
-  },beatTime*500); // 8th notes
+  },beatTime*250); // 16th notes for fast pace
 }
 
 function stopMusic(){
@@ -934,14 +948,14 @@ function updateMusicLayers(tier){
   if(!music.playing)return;
   music.tier=tier;
   const now=music.ctx.currentTime;
-  // Tier 2+: arp comes in
-  music.arpGain.gain.linearRampToValueAtTime(tier>=2?0.35:0,now+0.5);
-  // Tier 3+: filter opens up
-  if(tier>=3)music.arpFilter.frequency.linearRampToValueAtTime(1600,now+1);
-  // Tier 4+: kick drum
-  music.kickGain.gain.linearRampToValueAtTime(tier>=4?0.5:0,now+0.5);
-  // Speed up slightly each tier
-  music.bpm=90+((tier-1)*5);
+  // Everything louder and more intense each tier
+  music.bassGain.gain.linearRampToValueAtTime(0.5+tier*0.08,now+0.3);
+  music.arpGain.gain.linearRampToValueAtTime(0.3+tier*0.05,now+0.3);
+  music.kickGain.gain.linearRampToValueAtTime(0.5+tier*0.06,now+0.3);
+  // Filter opens up with tier
+  music.arpFilter.frequency.linearRampToValueAtTime(800+tier*300,now+0.5);
+  // Speed up with tier - gets intense!
+  music.bpm=145+((tier-1)*8);
 }
 
 /* ================================================================
@@ -1255,46 +1269,178 @@ function setSteerUI(){$('steerSeg').querySelectorAll('button').forEach(b=>b.clas
 
 function buildPresetList(){
   const list=$('presetList');list.innerHTML='';
-  const unlocked=getUnlockedLevel();
   PRESETS.forEach((p,i)=>{
-    const isLocked=i>unlocked && currentStudent(); // Lock if above unlocked level (only if logged in)
     const el=document.createElement('div');
-    el.className='preset'+(p.amber?' amberBadge':'')+(isLocked?' locked':'');
+    el.className='preset'+(p.amber?' amberBadge':'');
     el.innerHTML='<div class="badge">'+(i+1)+'</div><div class="txt"><div class="nm">'+p.n+'</div><div class="ds">'+p.d+'</div></div>';
-    if(!isLocked){
-      el.addEventListener('click',()=>{
-        G.currentPresetIdx=i; // Track which preset we're playing
-        let pool=p.build(G.clefMode);
-        // clamp to active clef range for treble/bass modes
-        if(G.clefMode!=='grand'){const c=STAFF[G.clefMode];pool=pool.filter(n=>n.step>=c.lo&&n.step<=c.hi);}
-        if(!pool.length){pool=p.build('grand');}
-        launchWith(pool,p.n);
-      });
-    }
+    el.addEventListener('click',()=>{
+      G.currentPresetIdx=i; // Track which preset we're playing
+      let pool=p.build(G.clefMode);
+      // clamp to active clef range for treble/bass modes
+      if(G.clefMode!=='grand'){const c=STAFF[G.clefMode];pool=pool.filter(n=>n.step>=c.lo&&n.step<=c.hi);}
+      if(!pool.length){pool=p.build('grand');}
+      launchWith(pool,p.n);
+    });
     list.appendChild(el);
   });
 }
 
-/* ---- Level Designer ---- */
+/* ---- Level Designer (NoteRush-style visual staff) ---- */
 const dSel=new Set(); let dSharp=false,dFlat=false;
+let dCanvas,dCtx,dNotePositions=[];
+const D_LS=14; // line spacing for designer
+
 function designerRange(){
   if(G.clefMode==='treble')return[STAFF.treble.hi,STAFF.treble.lo];
   if(G.clefMode==='bass')return[STAFF.bass.hi,STAFF.bass.lo];
   return[STAFF.treble.hi,STAFF.bass.lo]; // grand: full span
 }
 function noteKey(n){return n.letter+n.octave;}
-function buildDesigner(){
-  const grid=$('noteGrid');grid.innerHTML='';
-  const[hi,lo]=designerRange();
-  for(let s=hi;s>=lo;s--){
-    const n=noteFromStep(s);const key=noteKey(n);
-    const c=STAFF[clefFor(s,G.clefMode)];const isLedger=s<c.bottomLine||s>c.topLine;
-    const chip=document.createElement('button');
-    chip.className='noteChip'+(dSel.has(key)?' on':'');
-    chip.innerHTML=n.letter+n.octave+(isLedger?'<span class="led">LEDGER</span>':'');
-    chip.addEventListener('click',()=>{if(dSel.has(key))dSel.delete(key);else dSel.add(key);chip.classList.toggle('on');updateDCount();});
-    grid.appendChild(chip);
+
+function initDesignerCanvas(){
+  dCanvas=$('staffDesigner');
+  if(!dCanvas)return;
+  dCtx=dCanvas.getContext('2d');
+  dCanvas.addEventListener('click',handleDesignerClick);
+  dCanvas.addEventListener('touchstart',e=>{e.preventDefault();handleDesignerTouch(e);},{passive:false});
+}
+
+function handleDesignerClick(e){
+  const rect=dCanvas.getBoundingClientRect();
+  const x=e.clientX-rect.left,y=e.clientY-rect.top;
+  toggleNoteAt(x,y);
+}
+function handleDesignerTouch(e){
+  const rect=dCanvas.getBoundingClientRect();
+  const touch=e.touches[0];
+  const x=touch.clientX-rect.left,y=touch.clientY-rect.top;
+  toggleNoteAt(x,y);
+}
+function toggleNoteAt(x,y){
+  for(const pos of dNotePositions){
+    const dx=x-pos.x,dy=y-pos.y;
+    if(Math.sqrt(dx*dx+dy*dy)<12){
+      const key=noteKey(pos.note);
+      if(dSel.has(key))dSel.delete(key);else dSel.add(key);
+      buildDesigner();
+      return;
+    }
   }
+}
+
+function buildDesigner(){
+  if(!dCanvas){initDesignerCanvas();if(!dCanvas)return;}
+  const w=dCanvas.width,h=dCanvas.height;
+  const g=dCtx;
+  dNotePositions=[];
+
+  // Background
+  g.fillStyle='#4a9eb8';g.fillRect(0,0,w,h);
+
+  // Draw grand staff
+  const staffX=60,staffW=w-80;
+  const trebleTop=40,bassTop=240;
+  const clefX=25;
+
+  g.strokeStyle='#1a3a4a';g.lineWidth=2;
+  g.fillStyle='#1a3a4a';
+
+  // Treble staff lines
+  for(let i=0;i<5;i++){
+    const y=trebleTop+i*D_LS;
+    g.beginPath();g.moveTo(staffX,y);g.lineTo(staffX+staffW,y);g.stroke();
+  }
+  // Bass staff lines
+  for(let i=0;i<5;i++){
+    const y=bassTop+i*D_LS;
+    g.beginPath();g.moveTo(staffX,y);g.lineTo(staffX+staffW,y);g.stroke();
+  }
+
+  // Clefs
+  g.font='bold 52px serif';g.fillText('\uD834\uDD1E',clefX,trebleTop+D_LS*3.5);
+  g.font='bold 38px serif';g.fillText('\uD834\uDD22',clefX,bassTop+D_LS*2.3);
+
+  // Brace connecting staves
+  g.strokeStyle='#1a3a4a';g.lineWidth=3;
+  g.beginPath();g.moveTo(staffX-5,trebleTop);g.lineTo(staffX-5,bassTop+D_LS*4);g.stroke();
+
+  // Note positions - column layout
+  const noteX=staffX+60;
+  const sharpX=staffX+140;
+  const flatX=staffX+200;
+  const [hi,lo]=designerRange();
+
+  // Calculate Y for each step
+  function stepToY(step){
+    // Treble: E4=bottom line (step 23), each step = half D_LS
+    // Bass: G2=bottom line (step 9)
+    const trebleBottom=STAFF.treble.bottomLine; // E4 = 23
+    const bassBottom=STAFF.bass.bottomLine;     // G2 = 9
+    const trebleBottomY=trebleTop+D_LS*4;
+    const bassBottomY=bassTop+D_LS*4;
+
+    if(step>=trebleBottom-6){ // treble range
+      return trebleBottomY-(step-trebleBottom)*(D_LS/2);
+    }else{ // bass range
+      return bassBottomY-(step-bassBottom)*(D_LS/2);
+    }
+  }
+
+  // Draw note positions
+  for(let s=hi;s>=lo;s--){
+    const n=noteFromStep(s);
+    const key=noteKey(n);
+    const y=stepToY(s);
+    const selected=dSel.has(key);
+
+    // Draw ledger lines if needed
+    g.strokeStyle='#1a3a4a';g.lineWidth=1.5;
+    const c=STAFF[clefFor(s,'grand')];
+    if(s<c.bottomLine&&s%2===c.bottomLine%2){
+      for(let e=c.bottomLine-2;e>=s;e-=2){
+        const ly=stepToY(e);
+        g.beginPath();g.moveTo(noteX-15,ly);g.lineTo(noteX+15,ly);g.stroke();
+      }
+    }
+    if(s>c.topLine&&s%2===c.topLine%2){
+      for(let e=c.topLine+2;e<=s;e+=2){
+        const ly=stepToY(e);
+        g.beginPath();g.moveTo(noteX-15,ly);g.lineTo(noteX+15,ly);g.stroke();
+      }
+    }
+
+    // Draw notehead
+    g.fillStyle=selected?'#1a3a4a':'rgba(26,58,74,0.3)';
+    g.beginPath();
+    g.save();g.translate(noteX,y);g.scale(1,0.7);
+    g.arc(0,0,9,0,Math.PI*2);g.fill();g.restore();
+    dNotePositions.push({x:noteX,y,note:n,acc:''});
+
+    // Sharp version
+    if(dSharp&&'CDFGA'.includes(n.letter)){
+      const sharpKey=key+'#';
+      const sharpSel=dSel.has(sharpKey);
+      g.fillStyle=sharpSel?'#1a3a4a':'rgba(26,58,74,0.25)';
+      g.beginPath();g.save();g.translate(sharpX,y);g.scale(1,0.7);
+      g.arc(0,0,9,0,Math.PI*2);g.fill();g.restore();
+      g.fillStyle='#1a3a4a';g.font='bold 14px serif';g.textAlign='center';
+      g.fillText('♯',sharpX+16,y+5);
+      dNotePositions.push({x:sharpX,y,note:{...n,acc:'#'},acc:'#'});
+    }
+
+    // Flat version
+    if(dFlat&&'DEGAB'.includes(n.letter)){
+      const flatKey=key+'b';
+      const flatSel=dSel.has(flatKey);
+      g.fillStyle=flatSel?'#1a3a4a':'rgba(26,58,74,0.25)';
+      g.beginPath();g.save();g.translate(flatX,y);g.scale(1,0.7);
+      g.arc(0,0,9,0,Math.PI*2);g.fill();g.restore();
+      g.fillStyle='#1a3a4a';g.font='bold 14px serif';g.textAlign='center';
+      g.fillText('♭',flatX+16,y+5);
+      dNotePositions.push({x:flatX,y,note:{...n,acc:'b'},acc:'b'});
+    }
+  }
+
   updateDCount();
 }
 function customPool(){
@@ -1340,7 +1486,7 @@ function bindMenu(){
    ================================================================ */
 window.addEventListener('load',()=>{
   if(typeof THREE==='undefined'){document.body.innerHTML='<div style="padding:40px;color:#fff;font-family:monospace">3D engine failed to load (needs internet).</div>';return;}
-  initThree();setupInput();bindMenu();buildPresetList();initStudentUI();initStaffCanvas();
+  initThree();setupInput();bindMenu();buildPresetList();initStudentUI();initStaffCanvas();initDesignerCanvas();
   const prev=noteFromStep(stepOf('G',4));prev.clef='treble';drawCard(prev);
   // default designer selection = on-staff treble
   const c=STAFF.treble;for(let s=c.bottomLine;s<=c.topLine;s++)dSel.add(noteKey(noteFromStep(s)));
