@@ -367,7 +367,10 @@ function initThree(){
   const key=new THREE.DirectionalLight(0xbbd8ff,1.1);key.position.set(3,6,5);scene.add(key);
   const rim=new THREE.PointLight(0x5B3FA0,1.2,60);rim.position.set(-5,-2,-6);scene.add(rim);
   buildStars();buildNebula();buildPlanets();buildMeteors();buildShip();buildReticle();
-  addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+  addEventListener('resize',()=>{
+    camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);
+    if(ship){const yOff=innerWidth>innerHeight?-1.0:-0.3;ship.position.y=G.ryS*PLAY_Y+yOff;}
+  });
 }
 function buildStars(){
   const N=2400,pos=new Float32Array(N*3),col=new Float32Array(N*3),c=new THREE.Color();
@@ -848,7 +851,8 @@ function gameStep(dt){
   reticle.position.copy(rPos);
 
   // ship is purely visual: sits a little below the reticle column and banks
-  const X=G.rxS*PLAY_X, Y=G.ryS*PLAY_Y - 1.0, vx=X-ship.position.x, vy=Y-ship.position.y;
+  const yOffset = innerWidth > innerHeight ? -1.0 : -0.3;  // less offset in portrait
+  const X=G.rxS*PLAY_X, Y=G.ryS*PLAY_Y + yOffset, vx=X-ship.position.x, vy=Y-ship.position.y;
   ship.position.set(X,Y,SHIP_Z);
   ship.rotation.z=-vx*.9-G.rxS*.18;ship.rotation.x=vy*.5;ship.rotation.y=G.rxS*.12;
   ship.userData.thrusters.forEach(th=>{th.scale.y=.65+Math.random()*.9;th.material.opacity=.55+Math.random()*.45;});
