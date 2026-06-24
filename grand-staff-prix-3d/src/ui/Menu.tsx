@@ -388,6 +388,45 @@ function ProfileScreen({ onBack }: { onBack: () => void }) {
 }
 
 // ───────────────────────── Play menu (level + scenery + start) ─────────────────────────
+// Player + loadout hero — fills the side space on tablet/desktop with the
+// player's stats, their current car & composer, and a Garage button to change.
+function LoadoutHero({ onGarage, onProfile, onSwitch }: { onGarage: () => void; onProfile: () => void; onSwitch: () => void }) {
+  const profile = useGame(activeProfile)
+  const settings = useGame((s) => s.settings)
+  const car = carById(profile?.carId ?? settings.carId)
+  const composer = composerById(profile?.composerId ?? settings.composerId)
+  const r = profile ? rankForXp(profile.xp) : null
+  const pct = r && r.xpForNext !== Infinity ? Math.round((r.xpInto / r.xpForNext) * 100) : 100
+  return (
+    <div className="loadout card">
+      <button className="loPlayer" onClick={onProfile}>
+        <span className="loAvatar">{(profile?.name ?? 'P').slice(0, 1).toUpperCase()}</span>
+        <div className="loInfo">
+          <div className="loName">{profile?.name ?? 'Player'}</div>
+          <div className="loRank">{r?.name ?? 'Beginner'} · LV {r?.level ?? 1}</div>
+          <div className="loXp"><span style={{ width: `${pct}%` }} /></div>
+        </div>
+        <span className="loGems">💎 {profile?.gems ?? 0}</span>
+      </button>
+
+      <div className="loRideLabel">Your ride</div>
+      <div className="loRide">
+        <div className="loRideItem">
+          <span className="loThumb"><AssetThumb src={`/thumbs/car_${car.id}.png`} alt={car.name} /></span>
+          <span className="loRideName">{car.name}</span>
+        </div>
+        <div className="loRideItem">
+          <span className="loThumb round"><AssetThumb src={`/thumbs/composer_${composer.id}.png`} alt={composer.name} /></span>
+          <span className="loRideName">{composer.name}</span>
+        </div>
+      </div>
+
+      <button className="btn loGarage" onClick={onGarage}>{Icon.keys} Open Garage</button>
+      <button className="loSwitch" onClick={onSwitch}>Switch player {Icon.chevDown}</button>
+    </div>
+  )
+}
+
 function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onGarage: () => void; onProfile: () => void }) {
   const profile = useGame(activeProfile)
   const settings = useGame((s) => s.settings)
@@ -421,7 +460,6 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
   const unlocked = new Set(profile?.unlocked ?? [NOTE_SETS[0].id])
   const mastered = new Set(profile?.mastered ?? [])
   const activeTheme = THEMES.find((t) => t.id === settings.themeId) ?? THEMES[0]
-  const r = profile ? rankForXp(profile.xp) : null
 
   const onStart = () => {
     input.setMode(settings.steering)
@@ -429,28 +467,16 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
   }
 
   return (
-    <div className="sheet">
+    <div className="sheet playSheet">
       <Hero />
 
-      <div className="topbar">
-        <button className="chip playerChip" onClick={onProfile}>
-          <span className="avatar sm">{(profile?.name ?? 'P').slice(0, 1).toUpperCase()}</span>
-          <span className="pcName">{profile?.name ?? 'Player'}</span>
-          {r && <span className="pcMeta">LV {r.level} · 💎 {profile?.gems ?? 0}</span>}
-        </button>
-        <button className="chip ghost" onClick={onSwitch}>Switch {Icon.chevDown}</button>
-      </div>
-
-      <div className="navRow">
-        <button className="navBtn" onClick={onGarage}>
-          {Icon.play} <span>Garage</span><small>Car &amp; driver</small>
-        </button>
-        <button className="navBtn" onClick={onProfile}>
-          {Icon.trophy} <span>Stats</span><small>Rank · challenges</small>
-        </button>
-      </div>
-
       {creating && <LevelCreator onClose={() => setCreating(false)} />}
+
+      <div className="playGrid">
+        <aside className="playAside">
+          <LoadoutHero onGarage={onGarage} onProfile={onProfile} onSwitch={onSwitch} />
+        </aside>
+        <main className="playMain">
 
       {/* LEVEL */}
       <div className="sec">
@@ -574,6 +600,8 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
         <p className="tiny">
           Steer into the gate whose letter matches the note on the staff. Master a level (Stage 4, 90%+ over 30 notes) to unlock the next.
         </p>
+      </div>
+        </main>
       </div>
     </div>
   )

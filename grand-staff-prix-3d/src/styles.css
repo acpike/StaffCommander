@@ -2136,3 +2136,33 @@ body {
 .pickImg.round img { object-fit: contain; object-position: center; }
 .pickName { font-size: 11px; font-weight: 600; color: var(--dim); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .pickCard.on .pickName { color: var(--txt); }
+
+/* ── Play screen: responsive 2-column (loadout hero + level list) ── */
+.playGrid { display: flex; flex-direction: column; gap: 13px; }
+.playMain { display: flex; flex-direction: column; gap: 13px; min-width: 0; }
+.playSheet { width: min(440px, 100%); }
+@media (min-width: 760px) {
+  .playSheet { width: min(900px, 96%); }
+  .playGrid { display: grid; grid-template-columns: 300px 1fr; gap: 18px; align-items: start; }
+  .playAside { position: sticky; top: 12px; align-self: start; }
+}
+
+.loadout { display: flex; flex-direction: column; gap: 12px; }
+.loPlayer { display: flex; align-items: center; gap: 12px; width: 100%; padding: 2px; text-align: left; }
+.loAvatar { width: 48px; height: 48px; border-radius: 50%; background: var(--acc-grad); color: #fff; font-weight: 800; font-size: 20px; display: grid; place-items: center; flex: none; }
+.loInfo { flex: 1; min-width: 0; }
+.loName { font-size: 18px; font-weight: 800; }
+.loRank { font-size: 12px; color: var(--dim); margin-bottom: 6px; }
+.loXp { height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+.loXp > span { display: block; height: 100%; border-radius: 999px; background: var(--acc-grad); }
+.loGems { font-size: 13px; font-weight: 700; color: var(--acc2); flex: none; align-self: flex-start; }
+.loRideLabel { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim); }
+.loRide { display: flex; gap: 10px; }
+.loRideItem { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px; border-radius: 12px; background: var(--surf); border: 1px solid var(--line); min-width: 0; }
+.loThumb { width: 100%; height: 66px; border-radius: 9px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: radial-gradient(75% 65% at 50% 32%, #eef1f6 0%, #c2c9d6 55%, #939bac 100%); }
+.loThumb img { width: 100%; height: 100%; object-fit: contain; }
+.loThumb.round { background: #15131d; }
+.loRideName { font-size: 12px; font-weight: 600; color: var(--txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.loGarage { width: 100%; }
+.loSwitch { font-size: 12px; font-weight: 600; color: var(--dim); display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 4px; }
+.loSwitch .ico { width: 14px; height: 14px; }
