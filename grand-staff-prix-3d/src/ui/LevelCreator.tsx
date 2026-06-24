@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useGame } from '../state/store'
 import { candidateNoteNames, type Clef, type NoteMode } from '../data/notes'
+import { TapStaff } from './TapStaff'
 import { Icon } from './icons'
 
 // Students build their own practice level: pick a clef + the exact notes they
@@ -79,13 +80,9 @@ export function LevelCreator({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="card sec">
-          <div className="secLabel">Pick notes to practice · {selected.size} chosen</div>
-          <div className="noteGrid">
-            {candidates.map((n) => (
-              <button key={n} className={`noteChip${selected.has(n) ? ' on' : ''}`} onClick={() => toggle(n)}>
-                {n}
-              </button>
-            ))}
+          <div className="secLabel">Tap the staff to pick notes · {selected.size} chosen</div>
+          <div className="tapStaffWrap">
+            <TapStaff clef={clef} notes={candidates} selected={selected} onToggle={toggle} />
           </div>
         </div>
 

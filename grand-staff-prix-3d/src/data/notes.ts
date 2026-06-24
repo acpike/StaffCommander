@@ -5,7 +5,7 @@
 // ──────────────────────────────────────────────────────────────────────────
 
 export type Letter = 'C' | 'D' | 'E' | 'F' | 'G' | 'A' | 'B'
-export type Clef = 'treble' | 'bass'
+export type Clef = 'treble' | 'bass' | 'alto' | 'tenor'
 
 export const LETTERS: Letter[] = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
 
@@ -44,10 +44,13 @@ export function noteFrequency(note: GameNote): number {
 }
 
 // Diatonic value of the bottom line of each clef's five-line staff.
-// Treble bottom line = E4; Bass bottom line = G2.
+// Treble bottom line = E4; Bass = G2; Alto (C-clef, middle line C4) = F3;
+// Tenor (C-clef, 4th line C4) = D3.
 const BOTTOM_LINE_DIATONIC: Record<Clef, number> = {
   treble: makeNote('E4', 'treble').diatonic,
   bass: makeNote('G2', 'bass').diatonic,
+  alto: makeNote('F3', 'alto').diatonic,
+  tenor: makeNote('D3', 'tenor').diatonic,
 }
 
 /**

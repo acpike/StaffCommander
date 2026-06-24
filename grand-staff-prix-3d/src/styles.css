@@ -1896,3 +1896,20 @@ body {
   color: #14121c;
   text-shadow: 0 2px 0 rgba(255, 255, 255, 0.4);
 }
+
+/* ── tap-to-pick staff (level creator) ── */
+.tapStaffWrap {
+  background: #fbfbfd;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 10px 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.tapStaff {
+  display: block;
+  height: 158px;
+  width: auto;
+  margin: 0 auto;
+  touch-action: pan-x;
+}
