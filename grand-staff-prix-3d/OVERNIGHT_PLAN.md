@@ -115,7 +115,7 @@ Before ticking any box or committing:
 - Mountain Pass ✅ real mountains (TODO: add pine trees + snow for full polish)
 - Desert Run ✅ real arid landscape (TODO: add cacti/dunes polish)
 - Deep Space ✅ galaxy + planets
-- San Francisco ✗ GATED — needs Golden Gate (VITE_GOOGLE_TILES_KEY 3D-tiles, or a GG GLB model). Do not ship generic city.
+- San Francisco ◐ stylized Golden Gate towers + fog (keyless fallback) [v0.12]; photoreal real-SF still behind VITE_GOOGLE_TILES_KEY.
 - Candy Canyon ✅ stylized candy world (pink sky, lollipops, gumdrop hills) [v0.11]
 NEXT iterations: candy stylized art; mountain pines+snow; desert cacti; then cars (open cockpit), helmeted avatars, mastery levels.
 - `v0.5-mastery-levels` — mastery-based unlock (Stage 4 · 30+ notes · 90%+), longer stages, accuracy-weighted scoring, HUD mastery meter. Pure logic+UI, build green, meter verified on screen.
@@ -125,3 +125,4 @@ NEXT iterations: candy stylized art; mountain pines+snow; desert cacti; then car
 - `v0.9-daily-challenges` — 3 deterministic per-day challenges with progress + gem rewards + date reset; menu Today’s Challenges card. Verified on screen; build green. GAMIFICATION LAYER COMPLETE (ranks/gems/achievements/daily).
 - `v0.10-detailed-car` — swapped the box car for the detailed sculpted ProceduralBody (swept shell, glass canopy, wing, diffuser, detailed wheels), shared by game + menu. Rear-view verified; build green. Follow-up: open-cockpit body + helmeted avatar (avatar still the full-face character).
 - `v0.11-candy-canyon` — stylized Candy Canyon: pink gradient sky, gumdrop hills, streaming lollipops. Verified on screen (reads as candy). 4/5 maps name-match; only San Francisco gated (Google key / Golden Gate model).
+- `v0.12-golden-gate` — stylized Golden Gate Bridge for SF (orange towers + draping cables + coastal fog), keyless fallback. Verified on screen. ALL 5 maps now name-appropriate (4 strong + SF stylized; real SF needs Google key).
