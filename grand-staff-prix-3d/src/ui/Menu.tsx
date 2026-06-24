@@ -118,6 +118,7 @@ const CAR_THUMB_ITEMS: ThumbItem[] = CARS.filter((c) => c.model).map((c) => ({
   rotationY: c.modelRotation,
   kind: 'car',
 }))
+const CAR_THUMB_SIZE = { w: 384, h: 220 }
 
 function Setup({ onSwitch }: { onSwitch: () => void }) {
   const profile = useGame(activeProfile)
@@ -135,7 +136,7 @@ function Setup({ onSwitch }: { onSwitch: () => void }) {
   // Level creator overlay.
   const [creating, setCreating] = useState(false)
   // static car thumbnails (real asset rendered once) for the selector
-  const carThumbs = useThumbnails(CAR_THUMB_ITEMS, 320)
+  const carThumbs = useThumbnails(CAR_THUMB_ITEMS, CAR_THUMB_SIZE)
 
   const car = carById(settings.carId)
   const unlocked = new Set(profile?.unlocked ?? [NOTE_SETS[0].id])
