@@ -408,6 +408,18 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
   const customLevels = useGame((s) => s.customLevels)
   const removeCustomLevel = useGame((s) => s.removeCustomLevel)
   const [creating, setCreating] = useState(false)
+  // which difficulty sections are expanded (default: the band of the selected level)
+  const [openBands, setOpenBands] = useState<Set<string>>(() => {
+    const sel = NOTE_SETS.find((s) => s.id === settings.levelId)
+    return new Set([sel?.band ?? 'beginner'])
+  })
+  const toggleBand = (b: string) =>
+    setOpenBands((prev) => {
+      const next = new Set(prev)
+      if (next.has(b)) next.delete(b)
+      else next.add(b)
+      return next
+    })
 
   // preload the chosen car + composer so the race starts smooth (no first-second hitch)
   const carModel = carById(profile?.carId ?? settings.carId).model
@@ -460,42 +472,60 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
               (s) => s.band === band.id && (settings.showCClefs || (s.group !== 'alto' && s.group !== 'tenor')),
             )
             if (!bandLevels.length) return null
+            const total = bandLevels.length
+            const doneCount = bandLevels.filter((s) => mastered.has(s.id)).length
+            const current = bandLevels.find((s) => !mastered.has(s.id) && (s.tier === 1 || unlocked.has(s.id)))
+            const pct = Math.round((doneCount / total) * 100)
+            const isOpen = openBands.has(band.id)
+            const currentText = doneCount === total ? '✓ Complete' : current ? current.name : 'Locked'
             return (
-              <div key={band.id} className="clefGroup">
-                <div className="clefGroupHead">{band.label}</div>
-                {bandLevels.map((s) => {
-                  const isUnlocked = s.tier === 1 || unlocked.has(s.id)
-                  const on = settings.levelId === s.id
-                  const best = profile?.best[s.id]
-                  const clefLabel = CLEF_GROUPS.find((g) => g.id === s.group)?.label ?? ''
-                  return (
-                    <button
-                      key={s.id}
-                      className={`levelRow${on ? ' on' : ''}${isUnlocked ? '' : ' locked'}`}
-                      disabled={!isUnlocked}
-                      onClick={() => isUnlocked && setLevel(s.id)}
-                    >
-                      <span className="bar" />
-                      <span className="clefBadge" aria-hidden>{CLEF_BADGE[s.group ?? 'treble']}</span>
-                      <span className="info">
-                        <div className="nm">{s.name}</div>
-                        <div className="ds">{clefLabel} · {s.blurb}</div>
-                      </span>
-                      {isUnlocked ? (
-                        <>
-                          {mastered.has(s.id) && <span className="masteredTag">✓ Mastered</span>}
-                          {best ? (
-                            <span className="best"><span className="bestV">{best}</span><span className="bestK">BEST</span></span>
+              <div key={band.id} className={`bandSec${isOpen ? ' open' : ''}`}>
+                <button className="bandHeader" onClick={() => toggleBand(band.id)}>
+                  <div className="bandHeadTop">
+                    <span className="bandChev">{Icon.chevDown}</span>
+                    <span className="bandTitle">{band.label}</span>
+                    <span className="bandCurrent">{currentText}</span>
+                    <span className="bandCount">{doneCount}/{total}</span>
+                  </div>
+                  <span className="bandBar"><span style={{ width: `${pct}%` }} /></span>
+                </button>
+                {isOpen && (
+                  <div className="bandBody">
+                    {bandLevels.map((s) => {
+                      const isUnlocked = s.tier === 1 || unlocked.has(s.id)
+                      const on = settings.levelId === s.id
+                      const best = profile?.best[s.id]
+                      const clefLabel = CLEF_GROUPS.find((g) => g.id === s.group)?.label ?? ''
+                      return (
+                        <button
+                          key={s.id}
+                          className={`levelRow${on ? ' on' : ''}${isUnlocked ? '' : ' locked'}`}
+                          disabled={!isUnlocked}
+                          onClick={() => isUnlocked && setLevel(s.id)}
+                        >
+                          <span className="bar" />
+                          <span className="clefBadge" aria-hidden>{CLEF_BADGE[s.group ?? 'treble']}</span>
+                          <span className="info">
+                            <div className="nm">{s.name}</div>
+                            <div className="ds">{clefLabel} · {s.blurb}</div>
+                          </span>
+                          {isUnlocked ? (
+                            <>
+                              {mastered.has(s.id) && <span className="masteredTag">✓</span>}
+                              {best ? (
+                                <span className="best"><span className="bestV">{best}</span><span className="bestK">BEST</span></span>
+                              ) : (
+                                on && !mastered.has(s.id) && <span className="nowTag">Selected</span>
+                              )}
+                            </>
                           ) : (
-                            on && !mastered.has(s.id) && <span className="nowTag">Selected</span>
+                            <span className="lock">{Icon.lock}</span>
                           )}
-                        </>
-                      ) : (
-                        <span className="lock">{Icon.lock} Locked</span>
-                      )}
-                    </button>
-                  )
-                })}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )
           })}
