@@ -2027,3 +2027,52 @@ body {
 }
 .levelRow.on .clefBadge { color: var(--acc2); }
 .levelRow.locked .clefBadge { opacity: 0.4; }
+
+/* ─────────────────────────  Journey Play screen (beta)  ───────────────────── */
+.jp { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column;
+  background: radial-gradient(140% 70% at 50% -8%, #1d1832 0%, var(--bg) 55%); color: var(--txt); }
+.jpHead { display: flex; align-items: center; gap: 12px; padding: max(12px, env(safe-area-inset-top)) 16px 10px; }
+.jpAvatar { width: 40px; height: 40px; border-radius: 50%; background: var(--acc-grad); color: #fff; font-weight: 800; font-size: 17px; }
+.jpRank { display: flex; flex-direction: column; line-height: 1.15; }
+.jpRank b { font-size: 15px; }
+.jpRank span { font-size: 11px; color: var(--dim); }
+.jpGems { margin-left: auto; font-size: 14px; font-weight: 700; background: var(--surf); border: 1px solid var(--line); padding: 7px 12px; border-radius: 999px; }
+
+.jpScroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.jpMap { position: relative; width: 100%; }
+.jpRoad { position: absolute; inset: 0; }
+.roadEdge { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 38; stroke-linecap: round; stroke-linejoin: round; }
+.roadInk { fill: none; stroke: #262232; stroke-width: 28; stroke-linecap: round; stroke-linejoin: round; }
+.roadDash { fill: none; stroke: rgba(255,255,255,0.22); stroke-width: 3; stroke-dasharray: 2 22; stroke-linecap: round; stroke-linejoin: round; }
+.jpBanner { position: absolute; left: 18px; font-size: 12px; font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; }
+
+.jpNode { position: absolute; width: 56px; height: 56px; border-radius: 50%; transform: translate(-50%, -50%);
+  display: grid; place-items: center; border: 3px solid rgba(255,255,255,0.22);
+  box-shadow: 0 7px 16px rgba(0,0,0,0.5), inset 0 2px 6px rgba(255,255,255,0.28); z-index: 2; transition: transform .14s ease; }
+.jpNode.locked { background: #211e2c; border-color: #34303f; box-shadow: 0 5px 12px rgba(0,0,0,0.45); }
+.jpNode.sel { transform: translate(-50%, -50%) scale(1.12); }
+.jpGlyph { font-family: 'Bravura'; color: #fff; font-size: 27px; line-height: 1; transform: translateY(-1px); pointer-events: none; }
+.jpNode.grand .jpGlyph { font-size: 15px; letter-spacing: -2px; }
+.jpNode.locked .jpGlyph { color: #6b6678; }
+.jpStar { position: absolute; top: -7px; right: -7px; font-size: 16px; color: #ffd089; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+.jpLock { position: absolute; bottom: -3px; right: -3px; display: grid; place-items: center; }
+.jpLock .ico { width: 13px; height: 13px; color: #b7b2c4; }
+.jpSelRing { position: absolute; width: 56px; height: 56px; border-radius: 50%; transform: translate(-50%, -50%); z-index: 1; }
+.jpLabel { position: absolute; transform: translate(-50%, 0); font-size: 11px; font-weight: 600; color: #cfcbd8; white-space: nowrap; text-shadow: 0 1px 4px rgba(0,0,0,.7); z-index: 2; pointer-events: none; }
+.jpLabel.dim { color: #6f6a7b; }
+
+.jpDock { padding: 10px 14px max(12px, env(safe-area-inset-bottom)); background: linear-gradient(180deg, transparent, rgba(8,7,14,0.72) 28%); }
+.jpGarage { display: flex; gap: 8px; margin-bottom: 10px; }
+.jpChip { flex: 1; display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 13px; background: var(--surf); border: 1px solid var(--line); font-size: 13px; font-weight: 600; min-width: 0; }
+.jpChip img { width: 30px; height: 30px; border-radius: 8px; object-fit: cover; flex: none; background: #15131d; }
+.jpChip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jpSwatch { width: 30px; height: 30px; border-radius: 8px; flex: none; }
+
+.jpStartRow { display: flex; gap: 12px; align-items: stretch; }
+.jpSel { flex: 1; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: var(--surf2); border: 1px solid var(--acc-line); min-width: 0; }
+.jpSelClef { font-family: 'Bravura'; font-size: 28px; color: var(--acc2); line-height: 1; flex: none; }
+.jpSelName { font-weight: 800; font-size: 15px; }
+.jpSelSub { font-size: 11px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jpSelStar { margin-left: auto; color: #ffd089; }
+.jpStart { padding: 0 22px; border-radius: 16px; background: var(--acc-grad); color: #fff; font-weight: 800; font-size: 16px; display: flex; align-items: center; gap: 7px; box-shadow: var(--acc-glow); flex: none; }
+.jpStart .ico { width: 18px; height: 18px; }

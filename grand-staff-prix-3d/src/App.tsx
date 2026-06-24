@@ -4,6 +4,10 @@ import { input } from './game/input'
 import { ensureMusicFont } from './util/staffTexture'
 import { GameScene } from './game/GameScene'
 import { Menu } from './ui/Menu'
+import { JourneyPlay } from './ui/JourneyPlay'
+
+// Opt-in beta Play screen: add ?journey=1 to the URL. Leaves the current Menu untouched.
+const USE_JOURNEY = typeof location !== 'undefined' && new URLSearchParams(location.search).get('journey') === '1'
 import { HUD } from './ui/HUD'
 import { Countdown } from './ui/Countdown'
 import { GameOver } from './ui/GameOver'
@@ -28,7 +32,7 @@ export function App() {
   return (
     <>
       {inGame && <GameScene />}
-      {screen === 'menu' && <Menu />}
+      {screen === 'menu' && (USE_JOURNEY ? <JourneyPlay /> : <Menu />)}
       {screen === 'countdown' && <Countdown />}
       {screen === 'playing' && <HUD />}
       {screen === 'playing' && <TouchControls />}
