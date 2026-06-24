@@ -1596,3 +1596,38 @@ body {
   font-weight: 600;
   font-size: 14px;
 }
+
+/* ── daily challenges ── */
+.dailyRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 2px;
+  font-size: 13.5px;
+}
+.dailyCheck {
+  width: 16px;
+  text-align: center;
+  color: var(--faint);
+  font-weight: 700;
+}
+.dailyRow.done .dailyCheck {
+  color: #46d27a;
+}
+.dailyDesc {
+  flex: 1;
+  color: var(--txt);
+  font-weight: 500;
+}
+.dailyRow.done .dailyDesc {
+  color: var(--dim);
+  text-decoration: line-through;
+}
+.dailyProg {
+  color: var(--dim);
+  font-weight: 600;
+  font-size: 12px;
+}
+.dailyRow.done .dailyProg {
+  color: #8fd2ff;
+}

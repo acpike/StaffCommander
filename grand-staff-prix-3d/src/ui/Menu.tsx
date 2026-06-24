@@ -10,7 +10,7 @@ import { MenuCar3D } from './MenuCar3D'
 import { AvatarBuilder } from './AvatarBuilder'
 import { LevelCreator } from './LevelCreator'
 import { DEFAULT_AVATAR, type AvatarConfig } from '../data/avatars'
-import { rankForXp, ACHIEVEMENTS } from '../data/progression'
+import { rankForXp, ACHIEVEMENTS, dailyChallenges } from '../data/progression'
 
 function Hero() {
   return (
@@ -146,6 +146,7 @@ function Setup({ onSwitch }: { onSwitch: () => void }) {
   const startGame = useGame((s) => s.startGame)
   const customLevels = useGame((s) => s.customLevels)
   const removeCustomLevel = useGame((s) => s.removeCustomLevel)
+  const daily = useGame((s) => s.daily)
 
   // Driver builder (editing the current profile's avatar).
   const [editing, setEditing] = useState(false)
@@ -222,6 +223,22 @@ function Setup({ onSwitch }: { onSwitch: () => void }) {
             </div>
           )
         })()}
+
+      {/* TODAY'S CHALLENGES */}
+      <div className="card sec">
+        <div className="secLabel">Today's Challenges</div>
+        {dailyChallenges(daily.date).map((c) => {
+          const done = daily.done.includes(c.id)
+          const prog = Math.min(daily.progress[c.id] ?? 0, c.target)
+          return (
+            <div key={c.id} className={`dailyRow${done ? ' done' : ''}`}>
+              <span className="dailyCheck">{done ? '✓' : '○'}</span>
+              <span className="dailyDesc">{c.desc}</span>
+              <span className="dailyProg">{done ? `+${c.reward} 💎` : `${prog}/${c.target}`}</span>
+            </div>
+          )
+        })}
+      </div>
 
       {/* CAR GARAGE — live 3D showroom */}
       <div className="sec garageSec">

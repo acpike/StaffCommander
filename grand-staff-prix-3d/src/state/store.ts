@@ -4,7 +4,13 @@ import { CARS } from '../data/cars'
 import { THEMES } from '../data/themes'
 import { audio } from '../audio/sound'
 import { resetCarState } from '../game/carState'
-import { gemsForRun, checkAchievements } from '../data/progression'
+import { gemsForRun, checkAchievements, dailyChallenges, todayKey } from '../data/progression'
+
+export interface DailyState {
+  date: string
+  progress: Record<string, number>
+  done: string[]
+}
 import { DEFAULT_AVATAR, normalizeAvatar, type AvatarConfig } from '../data/avatars'
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -16,6 +22,7 @@ const LS_PROFILES = 'gsp3d.profiles'
 const LS_CURRENT = 'gsp3d.current'
 const LS_SETTINGS = 'gsp3d.settings'
 const LS_CUSTOM = 'gsp3d.custom'
+const LS_DAILY = 'gsp3d.daily'
 
 export interface Profile {
   id: string
@@ -110,6 +117,8 @@ export interface GameState {
   settings: Settings
   /** Student-built custom practice levels (persisted, always playable). */
   customLevels: NoteSet[]
+  /** Today's daily-challenge progress. */
+  daily: DailyState
   // ── live run ──
   score: number
   lives: number
@@ -203,6 +212,11 @@ export const useGame = create<GameState>()((set, get) => {
     currentId: initialCurrent && initialProfiles.some((p) => p.id === initialCurrent) ? initialCurrent : null,
     settings: initialSettings,
     customLevels: loadJSON<NoteSet[]>(LS_CUSTOM, []),
+    daily: (() => {
+      const stored = loadJSON<DailyState | null>(LS_DAILY, null)
+      const key = todayKey()
+      return stored && stored.date === key ? stored : { date: key, progress: {}, done: [] }
+    })(),
 
     score: 0,
     lives: START_LIVES,
@@ -397,6 +411,29 @@ export const useGame = create<GameState>()((set, get) => {
       const total = st.correctCount + st.wrongCount
       const accuracy = total > 0 ? st.correctCount / total : 0
       const gems = gemsForRun(st.score, !!st.masteredThisRun, accuracy)
+
+      // ── daily challenges: update progress + award gems for completions ──
+      const dKey = todayKey()
+      const base = st.daily.date === dKey ? st.daily : { date: dKey, progress: {}, done: [] }
+      const progress: Record<string, number> = { ...base.progress }
+      const done = [...base.done]
+      let dailyGems = 0
+      for (const c of dailyChallenges(dKey)) {
+        let v = progress[c.id] ?? 0
+        if (c.type === 'notes') v += st.correctCount
+        else if (c.type === 'games') v += 1
+        else if (c.type === 'accuracy90') v = accuracy >= 0.9 ? Math.max(v, 1) : v
+        else if (c.type === 'stage') v = Math.max(v, st.stage)
+        else if (c.type === 'streak') v = Math.max(v, st.bestStreak)
+        progress[c.id] = v
+        if (v >= c.target && !done.includes(c.id)) {
+          done.push(c.id)
+          dailyGems += c.reward
+        }
+      }
+      const daily: DailyState = { date: dKey, progress, done }
+      saveJSON(LS_DAILY, daily)
+
       const prof = st.currentId ? st.profiles.find((p) => p.id === st.currentId) : null
       let newAchievements: string[] = []
       if (prof) {
@@ -404,7 +441,7 @@ export const useGame = create<GameState>()((set, get) => {
         const best =
           st.score > prevBest ? { ...prof.best, [st.settings.levelId]: st.score } : prof.best
         const newXp = prof.xp + Math.round(st.score / 10)
-        const newGems = prof.gems + gems
+        const newGems = prof.gems + gems + dailyGems
         // prof.mastered already reflects any mastery earned this run (set in answer)
         newAchievements = checkAchievements(
           {
@@ -430,7 +467,7 @@ export const useGame = create<GameState>()((set, get) => {
       audio.crash()
       audio.setMusic(false)
       audio.stopEngine()
-      set({ screen: 'over', gemsEarned: gems, newAchievements })
+      set({ screen: 'over', gemsEarned: gems + dailyGems, newAchievements, daily })
     },
   }
 })

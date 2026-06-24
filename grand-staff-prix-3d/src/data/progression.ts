@@ -93,3 +93,47 @@ export function checkAchievements(stats: AchStats, have: string[]): string[] {
 export function achievementById(id: string): Achievement | undefined {
   return ACHIEVEMENTS.find((a) => a.id === id)
 }
+
+// ── Daily challenges ───────────────────────────────────────────────────────
+export type DailyType = 'notes' | 'accuracy90' | 'stage' | 'streak' | 'games'
+
+export interface DailyChallenge {
+  id: string
+  type: DailyType
+  desc: string
+  target: number
+  reward: number // gems
+}
+
+function seedFromKey(key: string): number {
+  let h = 2166136261
+  for (let i = 0; i < key.length; i++) {
+    h ^= key.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return h >>> 0
+}
+
+/** Stable date key (local), e.g. "2026-06-24". */
+export function todayKey(d: Date = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/** Three challenges for the given day, deterministic from the date. */
+export function dailyChallenges(key: string): DailyChallenge[] {
+  const seed = seedFromKey(key)
+  const pick = (arr: number[], salt: number) => arr[(Math.imul(seed ^ (salt * 2654435761), 2246822519) >>> 0) % arr.length]
+  const notesT = pick([20, 30, 40], 1)
+  const stageT = pick([3, 4, 5], 2)
+  const streakT = pick([8, 12, 15], 3)
+  const gamesT = pick([2, 3, 4], 4)
+  const all: DailyChallenge[] = [
+    { id: 'd-notes', type: 'notes', desc: `Read ${notesT} notes today`, target: notesT, reward: 30 },
+    { id: 'd-acc', type: 'accuracy90', desc: 'Finish a run at 90%+ accuracy', target: 1, reward: 25 },
+    { id: 'd-stage', type: 'stage', desc: `Reach Stage ${stageT}`, target: stageT, reward: 25 },
+    { id: 'd-streak', type: 'streak', desc: `Hit a ${streakT}-streak`, target: streakT, reward: 20 },
+    { id: 'd-games', type: 'games', desc: `Play ${gamesT} games`, target: gamesT, reward: 15 },
+  ]
+  const start = (Math.imul(seed ^ 0x9e3779b9, 2246822519) >>> 0) % all.length
+  return [all[start], all[(start + 1) % all.length], all[(start + 2) % all.length]]
+}
