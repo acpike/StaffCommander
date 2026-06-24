@@ -72,7 +72,7 @@ Before ticking any box or committing:
 
 ## PHASE 2 — Features (subagent waves on disjoint files + main-thread backbone)
 - [ ] Curved-course backbone (main thread): spline-based track, straight for beginner levels → gentle curves later; car/camera/gates follow the spline. Verify drivable via smoke test.
-- [ ] Level creator: students build custom note sets (pick clef/notes/range) saved per profile, playable as a level. (store + notes + new UI)
+- [x] Level creator [v0.6]: students pick clef + exact notes, name + play custom practice levels; persisted, deletable, always playable.
 - [ ] Track types: multiple track styles selectable.
 - [ ] Gamification for 3D: XP/levels/ranks, achievements, gems, daily challenges (per README).
 - [x] **Mastery-based level design** [v0.5] — DONE: longer stages (8 notes), unlock next only at Stage 4 over ≥30 notes at ≥90% accuracy; accuracy-weighted score; +250 mastery XP; per-profile `mastered`; live HUD mastery meter. (Follow-up: mastery celebration on game-over + "Mastered ✓" badge in menu level list.)
@@ -119,3 +119,4 @@ Before ticking any box or committing:
 - Candy Canyon ✗ pastel sky only — needs deliberate STYLIZED candy art (hills/lollipops); no real-world asset exists.
 NEXT iterations: candy stylized art; mountain pines+snow; desert cacti; then cars (open cockpit), helmeted avatars, mastery levels.
 - `v0.5-mastery-levels` — mastery-based unlock (Stage 4 · 30+ notes · 90%+), longer stages, accuracy-weighted scoring, HUD mastery meter. Pure logic+UI, build green, meter verified on screen.
+- `v0.6-level-creator` — student Level Creator (pick clef + notes → custom practice level). Clean on-brand UI verified by screenshot; build green, smoke confirms it opens/renders/closes + game plays.
