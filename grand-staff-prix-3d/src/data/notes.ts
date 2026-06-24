@@ -187,10 +187,13 @@ export function grandClefFor(name: string): Clef {
   return diatonicOfName(name) >= MIDDLE_C_DIATONIC ? 'treble' : 'bass'
 }
 
-/** Grand-staff pickable notes: C2 → C6, each pitch once. */
+/** Grand-staff pickable notes: 3 ledger lines below the bass staff (A1) through
+ *  3 ledger lines above the treble staff (E6), each pitch once. */
 export function grandCandidateNames(): string[] {
+  const lo = bottomLineDiatonic('bass') + LEDGER_MIN_STEP // A1, 3 ledgers below bass
+  const hi = bottomLineDiatonic('treble') + LEDGER_MAX_STEP // E6, 3 ledgers above treble
   const names: string[] = []
-  for (let d = diatonicOfName('C2'); d <= diatonicOfName('C6'); d++) names.push(diatonicToName(d))
+  for (let d = lo; d <= hi; d++) names.push(diatonicToName(d))
   return names
 }
 

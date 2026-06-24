@@ -1902,16 +1902,13 @@ body {
   background: #fbfbfd;
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 12px;
-  padding: 10px 6px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  padding: 12px 8px;
 }
 .tapStaff {
   display: block;
-  height: 212px;
-  width: auto;
-  margin: 0 auto;
-  touch-action: pan-x;
+  width: 100%;
+  height: auto;
+  touch-action: none;
 }
 
 /* ── visual clef + mode selectors (level creator) ── */
@@ -1935,14 +1932,15 @@ body {
   border-color: var(--acc-line);
   color: var(--txt);
 }
-.clefGlyph {
-  font-family: 'Bravura';
-  font-size: 30px;
-  line-height: 1;
-  height: 42px;
+.clefIconWrap {
+  height: 52px;
   display: flex;
   align-items: center;
-  letter-spacing: 1px;
+  justify-content: center;
+}
+.clefIconSvg {
+  height: 52px;
+  width: auto;
 }
 .clefLabel { font-size: 12px; font-weight: 600; }
 .modeIcon {

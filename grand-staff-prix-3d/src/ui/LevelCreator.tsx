@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { useGame } from '../state/store'
 import { candidateNoteNames, grandCandidateNames, type NoteMode } from '../data/notes'
-import { TapStaff, type StaffKind } from './TapStaff'
+import { TapStaff, ClefIcon, type StaffKind } from './TapStaff'
 import { Icon } from './icons'
 
-const CLEF_OPTS: { id: StaffKind; glyph: string; label: string }[] = [
-  { id: 'treble', glyph: String.fromCharCode(0xe050), label: 'Treble' },
-  { id: 'bass', glyph: String.fromCharCode(0xe062), label: 'Bass' },
-  { id: 'grand', glyph: String.fromCharCode(0xe050, 0xe062), label: 'Grand' },
+const CLEF_OPTS: { id: StaffKind; label: string }[] = [
+  { id: 'treble', label: 'Treble' },
+  { id: 'bass', label: 'Bass' },
+  { id: 'grand', label: 'Grand' },
 ]
 
 // Students build their own practice level: pick a clef + the exact notes they
@@ -20,11 +20,12 @@ export function LevelCreator({ onClose }: { onClose: () => void }) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const candidates = clef === 'grand' ? grandCandidateNames() : candidateNoteNames(clef)
-  const toggle = (n: string) =>
+  const setNote = (n: string, on: boolean) =>
     setSelected((prev) => {
+      if (on === prev.has(n)) return prev
       const next = new Set(prev)
-      if (next.has(n)) next.delete(n)
-      else next.add(n)
+      if (on) next.add(n)
+      else next.delete(n)
       return next
     })
   const canSave = selected.size >= 2
@@ -66,7 +67,7 @@ export function LevelCreator({ onClose }: { onClose: () => void }) {
                 onClick={() => { setClef(o.id); setSelected(new Set()) }}
                 aria-label={o.label}
               >
-                <span className="clefGlyph">{o.glyph}</span>
+                <span className="clefIconWrap"><ClefIcon kind={o.id} /></span>
                 <span className="clefLabel">{o.label}</span>
               </button>
             ))}
@@ -99,9 +100,9 @@ export function LevelCreator({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="card sec">
-          <div className="secLabel">Tap the staff to pick notes · {selected.size} chosen</div>
+          <div className="secLabel">Tap or drag across the staff · {selected.size} chosen</div>
           <div className="tapStaffWrap">
-            <TapStaff clef={clef} notes={candidates} selected={selected} onToggle={toggle} />
+            <TapStaff clef={clef} notes={candidates} selected={selected} onSet={setNote} />
           </div>
         </div>
 

@@ -55,9 +55,17 @@ export function drawNoteCard(
   const staffWidth = gap * 7.2
   const left = (cssW - staffWidth) / 2
   const right = left + staffWidth
-  // Vertically center the 4-gap staff in the card.
+  // Center the staff, then nudge the whole thing up/down ONLY if the note would
+  // fall off the card. Staff stays the same size; extreme ledger notes stay visible.
   const middleY = cssH / 2
-  const bottomLineY = middleY + 2 * gap // bottom line is 2 gaps below the middle line
+  const naturalBottom = middleY + 2 * gap // bottom line is 2 gaps below the middle line
+  const noteStep = staffStep(note)
+  const naturalNoteY = naturalBottom - noteStep * (gap / 2)
+  const edge = gap * 1.7 // keep the notehead + a ledger clear of the edge
+  let shift = 0
+  if (naturalNoteY < edge) shift = edge - naturalNoteY
+  else if (naturalNoteY > cssH - edge) shift = cssH - edge - naturalNoteY
+  const bottomLineY = naturalBottom + shift
 
   const yOfStep = (step: number) => bottomLineY - step * (gap / 2)
 
