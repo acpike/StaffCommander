@@ -25,8 +25,9 @@ function Showroom({ car }: { car: CarSpec }) {
     need.current = true
   }, [car.id, size.width, size.height])
 
-  useFrame((_, delta) => {
-    if (spin.current) spin.current.rotation.y += delta * 0.45
+  useFrame((s) => {
+    // gentle sway (stays ~3/4 view so the car can be framed tight + big)
+    if (spin.current) spin.current.rotation.y = -0.5 + Math.sin(s.clock.elapsedTime * 0.5) * 0.4
 
     if (!need.current || !ref.current) return
     const box = new THREE.Box3().setFromObject(ref.current)
@@ -34,20 +35,28 @@ function Showroom({ car }: { car: CarSpec }) {
     if (sz.x < 0.05 || sz.y < 0.05) return // model not loaded yet
     need.current = false
 
-    // rotation-safe radius: the horizontal footprint sweeps a circle as the car
-    // spins, so use its diagonal (overestimate → never clips at any angle).
-    const rXZ = Math.hypot(sz.x, sz.z) / 2
-    const radius = Math.hypot(rXZ, sz.y / 2)
-    const cy = (box.min.y + box.max.y) / 2
-
-    const vFov = THREE.MathUtils.degToRad(camera.fov)
-    const aspect = size.width / Math.max(1, size.height)
-    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * aspect)
-    const dist = (radius * 1.12) / Math.sin(Math.min(vFov, hFov) / 2)
-
-    const center = new THREE.Vector3(0, cy, 0)
-    camera.position.copy(center).addScaledVector(VIEW_DIR, dist)
-    camera.lookAt(center)
+    // Fit by the car's ACTUAL projected silhouette (not its sphere): place the
+    // camera at a reference distance, project the 8 box corners, then scale the
+    // distance so the limiting screen dimension fills TARGET of the frame.
+    const ctr = box.getCenter(new THREE.Vector3())
+    const D0 = 14
+    camera.position.copy(ctr).addScaledVector(VIEW_DIR, D0)
+    camera.lookAt(ctr)
+    camera.updateMatrixWorld()
+    camera.updateProjectionMatrix()
+    let mx = 0
+    let my = 0
+    const c = new THREE.Vector3()
+    for (let i = 0; i < 8; i++) {
+      c.set(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z).project(camera)
+      mx = Math.max(mx, Math.abs(c.x))
+      my = Math.max(my, Math.abs(c.y))
+    }
+    const fill = Math.max(mx, my)
+    const TARGET = 0.9 // limiting dimension fills ~90% (AABB overestimate → ~85% real)
+    const dist = D0 * (fill / TARGET)
+    camera.position.copy(ctr).addScaledVector(VIEW_DIR, dist)
+    camera.lookAt(ctr)
     camera.updateProjectionMatrix()
   })
 
