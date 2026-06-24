@@ -1,23 +1,19 @@
-import { useGame, activeProfile } from '../state/store'
-import { DEFAULT_AVATAR } from '../data/avatars'
-import { AvatarCharacter } from './AvatarCharacter'
-import { ProceduralBody } from './RealCarModel'
+import { type CarSpec } from '../data/cars'
+import { RealCar } from './RealCar'
+import { DriverModel } from './DriverModel'
 
-// The single source of truth for what a car looks like. Used by BOTH the in-game
-// car (game/Car.tsx) and the menu showroom (ui/MenuCar3D.tsx) so they are
-// identical. The body is the detailed sculpted ProceduralBody (swept shell,
-// glass canopy, wing, diffuser, detailed wheels); the seated driver is the
-// player's chosen avatar, read from the active profile.
-export function CarModel({ color, accent }: { color: string; accent: string }) {
-  const profile = useGame(activeProfile)
-  const avatar = profile?.avatar ?? DEFAULT_AVATAR
+// Single source of truth for the car, used by BOTH the in-game car (game/Car.tsx)
+// and the menu showroom (ui/MenuCar3D.tsx). A real artist-made model tinted per
+// car color (or the car's own GLB), plus a seated helmeted driver on open cockpits.
+export function CarModel({ car }: { car: CarSpec }) {
   return (
     <group>
-      <ProceduralBody color={color} accent={accent} />
-      {/* seated driver under the canopy */}
-      <group position={[0, 0.34, 0.18]} scale={0.4}>
-        <AvatarCharacter config={avatar} />
-      </group>
+      <RealCar color={car.color} modelUrl={car.model} rotationY={car.modelRotation} />
+      {car.openCockpit && (
+        <group position={car.driverSeat ?? [0, 0.55, 0.1]} scale={car.driverScale ?? 1}>
+          <DriverModel rotationY={car.driverRotation ?? 0} />
+        </group>
+      )}
     </group>
   )
 }

@@ -26,10 +26,17 @@ export interface CarSpec {
   modelRotation?: number
   /** Vertical offset so the model's wheels rest near y = -0.18. */
   modelYOffset?: number
+  /** Open-cockpit car: show a helmeted driver in the seat. */
+  openCockpit?: boolean
+  /** Where the driver bust sits, in fitted-car space (after auto-fit). */
+  driverSeat?: [number, number, number]
+  /** Driver bust scale + Y rotation tweaks. */
+  driverScale?: number
+  driverRotation?: number
 }
 
 export const CARS: CarSpec[] = [
-  { id: 'vortex', name: 'Vortex GT', color: '#FF4E2E', accent: '#2A1410', speed: 0.7, grip: 0.7, topSpeedMul: 1.0, turnMul: 1.0 },
+  { id: 'vortex', name: 'Vortex GT', color: '#FF4E2E', accent: '#2A1410', speed: 0.7, grip: 0.7, topSpeedMul: 1.0, turnMul: 1.0, model: '/models/user_sportscar.glb', modelRotation: Math.PI / 2, openCockpit: true, driverSeat: [0, 0.55, 0.15], driverScale: 1, driverRotation: 0 },
   { id: 'brawler', name: 'Brawler', color: '#F5A623', accent: '#3A2606', speed: 0.55, grip: 0.9, topSpeedMul: 0.92, turnMul: 1.12 },
   { id: 'apex', name: 'Apex F1', color: '#34D1BF', accent: '#06302B', speed: 0.95, grip: 0.6, topSpeedMul: 1.12, turnMul: 0.9 },
   { id: 'trailblaze', name: 'Trailblaze', color: '#5B8DEF', accent: '#0B1E3D', speed: 0.6, grip: 0.85, topSpeedMul: 0.95, turnMul: 1.08 },

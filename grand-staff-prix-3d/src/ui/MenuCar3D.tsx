@@ -8,17 +8,17 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { ContactShadows, Environment, Float } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import * as THREE from 'three'
-import { carById } from '../data/cars'
+import { carById, type CarSpec } from '../data/cars'
 import { CarModel } from '../game/CarModel'
 
-function Turntable({ color, accent }: { color: string; accent: string }) {
+function Turntable({ car }: { car: CarSpec }) {
   const root = useRef<THREE.Group>(null)
   useFrame((_, delta) => {
     if (root.current) root.current.rotation.y += delta * 0.45
   })
   return (
     <group ref={root} rotation={[0, -0.7, 0]}>
-      <CarModel color={color} accent={accent} />
+      <CarModel car={car} />
     </group>
   )
 }
@@ -70,7 +70,7 @@ export function MenuCar3D({ carId }: { carId: string }) {
       </Suspense>
 
       <Float speed={1.4} rotationIntensity={0} floatIntensity={0.4} floatingRange={[-0.04, 0.06]}>
-        <Turntable key={spec.id} color={spec.color} accent={spec.accent} />
+        <Turntable key={spec.id} car={spec} />
       </Float>
 
       <Pedestal color={spec.color} />

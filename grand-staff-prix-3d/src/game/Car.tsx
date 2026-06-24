@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { Suspense, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { RigidBody, CuboidCollider, type RapierRigidBody } from '@react-three/rapier'
 import * as THREE from 'three'
@@ -72,7 +72,9 @@ export function Car() {
       {/* collision proxy used for gate sensor intersections */}
       <CuboidCollider args={[0.9, 0.5, 1.85]} />
       <group ref={visual}>
-        <CarModel color={spec.color} accent={spec.accent} />
+        <Suspense fallback={null}>
+          <CarModel car={spec} />
+        </Suspense>
       </group>
     </RigidBody>
   )
