@@ -5,7 +5,8 @@ import { COMPOSERS } from '../data/composers'
 import { cloudEnabled, fetchPlayers, insertPlayer, updatePlayer, deletePlayer } from '../lib/cloud'
 import { THEMES } from '../data/themes'
 import { audio } from '../audio/sound'
-import { resetCarState } from '../game/carState'
+import { resetCarState, carState } from '../game/carState'
+import { BASE_SPEED, STAGE_SPEED } from '../game/constants'
 import { gemsForRun, checkAchievements, dailyChallenges, todayKey } from '../data/progression'
 
 export interface DailyState {
@@ -503,8 +504,12 @@ export const useGame = create<GameState>()((set, get) => {
         const accuracy = total > 0 ? correctCount / total : 1
         const stage = 1 + Math.floor(correctCount / CORRECT_PER_STAGE)
         const streak = st.streak + 1
-        // accuracy bonus rewards reading well, not just surviving
-        const gained = Math.round(100 * (1 + streak * 0.12) * stage * (0.6 + 0.4 * accuracy))
+        // SCORE = small base × SPEED × COMBO. Accelerating into the correct gate
+        // pays more (but going fast = less reaction time = real risk).
+        const cruise = BASE_SPEED + (stage - 1) * STAGE_SPEED // no-boost speed for this stage
+        const speedMult = Math.max(1, Math.min(2.5, 1 + (carState.speed / cruise - 1) * 2.5))
+        const comboMult = 1 + Math.min(streak, 20) * 0.2 // 1× → 5× at a 20-streak
+        const gained = Math.round(10 * speedMult * comboMult)
         const score = st.score + gained
 
         // MASTERY GATE: unlock the next level only when the player demonstrates the
@@ -528,7 +533,7 @@ export const useGame = create<GameState>()((set, get) => {
             if (p.id !== prof.id) return p
             const mastered = [...p.mastered, levelId]
             const unlocked = next && !p.unlocked.includes(next.id) ? [...p.unlocked, next.id] : p.unlocked
-            return { ...p, mastered, unlocked, xp: p.xp + 250 } // mastery XP bonus
+            return { ...p, mastered, unlocked, xp: p.xp + 50 } // mastery XP bonus
           })
           set({ profiles })
           persistProfiles()
@@ -595,7 +600,8 @@ export const useGame = create<GameState>()((set, get) => {
         const prevBest = prof.best[st.settings.levelId] ?? 0
         const best =
           st.score > prevBest ? { ...prof.best, [st.settings.levelId]: st.score } : prof.best
-        const newXp = prof.xp + Math.round(st.score / 10)
+        // XP = LEARNING: one point per note read correctly this run (mastery adds a bonus above)
+        const newXp = prof.xp + st.correctCount
         const newGems = prof.gems + gems + dailyGems
         // prof.mastered already reflects any mastery earned this run (set in answer)
         newAchievements = checkAchievements(

@@ -6,18 +6,20 @@ export interface Rank {
   name: string
 }
 
+// XP = notes read correctly (1 each) + mastery bonuses (+50). Tuned so ranks
+// reflect real practice: Novice ~2 runs, Maestro a long-term goal.
 export const RANKS: Rank[] = [
   { xp: 0, name: 'Beginner' },
-  { xp: 100, name: 'Novice' },
-  { xp: 300, name: 'Apprentice' },
-  { xp: 600, name: 'Student' },
-  { xp: 1000, name: 'Musician' },
-  { xp: 1500, name: 'Performer' },
-  { xp: 2200, name: 'Artist' },
+  { xp: 50, name: 'Novice' },
+  { xp: 150, name: 'Apprentice' },
+  { xp: 350, name: 'Student' },
+  { xp: 700, name: 'Musician' },
+  { xp: 1200, name: 'Performer' },
+  { xp: 2000, name: 'Artist' },
   { xp: 3200, name: 'Soloist' },
   { xp: 5000, name: 'Virtuoso' },
-  { xp: 9000, name: 'Master' },
-  { xp: 15000, name: 'Maestro' },
+  { xp: 8000, name: 'Master' },
+  { xp: 12000, name: 'Maestro' },
 ]
 
 export interface RankInfo {
@@ -46,7 +48,7 @@ export function rankForXp(xp: number): RankInfo {
 
 /** Gems earned for a finished run — rewards score, mastery and clean play. */
 export function gemsForRun(score: number, mastered: boolean, accuracy: number): number {
-  let g = Math.round(score / 400)
+  let g = Math.round(score / 120)
   if (accuracy >= 0.95) g += 5
   if (mastered) g += 25
   return g
