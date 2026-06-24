@@ -4,6 +4,7 @@ import { Environment, Stars } from '@react-three/drei'
 import * as THREE from 'three'
 import { type Theme } from '../data/themes'
 import { carState } from './carState'
+import { CandyScene } from './CandyScene'
 
 // Deep Space: a real Milky-Way galaxy sky (public-domain equirect) + textured
 // planets (NASA-derived public-domain maps), so the map matches its name.
@@ -121,6 +122,14 @@ export function Scenery({ theme }: { theme: Theme }) {
           {/* dim IBL so the car still catches light in space */}
           <Suspense fallback={null}>
             <Environment files="/hdri/space.hdr" environmentIntensity={0.6} />
+          </Suspense>
+        </>
+      ) : theme.id === 'candy' ? (
+        <>
+          <CandyScene />
+          {/* warm IBL only; the pink CandySky is the visible backdrop */}
+          <Suspense fallback={null}>
+            <Environment files="/hdri/candy.hdr" environmentIntensity={0.8} />
           </Suspense>
         </>
       ) : (
