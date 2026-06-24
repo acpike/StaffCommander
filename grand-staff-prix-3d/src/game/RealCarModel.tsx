@@ -185,7 +185,7 @@ function bodyGeometry(): THREE.BufferGeometry {
   return geo
 }
 
-function ProceduralBody({ color, accent }: { color: string; accent: string }) {
+export function ProceduralBody({ color, accent }: { color: string; accent: string }) {
   const body = useMemo(bodyGeometry, [])
   const paint = useMemo(() => makePaint(color), [color])
 
