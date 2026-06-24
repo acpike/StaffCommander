@@ -6,6 +6,7 @@ import { type Theme } from '../data/themes'
 import { carState } from './carState'
 import { CandyScene } from './CandyScene'
 import { SFScene } from './SFScene'
+import { MountainScene } from './MountainScene'
 
 // Deep Space: a real Milky-Way galaxy sky (public-domain equirect) + textured
 // planets (NASA-derived public-domain maps), so the map matches its name.
@@ -138,6 +139,13 @@ export function Scenery({ theme }: { theme: Theme }) {
           {/* warm IBL only; the pink CandySky is the visible backdrop */}
           <Suspense fallback={null}>
             <Environment files="/hdri/candy.hdr" environmentIntensity={0.8} />
+          </Suspense>
+        </>
+      ) : theme.id === 'mountain' ? (
+        <>
+          <MountainScene />
+          <Suspense fallback={null}>
+            <Environment files="/hdri/mountain.hdr" background backgroundBlurriness={0} environmentIntensity={1} />
           </Suspense>
         </>
       ) : (
