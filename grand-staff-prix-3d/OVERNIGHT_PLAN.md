@@ -128,3 +128,4 @@ NEXT iterations: candy stylized art; mountain pines+snow; desert cacti; then car
 - `v0.11-candy-canyon` — stylized Candy Canyon: pink gradient sky, gumdrop hills, streaming lollipops. Verified on screen (reads as candy). 4/5 maps name-match; only San Francisco gated (Google key / Golden Gate model).
 - `v0.12-golden-gate` — stylized Golden Gate Bridge for SF (orange towers + draping cables + coastal fog), keyless fallback. Verified on screen. ALL 5 maps now name-appropriate (4 strong + SF stylized; real SF needs Google key).
 - `v0.14-perf-verify` — perf fix: scenery must use SHARED geometry + NO shadow-casters + modest counts (a heavy mountain/candy pass tanked headless fps so the car couldn't reach a gate). Smoke window widened (36 samples) for reliable "gameplay advances" measurement. ALL 5 themes verified hudChanged=true.
+- `v0.15-desert-cacti` — saguaro cacti + boulders + mesas for Desert Run (lean: shared geo, no shadows). Verified on screen; build green.
