@@ -57,6 +57,8 @@ interface Settings {
   steering: 'touch' | 'tilt' | 'keys'
   /** Class code grouping players for cloud sync + leaderboard (empty = local only). */
   classCode: string
+  /** Show the alto + tenor (C-clef) tracks in the menu + creator. */
+  showCClefs: boolean
 }
 
 /** Map a profile to the cloud `data` blob (everything except id + name). */
@@ -82,6 +84,7 @@ const DEFAULT_SETTINGS: Settings = {
   music: true,
   steering: 'keys',
   classCode: '',
+  showCClefs: false,
 }
 
 /** Build a local Profile from a cloud row. */
@@ -213,6 +216,7 @@ export interface GameState {
   setComposer: (id: string) => void
   setTheme: (id: string) => void
   toggleMusic: () => void
+  toggleCClefs: () => void
   setSteering: (s: Settings['steering']) => void
 
   // ── flow actions ──
@@ -441,6 +445,10 @@ export const useGame = create<GameState>()((set, get) => {
     },
     setSteering: (s) => {
       set((st) => ({ settings: { ...st.settings, steering: s } }))
+      persistSettings()
+    },
+    toggleCClefs: () => {
+      set((st) => ({ settings: { ...st.settings, showCClefs: !st.settings.showCClefs } }))
       persistSettings()
     },
 

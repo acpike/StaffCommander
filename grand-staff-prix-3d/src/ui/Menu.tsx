@@ -288,6 +288,7 @@ function ProfileScreen({ onBack }: { onBack: () => void }) {
   const profile = useGame(activeProfile)
   const settings = useGame((s) => s.settings)
   const toggleMusic = useGame((s) => s.toggleMusic)
+  const toggleCClefs = useGame((s) => s.toggleCClefs)
   const setSteering = useGame((s) => s.setSteering)
   const daily = useGame((s) => s.daily)
   if (!profile) return null
@@ -373,6 +374,15 @@ function ProfileScreen({ onBack }: { onBack: () => void }) {
               ))}
             </div>
           </div>
+          <div className="rowDivider" />
+          <div className="row">
+            <span className="rowLabel">Alto &amp; Tenor clefs</span>
+            <button
+              className={`toggle${settings.showCClefs ? ' on' : ''}`}
+              aria-label="Toggle alto and tenor clefs"
+              onClick={toggleCClefs}
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -436,7 +446,7 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
       <div className="sec">
         <div className="secLabel">Level</div>
         <div className="levelList">
-          {CLEF_GROUPS.filter((g) => !g.optional).map((group) => (
+          {CLEF_GROUPS.filter((g) => !g.optional || settings.showCClefs).map((group) => (
             <div key={group.id} className="clefGroup">
               <div className="clefGroupHead">{group.label}</div>
               {DIFFICULTIES.map((band) => {
@@ -446,7 +456,7 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
                   <div key={band.id} className="bandGroup">
                     <div className="bandHead">{band.label}</div>
                     {bandLevels.map((s) => {
-                const isUnlocked = unlocked.has(s.id)
+                const isUnlocked = s.tier === 1 || unlocked.has(s.id)
                 const on = settings.levelId === s.id
                 const best = profile?.best[s.id]
                 return (

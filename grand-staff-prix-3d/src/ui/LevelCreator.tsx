@@ -4,10 +4,12 @@ import { candidateNoteNames, grandCandidateNames, type NoteMode } from '../data/
 import { TapStaff, ClefIcon, type StaffKind } from './TapStaff'
 import { Icon } from './icons'
 
-const CLEF_OPTS: { id: StaffKind; label: string }[] = [
+const CLEF_OPTS: { id: StaffKind; label: string; optional?: boolean }[] = [
   { id: 'treble', label: 'Treble' },
   { id: 'bass', label: 'Bass' },
   { id: 'grand', label: 'Grand' },
+  { id: 'alto', label: 'Alto', optional: true },
+  { id: 'tenor', label: 'Tenor', optional: true },
 ]
 
 // Mini staff-with-note icon for the "Name" mode button.
@@ -26,6 +28,7 @@ function NameIcon() {
 // it, and play it. Saved per device. Fits the viewport (no scroll).
 export function LevelCreator({ onClose }: { onClose: () => void }) {
   const addCustomLevel = useGame((s) => s.addCustomLevel)
+  const showCClefs = useGame((s) => s.settings.showCClefs)
   const [name, setName] = useState('')
   const [clef, setClef] = useState<StaffKind>('treble')
   const [mode, setMode] = useState<NoteMode>('mix')
@@ -65,7 +68,7 @@ export function LevelCreator({ onClose }: { onClose: () => void }) {
         <div className="createBlock">
           <div className="miniLabel">Clef</div>
           <div className="clefRow">
-            {CLEF_OPTS.map((o) => (
+            {CLEF_OPTS.filter((o) => !o.optional || showCClefs).map((o) => (
               <button
                 key={o.id}
                 className={`clefBtn${clef === o.id ? ' on' : ''}`}
