@@ -86,7 +86,8 @@ function StaffBlock({ letter, octave, clef, baseY, index, size }: { letter: Lett
 
   useFrame((state) => {
     const t = state.clock.elapsedTime
-    if (block.current) block.current.rotation.y = Math.sin(t * 0.8 + index) * 0.34
+    // gentle sway only — keep the staff facing the camera so it stays readable
+    if (block.current) block.current.rotation.y = Math.sin(t * 0.8 + index) * 0.12
     if (mat.current) mat.current.emissiveIntensity = 0.32 + Math.sin(t * 3 + index) * 0.18
     if (halo.current) {
       const s = 1 + Math.sin(t * 3 + index) * 0.12
@@ -102,10 +103,10 @@ function StaffBlock({ letter, octave, clef, baseY, index, size }: { letter: Lett
             <meshStandardMaterial ref={mat} color="#16233f" emissive="#1f3f72" emissiveIntensity={0.32} metalness={0.55} roughness={0.22} />
             <Edges threshold={15} color="#7fd0ff" />
           </RoundedBox>
-          {/* staff card on the front face — fills most of the block, high contrast */}
+          {/* staff card on the front face — fog OFF so the white stays white at distance */}
           <mesh position={[0, 0, size / 2 + 0.012]}>
             <planeGeometry args={[size * 0.96, size * 0.9]} />
-            <meshBasicMaterial map={tex} toneMapped={false} />
+            <meshBasicMaterial map={tex} toneMapped={false} fog={false} />
           </mesh>
           <Sparkles count={10} scale={size * 1.4} size={3.5} speed={0.45} color="#bfe8ff" />
         </group>
