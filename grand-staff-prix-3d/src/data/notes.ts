@@ -156,10 +156,10 @@ function diatonicToName(diatonic: number): string {
   return `${LETTERS[diatonic - octave * 7]}${octave}`
 }
 
-// Staff spans steps 0–8; ledger lines sit at ±2, ±4, ±6. So 3 ledger lines below
-// the bottom line = step -6, and the space just past it = -7; likewise +14/+15 above.
-export const LEDGER_MIN_STEP = -7 // 3 ledger lines below (incl. the space under)
-export const LEDGER_MAX_STEP = 15 // 3 ledger lines above (incl. the space over)
+// Staff spans steps 0–8; ledger lines sit at ±2, ±4, ±6. The range stops ON the
+// 3rd ledger line: step -6 below the bottom line, +14 above the top line.
+export const LEDGER_MIN_STEP = -6 // note on the 3rd ledger line below
+export const LEDGER_MAX_STEP = 14 // note on the 3rd ledger line above
 
 /** Selectable notes for a clef: the staff plus 3 ledger lines above & below. */
 export function candidateNoteNames(clef: Clef): string[] {
