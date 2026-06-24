@@ -41,6 +41,7 @@ Before ticking any box or committing:
   can download (curl works here); subagents CANNOT (network-caged) — so all asset
   fetching + art integration is done by the main thread, not delegated.
 - **Verify before checkpoint.** Build + smoke-test every change.
+- **Keep scenery LEAN** (shared geometry, no shadow-casters on props, modest counts) — heavy scenes tank fps and the dt-clamp stalls the car. Verify hudChanged=true per theme.
 - Subagents only for pure code/logic on DISJOINT files; run them in waves; QA-review after.
 
 ## Credential-gated (needs the user in the morning — prep but don't block on these)
@@ -126,3 +127,4 @@ NEXT iterations: candy stylized art; mountain pines+snow; desert cacti; then car
 - `v0.10-detailed-car` — swapped the box car for the detailed sculpted ProceduralBody (swept shell, glass canopy, wing, diffuser, detailed wheels), shared by game + menu. Rear-view verified; build green. Follow-up: open-cockpit body + helmeted avatar (avatar still the full-face character).
 - `v0.11-candy-canyon` — stylized Candy Canyon: pink gradient sky, gumdrop hills, streaming lollipops. Verified on screen (reads as candy). 4/5 maps name-match; only San Francisco gated (Google key / Golden Gate model).
 - `v0.12-golden-gate` — stylized Golden Gate Bridge for SF (orange towers + draping cables + coastal fog), keyless fallback. Verified on screen. ALL 5 maps now name-appropriate (4 strong + SF stylized; real SF needs Google key).
+- `v0.14-perf-verify` — perf fix: scenery must use SHARED geometry + NO shadow-casters + modest counts (a heavy mountain/candy pass tanked headless fps so the car couldn't reach a gate). Smoke window widened (36 samples) for reliable "gameplay advances" measurement. ALL 5 themes verified hudChanged=true.
