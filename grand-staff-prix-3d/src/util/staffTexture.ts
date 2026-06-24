@@ -29,6 +29,7 @@ export function drawNoteCard(
   colors: CardColors,
   dpr = Math.min(window.devicePixelRatio || 1, 3),
   size?: { w: number; h: number },
+  tight = false, // fill more of the canvas (used by the gate blocks)
 ) {
   const cssW = size?.w ?? (canvas.clientWidth || 240)
   const cssH = size?.h ?? (canvas.clientHeight || 150)
@@ -48,7 +49,7 @@ export function drawNoteCard(
   }
 
   // Staff geometry. gap = distance between adjacent staff lines (one staff space).
-  const gap = Math.round(Math.min(cssH / 7.5, cssW / 11))
+  const gap = Math.round(Math.min(cssH / (tight ? 5.2 : 7.5), cssW / (tight ? 8 : 11)))
   const staffSpace = gap // one space = one gap
   const staffWidth = gap * 7.2
   const left = (cssW - staffWidth) / 2
@@ -150,14 +151,15 @@ export async function ensureMusicFont(): Promise<void> {
 }
 
 /** Render a note's staff to a CanvasTexture — for the "find the note" gate blocks. */
-export function noteToStaffTexture(note: GameNote, w = 300, h = 240): THREE.CanvasTexture {
+export function noteToStaffTexture(note: GameNote, w = 320, h = 300): THREE.CanvasTexture {
   const canvas = document.createElement('canvas')
   drawNoteCard(
     canvas,
     note,
-    { bg: '#f4f4f8', staff: '#14121c', note: '#0a0814', clef: '#0a0814' },
+    { bg: '#ffffff', staff: '#000000', note: '#000000', clef: '#000000' },
     Math.min(window.devicePixelRatio || 1, 2),
     { w, h },
+    true,
   )
   const tex = new THREE.CanvasTexture(canvas)
   tex.colorSpace = THREE.SRGBColorSpace
