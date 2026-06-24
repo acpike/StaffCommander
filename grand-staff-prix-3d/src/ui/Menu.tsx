@@ -233,34 +233,23 @@ function CarGarage() {
         <div className="stageGlare" />
       </div>
       <div className="carHead">
-        <div className="carTitle">
-          <span className="carIndex">{`0${CARS.findIndex((c) => c.id === car.id) + 1}`}</span>
-          <span className="nm">{car.name}</span>
-        </div>
-        <div className="carSwatchDot" style={{ background: car.color }} />
+        <span className="carName">{car.name}</span>
       </div>
-      <div className="stats">
-        <div className="stat">
-          <span className="k">Speed</span>
-          <span className="track"><span className="fill2" style={{ width: `${car.speed * 100}%` }} /></span>
+      <div className="carStats">
+        <div className="cstat">
+          <span className="cstatK">Speed</span>
+          <span className="cstatBar"><span style={{ width: `${car.speed * 100}%` }} /></span>
         </div>
-        <div className="stat">
-          <span className="k">Grip</span>
-          <span className="track"><span className="fill2" style={{ width: `${car.grip * 100}%` }} /></span>
+        <div className="cstat">
+          <span className="cstatK">Grip</span>
+          <span className="cstatBar"><span style={{ width: `${car.grip * 100}%` }} /></span>
         </div>
       </div>
-      <div className="carThumbs">
+      <div className="pickRow">
         {CARS.map((c) => (
-          <button
-            key={c.id}
-            className={`carThumb${car.id === c.id ? ' on' : ''}`}
-            onClick={() => setCar(c.id)}
-            aria-label={c.name}
-          >
-            <span className="carThumbImg">
-              <AssetThumb src={`/thumbs/car_${c.id}.png`} alt={c.name} />
-            </span>
-            <span className="thumbName">{c.name}</span>
+          <button key={c.id} className={`pickCard${car.id === c.id ? ' on' : ''}`} onClick={() => setCar(c.id)} aria-label={c.name}>
+            <span className="pickImg"><AssetThumb src={`/thumbs/car_${c.id}.png`} alt={c.name} /></span>
+            <span className="pickName">{c.name}</span>
           </button>
         ))}
       </div>

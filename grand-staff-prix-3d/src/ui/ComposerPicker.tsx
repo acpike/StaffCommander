@@ -7,18 +7,18 @@ export function ComposerPicker() {
   const composerId = useGame((s) => activeProfile(s)?.composerId ?? s.settings.composerId)
   const setComposer = useGame((s) => s.setComposer)
   return (
-    <div className="composerThumbs">
+    <div className="pickRow">
       {COMPOSERS.map((c) => (
         <button
           key={c.id}
-          className={`composerThumb${composerId === c.id ? ' on' : ''}`}
+          className={`pickCard${composerId === c.id ? ' on' : ''}`}
           onClick={() => setComposer(c.id)}
           aria-label={c.name}
         >
-          <span className="composerAvatar">
+          <span className="pickImg round">
             <AssetThumb src={`/thumbs/composer_${c.id}.png`} alt={c.name} />
           </span>
-          <span className="composerName">{c.name}</span>
+          <span className="pickName">{c.name}</span>
         </button>
       ))}
     </div>

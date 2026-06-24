@@ -50,7 +50,7 @@ export function MenuCar3D({ carId }: { carId: string }) {
       dpr={[1, 2]}
       gl={{ antialias: true, alpha: true }}
       shadows
-      camera={{ position: [3.8, 2.1, 5.6], fov: 38 }}
+      camera={{ position: [3.1, 1.75, 4.5], fov: 33 }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping
         gl.toneMappingExposure = 1.1

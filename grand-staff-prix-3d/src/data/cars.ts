@@ -37,10 +37,10 @@ export interface CarSpec {
 
 export const CARS: CarSpec[] = [
   { id: 'vortex', name: 'Vortex GT', color: '#FF4E2E', accent: '#2A1410', speed: 0.7, grip: 0.7, topSpeedMul: 1.0, turnMul: 1.0, model: '/models/car_vortex.glb', modelRotation: Math.PI / 2, openCockpit: true, driverSeat: [0, 0.55, 0.15], driverScale: 1, driverRotation: Math.PI / 2 },
-  { id: 'brawler', name: 'Brawler', color: '#F5A623', accent: '#3A2606', speed: 0.55, grip: 0.9, topSpeedMul: 0.92, turnMul: 1.12, model: '/models/car_brawler.glb', modelRotation: -Math.PI / 2, openCockpit: true, driverSeat: [0, 0.6, 0.1], driverRotation: Math.PI / 2 },
-  { id: 'apex', name: 'Apex F1', color: '#34D1BF', accent: '#06302B', speed: 0.95, grip: 0.6, topSpeedMul: 1.12, turnMul: 0.9, model: '/models/car_apex.glb', modelRotation: Math.PI / 2, openCockpit: true, driverSeat: [0, 0.6, 0.1] },
-  { id: 'trailblaze', name: 'Trailblaze', color: '#5B8DEF', accent: '#0B1E3D', speed: 0.6, grip: 0.85, topSpeedMul: 0.95, turnMul: 1.08, model: '/models/car_trailblaze.glb', modelRotation: Math.PI / 2, openCockpit: true, driverSeat: [0, 0.6, 0.1], driverRotation: Math.PI / 2 },
-  { id: 'rumble', name: 'Rumble Rod', color: '#E84CA0', accent: '#3A0B26', speed: 0.8, grip: 0.75, topSpeedMul: 1.05, turnMul: 1.0, model: '/models/car_rumble.glb', modelRotation: Math.PI / 2, openCockpit: true, driverSeat: [0, 0.6, 0.5] },
+  { id: 'brawler', name: 'Brawler', color: '#F5A623', accent: '#3A2606', speed: 0.5, grip: 0.9, topSpeedMul: 0.92, turnMul: 1.12, model: '/models/car_brawler.glb', modelRotation: -Math.PI / 2, openCockpit: true, driverSeat: [0, 0.6, 0.1], driverRotation: Math.PI / 2 },
+  { id: 'apex', name: 'Apex F1', color: '#34D1BF', accent: '#06302B', speed: 0.9, grip: 0.5, topSpeedMul: 1.12, turnMul: 0.9, model: '/models/car_apex.glb', modelRotation: Math.PI / 2, openCockpit: true, driverSeat: [0, 0.6, 0.1] },
+  { id: 'trailblaze', name: 'Trailblaze', color: '#5B8DEF', accent: '#0B1E3D', speed: 0.6, grip: 0.8, topSpeedMul: 0.95, turnMul: 1.08, model: '/models/car_trailblaze.glb', modelRotation: Math.PI / 2, openCockpit: true, driverSeat: [0, 0.6, 0.1], driverRotation: Math.PI / 2 },
+  { id: 'rumble', name: 'Rumble Rod', color: '#E84CA0', accent: '#3A0B26', speed: 0.8, grip: 0.6, topSpeedMul: 1.05, turnMul: 1.0, model: '/models/car_rumble.glb', modelRotation: Math.PI / 2, openCockpit: true, driverSeat: [0, 0.6, 0.5] },
 ]
 
 export function carById(id: string): CarSpec {

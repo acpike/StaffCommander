@@ -449,7 +449,7 @@ body {
 }
 .carStage {
   position: relative;
-  height: 150px;
+  height: clamp(220px, 33vh, 300px);
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -2102,3 +2102,37 @@ body {
 .bandBar { display: block; height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
 .bandBar > span { display: block; height: 100%; border-radius: 999px; background: var(--acc-grad); transition: width 0.35s ease; }
 .bandBody { padding: 2px 8px 9px; display: flex; flex-direction: column; gap: 8px; }
+
+/* ── garage: clean name, prominent stats, shared swipeable picker ── */
+.carHead { display: flex; align-items: center; margin: 12px 2px 10px; }
+.carName { font-size: 24px; font-weight: 800; letter-spacing: -0.01em; }
+
+.carStats { display: flex; flex-direction: column; gap: 10px; margin: 0 2px 14px; }
+.cstat { display: flex; align-items: center; gap: 12px; }
+.cstatK { width: 44px; flex: none; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); }
+.cstatBar { flex: 1; height: 9px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+.cstatBar > span { display: block; height: 100%; border-radius: 999px; background: var(--acc-grad); box-shadow: 0 0 10px rgba(255, 90, 46, 0.45); transition: width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+.pickRow {
+  display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 8px; margin: 0 -2px;
+  scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.pickRow::-webkit-scrollbar { display: none; }
+.pickCard {
+  flex: 0 0 auto; width: 118px; scroll-snap-align: center;
+  border-radius: 14px; border: 2px solid var(--line); cursor: pointer;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+  display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 9px 7px 8px;
+  transition: border-color 0.15s, background 0.15s, transform 0.08s, box-shadow 0.15s;
+}
+.pickCard.on { border-color: var(--acc); background: var(--acc-soft); box-shadow: 0 6px 18px rgba(255, 90, 46, 0.22); }
+.pickCard:active { transform: scale(0.96); }
+.pickImg {
+  width: 100%; height: 70px; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(75% 65% at 50% 32%, #eef1f6 0%, #c2c9d6 55%, #939bac 100%);
+}
+.pickImg img { width: 100%; height: 100%; object-fit: contain; }
+.pickImg.round { background: #15131d; }
+.pickImg.round img { object-fit: cover; }
+.pickName { font-size: 11px; font-weight: 600; color: var(--dim); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.pickCard.on .pickName { color: var(--txt); }
