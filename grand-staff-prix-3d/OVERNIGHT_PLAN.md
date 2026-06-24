@@ -14,15 +14,18 @@ Self-driving queue. Each loop iteration: pick the next unchecked task → do it 
   so the morning has a clean list of restorable versions.
 - Keep a running version list in the Log section at the bottom.
 
-## ANTI-SLOP QA GATE (run EVERY iteration that touches graphics or gameplay — the user will be furious if they wake to slop)
+## ANTI-SLOP QA GATE — applies to the WHOLE experience, not just maps (the user will be furious if they wake to slop)
+The bar covers EVERYTHING: cars, avatars, the menu/garage, the avatar builder, the HUD/note card,
+every map, how it PLAYS and FEELS, the level/mastery progression, the audio, and every game.
 Before ticking any box or committing:
 1. **Gameplay works**: `npm run build` green AND `node smoke.mjs` reaches `playing`, the
    loop advances (`hudChanged`), and `pageErrors`/`consoleErrors` are empty. Non-working
    gameplay → revert, do not ship.
-2. **Graphics aren't trashy**: capture menu + gameplay screenshots and **critically
-   self-review each PNG (main thread Reads the images) — judge as harshly as the user
-   would**: cheap/flat/uncanny/blocky/broken = FAIL. Also spawn a QA review agent for a
-   second opinion on the screenshots + code.
+2. **Nothing looks/feels trashy — anywhere**: capture screenshots of EVERY surface the change
+   touches (menu, garage/car, avatar, HUD, the map, game-over) and **critically self-review each
+   PNG (main thread Reads the images) — judge as harshly as the user would**: cheap / flat /
+   uncanny / blocky / barren / off-brand / doesn't-match-its-name / clunky = FAIL. Also sanity-check
+   feel (controls, pacing, level difficulty/mastery). Spawn a QA review agent for a second opinion.
 3. **Ship only on PASS of BOTH.** If graphics still look cheap, do NOT commit — iterate with
    real downloaded assets, or `git checkout -- <files>` back to the last good checkpoint.
    Never leave shipped slop. Log honestly here what passed/failed each iteration.
