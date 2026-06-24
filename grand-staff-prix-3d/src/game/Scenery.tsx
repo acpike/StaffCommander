@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { type Theme } from '../data/themes'
 import { carState } from './carState'
 import { CandyScene } from './CandyScene'
+import { isTouchDevice } from '../util/device'
 import { SFScene } from './SFScene'
 import { MountainScene } from './MountainScene'
 import { DesertScene } from './DesertScene'
@@ -76,8 +77,8 @@ function Sun({ theme }: { theme: Theme }) {
         color={theme.sun}
         intensity={1.15}
         castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
+        shadow-mapSize-width={isTouchDevice ? 1024 : 2048}
+        shadow-mapSize-height={isTouchDevice ? 1024 : 2048}
         shadow-camera-near={1}
         shadow-camera-far={160}
         shadow-camera-left={-55}

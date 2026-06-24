@@ -11,6 +11,7 @@ import { Car } from './Car'
 import { Gates } from './Gates'
 import { Explosions } from './Explosions'
 import { Effects } from './Effects'
+import { isTouchDevice } from '../util/device'
 
 export function GameScene() {
   const themeId = useGame((s) => s.settings.themeId)
@@ -21,8 +22,8 @@ export function GameScene() {
       className="fill"
       shadows
       flat
-      dpr={[1, 2]}
-      gl={{ antialias: true, powerPreference: 'high-performance' }}
+      dpr={isTouchDevice ? [1, 1.5] : [1, 2]}
+      gl={{ antialias: !isTouchDevice, powerPreference: 'high-performance' }}
       camera={{ position: [0, 4.3, 9], fov: 55, near: 0.1, far: 320 }}
     >
       <Scenery theme={theme} />
