@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { type Theme } from '../data/themes'
@@ -62,6 +62,9 @@ export function Track({ theme }: { theme: Theme }) {
   const leftPosts = useRef<(THREE.Mesh | null)[]>([])
   const rightPosts = useRef<(THREE.Mesh | null)[]>([])
 
+  // dispose the canvas/loaded textures when the track unmounts or theme changes
+  useEffect(() => () => { roadTex.dispose(); groundTex.dispose() }, [roadTex, groundTex])
+
   useFrame(() => {
     // the whole road/ground group rides with the car along Z …
     if (follow.current) follow.current.position.z = carState.z
@@ -113,7 +116,7 @@ export function Track({ theme }: { theme: Theme }) {
         </mesh>
       ))}
       {Array.from({ length: POSTS_PER_SIDE }).map((_, j) => (
-        <mesh key={`rp${j}`} ref={(m) => (rightPosts.current[j] = m)} position={[-TRACK_HALF - 1.1, 0.8, 0]} castShadow>
+        <mesh key={`rp${j}`} ref={(m) => { rightPosts.current[j] = m }} position={[-TRACK_HALF - 1.1, 0.8, 0]} castShadow>
           <boxGeometry args={[0.16, 1.6, 0.16]} />
           <meshStandardMaterial color={theme.sun} emissive={theme.sun} emissiveIntensity={0.5} toneMapped={false} />
         </mesh>

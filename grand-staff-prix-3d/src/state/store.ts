@@ -277,8 +277,13 @@ export const useGame = create<GameState>()((set, get) => {
       persistSettings()
     },
     removeCustomLevel: (id) => {
-      set((st) => ({ customLevels: st.customLevels.filter((l) => l.id !== id) }))
+      set((st) => ({
+        customLevels: st.customLevels.filter((l) => l.id !== id),
+        // if the deleted level was selected, fall back to the first built-in level
+        settings: st.settings.levelId === id ? { ...st.settings, levelId: NOTE_SETS[0].id } : st.settings,
+      }))
       saveJSON(LS_CUSTOM, get().customLevels)
+      persistSettings()
     },
     setCar: (id) => {
       set((st) => ({ settings: { ...st.settings, carId: id } }))

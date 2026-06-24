@@ -455,7 +455,7 @@ function Setup({ onSwitch }: { onSwitch: () => void }) {
           {Icon.play} Start Race
         </button>
         <p className="tiny">
-          Steer into the gate whose letter matches the note on the staff. Reach Stage 3 to unlock the next level.
+          Steer into the gate whose letter matches the note on the staff. Master a level (Stage 4, 90%+ over 30 notes) to unlock the next.
         </p>
       </div>
     </div>
