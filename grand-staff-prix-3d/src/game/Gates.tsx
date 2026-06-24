@@ -1,12 +1,12 @@
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Text3D, Center, Float, Edges, Sparkles, RoundedBox } from '@react-three/drei'
+import { Text3D, Center, Float, Edges, Sparkles, RoundedBox, Html } from '@react-three/drei'
 import { RigidBody, CuboidCollider, type IntersectionEnterPayload } from '@react-three/rapier'
 import { ActiveCollisionTypes } from '@dimforge/rapier3d-compat'
 import * as THREE from 'three'
 import { useGame } from '../state/store'
 import { makeNote, type Letter, type Clef } from '../data/notes'
-import { noteToStaffTexture } from '../util/staffTexture'
+import { drawNoteCard } from '../util/staffTexture'
 import { carState } from './carState'
 import { GATE_DISTANCE, GATE_THICKNESS, GATE_HEIGHT, laneCenters, laneWidth } from './constants'
 
@@ -77,20 +77,22 @@ function HoloBlock({ letter, baseY, index, size }: { letter: Letter; baseY: numb
 // "Find the note" block: same crystal, but its front face shows a staff with the
 // note (for this block's letter) instead of an extruded letter.
 function StaffBlock({ letter, octave, clef, baseY, index, size }: { letter: Letter; octave: number; clef: Clef; baseY: number; index: number; size: number }) {
-  const block = useRef<THREE.Group>(null)
   const mat = useRef<THREE.MeshStandardMaterial>(null)
   const halo = useRef<THREE.Mesh>(null)
-  const tex = useMemo(() => noteToStaffTexture(makeNote(`${letter}${octave}`, clef)), [letter, octave, clef])
-  // HDR-bright tint so the white survives the post-process ACES tone-map and lands
-  // back at true white (black stays black) — fixes the beige/grey wash.
-  const boost = useMemo(() => new THREE.Color(2.6, 2.6, 2.6), [])
-  // dispose the canvas texture when the block unmounts (each wave) — avoids a GPU leak
-  useEffect(() => () => tex.dispose(), [tex])
+  const cv = useRef<HTMLCanvasElement>(null)
+
+  // Draw the staff onto a DOM canvas — pure white/black, like the HUD card.
+  useEffect(() => {
+    if (!cv.current) return
+    const draw = () =>
+      cv.current &&
+      drawNoteCard(cv.current, makeNote(`${letter}${octave}`, clef), { bg: '#ffffff', staff: '#000000', note: '#000000', clef: '#000000' }, undefined, undefined, true)
+    draw()
+    if ('fonts' in document) (document as Document).fonts.ready.then(draw)
+  }, [letter, octave, clef])
 
   useFrame((state) => {
     const t = state.clock.elapsedTime
-    // gentle sway only — keep the staff facing the camera so it stays readable
-    if (block.current) block.current.rotation.y = Math.sin(t * 0.8 + index) * 0.12
     if (mat.current) mat.current.emissiveIntensity = 0.32 + Math.sin(t * 3 + index) * 0.18
     if (halo.current) {
       const s = 1 + Math.sin(t * 3 + index) * 0.12
@@ -101,16 +103,31 @@ function StaffBlock({ letter, octave, clef, baseY, index, size }: { letter: Lett
   return (
     <group>
       <Float speed={1.5 + (index % 3) * 0.3} floatIntensity={0.7} rotationIntensity={0}>
-        <group position={[0, baseY, 0]} ref={block}>
+        <group position={[0, baseY, 0]}>
           <RoundedBox args={[size, size, size]} radius={size * 0.07} smoothness={4} castShadow>
             <meshStandardMaterial ref={mat} color="#16233f" emissive="#1f3f72" emissiveIntensity={0.32} metalness={0.55} roughness={0.22} />
             <Edges threshold={15} color="#7fd0ff" />
           </RoundedBox>
-          {/* staff card on the front face — fog OFF so the white stays white at distance */}
-          <mesh position={[0, 0, size / 2 + 0.012]}>
-            <planeGeometry args={[size * 0.96, size * 0.9]} />
-            <meshBasicMaterial map={tex} color={boost} toneMapped={false} fog={false} />
-          </mesh>
+          {/* crisp DOM staff (drei Html) — bypasses tone-mapping / bloom / fog entirely */}
+          <Html
+            center
+            distanceFactor={9}
+            position={[0, 0, size / 2 + 0.04]}
+            zIndexRange={[0, 0]}
+            style={{ pointerEvents: 'none', userSelect: 'none' }}
+          >
+            <canvas
+              ref={cv}
+              style={{
+                width: `${Math.round(size * 62)}px`,
+                height: `${Math.round(size * 56)}px`,
+                background: '#ffffff',
+                borderRadius: '12px',
+                display: 'block',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
+              }}
+            />
+          </Html>
           <Sparkles count={10} scale={size * 1.4} size={3.5} speed={0.45} color="#bfe8ff" />
         </group>
       </Float>
