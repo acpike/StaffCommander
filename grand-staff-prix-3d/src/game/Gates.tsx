@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Text3D, Center, Float, Edges, Sparkles, RoundedBox, Html } from '@react-three/drei'
 import { RigidBody, CuboidCollider, type IntersectionEnterPayload } from '@react-three/rapier'
@@ -79,17 +79,20 @@ function HoloBlock({ letter, baseY, index, size }: { letter: Letter; baseY: numb
 function StaffBlock({ letter, octave, clef, baseY, index, size }: { letter: Letter; octave: number; clef: Clef; baseY: number; index: number; size: number }) {
   const mat = useRef<THREE.MeshStandardMaterial>(null)
   const halo = useRef<THREE.Mesh>(null)
-  const cv = useRef<HTMLCanvasElement>(null)
 
-  // Draw the staff onto a DOM canvas — pure white/black, like the HUD card.
-  useEffect(() => {
-    if (!cv.current) return
-    const draw = () =>
-      cv.current &&
-      drawNoteCard(cv.current, makeNote(`${letter}${octave}`, clef), { bg: '#ffffff', staff: '#000000', note: '#000000', clef: '#000000' }, undefined, { w: 300, h: 264 }, true)
-    draw()
-    if ('fonts' in document) (document as Document).fonts.ready.then(draw)
-  }, [letter, octave, clef])
+  // Draw the staff onto the DOM canvas the moment it mounts. drei <Html> mounts
+  // its canvas AFTER our effects run, so a ref callback is the reliable trigger
+  // (a useEffect saw a null ref → the blank white cards).
+  const drawStaff = useCallback(
+    (el: HTMLCanvasElement | null) => {
+      if (!el) return
+      const render = () =>
+        drawNoteCard(el, makeNote(`${letter}${octave}`, clef), { bg: '#ffffff', staff: '#000000', note: '#000000', clef: '#000000' }, undefined, { w: 300, h: 264 }, true)
+      render()
+      if ('fonts' in document) (document as Document).fonts.ready.then(render)
+    },
+    [letter, octave, clef],
+  )
 
   useFrame((state) => {
     const t = state.clock.elapsedTime
@@ -117,7 +120,7 @@ function StaffBlock({ letter, octave, clef, baseY, index, size }: { letter: Lett
             style={{ pointerEvents: 'none', userSelect: 'none' }}
           >
             <canvas
-              ref={cv}
+              ref={drawStaff}
               style={{
                 width: '150px',
                 height: '132px',
