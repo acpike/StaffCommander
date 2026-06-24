@@ -449,7 +449,7 @@ body {
 }
 .carStage {
   position: relative;
-  height: clamp(220px, 33vh, 300px);
+  aspect-ratio: 16 / 11;
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -2128,11 +2128,11 @@ body {
 .pickCard.on { border-color: var(--acc); background: var(--acc-soft); box-shadow: 0 6px 18px rgba(255, 90, 46, 0.22); }
 .pickCard:active { transform: scale(0.96); }
 .pickImg {
-  width: 100%; height: 70px; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 92px; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center;
   background: radial-gradient(75% 65% at 50% 32%, #eef1f6 0%, #c2c9d6 55%, #939bac 100%);
 }
 .pickImg img { width: 100%; height: 100%; object-fit: contain; }
 .pickImg.round { background: #15131d; }
-.pickImg.round img { object-fit: cover; }
+.pickImg.round img { object-fit: contain; object-position: center; }
 .pickName { font-size: 11px; font-weight: 600; color: var(--dim); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .pickCard.on .pickName { color: var(--txt); }
