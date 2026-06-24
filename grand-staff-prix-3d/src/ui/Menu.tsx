@@ -15,6 +15,15 @@ import { AssetThumb } from './AssetThumb'
 import { LevelCreator } from './LevelCreator'
 import { rankForXp, ACHIEVEMENTS, dailyChallenges } from '../data/progression'
 
+// Bravura clef glyph(s) per track, for the level-row badge.
+const CLEF_BADGE: Record<string, string> = {
+  treble: String.fromCharCode(0xe050),
+  bass: String.fromCharCode(0xe062),
+  grand: String.fromCharCode(0xe050, 0xe062),
+  alto: String.fromCharCode(0xe05c),
+  tenor: String.fromCharCode(0xe05c),
+}
+
 type View = 'select' | 'create' | 'play' | 'garage' | 'profile' | 'leaderboard'
 
 function Hero() {
@@ -446,52 +455,50 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
       <div className="sec">
         <div className="secLabel">Level</div>
         <div className="levelList">
-          {CLEF_GROUPS.filter((g) => !g.optional || settings.showCClefs).map((group) => (
-            <div key={group.id} className="clefGroup">
-              <div className="clefGroupHead">{group.label}</div>
-              {DIFFICULTIES.map((band) => {
-                const bandLevels = NOTE_SETS.filter((s) => s.group === group.id && s.band === band.id)
-                if (!bandLevels.length) return null
-                return (
-                  <div key={band.id} className="bandGroup">
-                    <div className="bandHead">{band.label}</div>
-                    {bandLevels.map((s) => {
-                const isUnlocked = s.tier === 1 || unlocked.has(s.id)
-                const on = settings.levelId === s.id
-                const best = profile?.best[s.id]
-                return (
-                  <button
-                    key={s.id}
-                    className={`levelRow${on ? ' on' : ''}${isUnlocked ? '' : ' locked'}`}
-                    disabled={!isUnlocked}
-                    onClick={() => isUnlocked && setLevel(s.id)}
-                  >
-                    <span className="bar" />
-                    <span className="num">{s.tier}</span>
-                    <span className="info">
-                      <div className="nm">{s.name}</div>
-                      <div className="ds">{s.blurb}</div>
-                    </span>
-                    {isUnlocked ? (
-                      <>
-                        {mastered.has(s.id) && <span className="masteredTag">✓ Mastered</span>}
-                        {best ? (
-                          <span className="best"><span className="bestV">{best}</span><span className="bestK">BEST</span></span>
-                        ) : (
-                          on && !mastered.has(s.id) && <span className="nowTag">Selected</span>
-                        )}
-                      </>
-                    ) : (
-                      <span className="lock">{Icon.lock} Locked</span>
-                    )}
-                  </button>
-                      )
-                    })}
-                  </div>
-                )
-              })}
-            </div>
-          ))}
+          {DIFFICULTIES.map((band) => {
+            const bandLevels = NOTE_SETS.filter(
+              (s) => s.band === band.id && (settings.showCClefs || (s.group !== 'alto' && s.group !== 'tenor')),
+            )
+            if (!bandLevels.length) return null
+            return (
+              <div key={band.id} className="clefGroup">
+                <div className="clefGroupHead">{band.label}</div>
+                {bandLevels.map((s) => {
+                  const isUnlocked = s.tier === 1 || unlocked.has(s.id)
+                  const on = settings.levelId === s.id
+                  const best = profile?.best[s.id]
+                  const clefLabel = CLEF_GROUPS.find((g) => g.id === s.group)?.label ?? ''
+                  return (
+                    <button
+                      key={s.id}
+                      className={`levelRow${on ? ' on' : ''}${isUnlocked ? '' : ' locked'}`}
+                      disabled={!isUnlocked}
+                      onClick={() => isUnlocked && setLevel(s.id)}
+                    >
+                      <span className="bar" />
+                      <span className="clefBadge" aria-hidden>{CLEF_BADGE[s.group ?? 'treble']}</span>
+                      <span className="info">
+                        <div className="nm">{s.name}</div>
+                        <div className="ds">{clefLabel} · {s.blurb}</div>
+                      </span>
+                      {isUnlocked ? (
+                        <>
+                          {mastered.has(s.id) && <span className="masteredTag">✓ Mastered</span>}
+                          {best ? (
+                            <span className="best"><span className="bestV">{best}</span><span className="bestK">BEST</span></span>
+                          ) : (
+                            on && !mastered.has(s.id) && <span className="nowTag">Selected</span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="lock">{Icon.lock} Locked</span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            )
+          })}
           {customLevels.map((s) => {
             const on = settings.levelId === s.id
             return (

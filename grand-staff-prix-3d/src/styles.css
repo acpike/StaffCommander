@@ -2014,3 +2014,16 @@ body {
 .createActions .btn { flex: 1; }
 .modeBtn { padding: 8px 6px; gap: 2px; }
 .modeSvg { width: 40px; height: 26px; }
+
+/* clef glyph badge on each level row (difficulty-grouped list) */
+.clefBadge {
+  font-family: 'Bravura';
+  font-size: 19px;
+  line-height: 1;
+  min-width: 40px;
+  text-align: center;
+  color: var(--dim);
+  flex: none;
+}
+.levelRow.on .clefBadge { color: var(--acc2); }
+.levelRow.locked .clefBadge { opacity: 0.4; }
