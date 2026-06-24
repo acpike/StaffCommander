@@ -46,8 +46,8 @@ function CandyHills() {
   // soft pastel gumdrop domes ringing the far horizon
   const hills = useMemo(
     () =>
-      Array.from({ length: 7 }, (_, i) => {
-        const ang = (i / 7) * Math.PI * 2
+      Array.from({ length: 5 }, (_, i) => {
+        const ang = (i / 5) * Math.PI * 2
         return {
           x: Math.sin(ang) * 230,
           z: -Math.cos(ang) * 230,
@@ -64,7 +64,7 @@ function CandyHills() {
     <group ref={ref}>
       {hills.map((h, i) => (
         <mesh key={i} position={[h.x, -h.r * 0.55, h.z]}>
-          <sphereGeometry args={[h.r, 24, 16]} />
+          <sphereGeometry args={[h.r, 16, 10]} />
           <meshStandardMaterial color={h.color} roughness={0.85} metalness={0} fog={false} />
         </mesh>
       ))}
@@ -72,13 +72,22 @@ function CandyHills() {
   )
 }
 
-const POPS = 16
-const POP_SPACING = 18
+const POPS = 10
+const POP_SPACING = 22
 const POP_COLORS = ['#ff5fa2', '#ffd35c', '#5fe0c0', '#c79bff', '#ff8fc7', '#8fd0ff']
+const POP_H = 3.4
 
 function Lollipops() {
   const left = useRef<(THREE.Group | null)[]>([])
   const right = useRef<(THREE.Group | null)[]>([])
+  // shared geometries + materials (perf: no per-lollipop allocation, no shadow casters)
+  const stickGeo = useMemo(() => new THREE.CylinderGeometry(0.12, 0.12, POP_H, 8), [])
+  const discGeo = useMemo(() => new THREE.TorusGeometry(0.95, 0.42, 10, 18), [])
+  const sphereGeo = useMemo(() => new THREE.SphereGeometry(0.55, 12, 12), [])
+  const stickMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#fff3fa', roughness: 0.5 }), [])
+  const whiteMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.25 }), [])
+  const colorMats = useMemo(() => POP_COLORS.map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.3, metalness: 0.05 })), [])
+
   useFrame(() => {
     const baseline = (Math.floor(carState.z / POP_SPACING) + 2) * POP_SPACING
     for (let j = 0; j < POPS; j++) {
@@ -90,24 +99,12 @@ function Lollipops() {
     }
   })
   const lolly = (key: string, side: number, j: number, ref: (g: THREE.Group | null) => void) => {
-    const color = POP_COLORS[(j + (side > 0 ? 0 : 3)) % POP_COLORS.length]
-    const h = 3 + ((j * 7) % 3) * 0.5
+    const mat = colorMats[(j + (side > 0 ? 0 : 3)) % colorMats.length]
     return (
       <group key={key} ref={ref} position={[side * (TRACK_HALF + 3.5), 0, 0]}>
-        {/* stick */}
-        <mesh position={[0, h / 2, 0]} castShadow>
-          <cylinderGeometry args={[0.12, 0.12, h, 10]} />
-          <meshStandardMaterial color="#fff3fa" roughness={0.5} />
-        </mesh>
-        {/* candy disc */}
-        <mesh position={[0, h + 1.1, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow>
-          <torusGeometry args={[0.95, 0.42, 14, 28]} />
-          <meshStandardMaterial color={color} roughness={0.3} metalness={0.05} />
-        </mesh>
-        <mesh position={[0, h + 1.1, 0.02]}>
-          <sphereGeometry args={[0.55, 18, 18]} />
-          <meshStandardMaterial color="#ffffff" roughness={0.25} metalness={0.05} />
-        </mesh>
+        <mesh position={[0, POP_H / 2, 0]} geometry={stickGeo} material={stickMat} />
+        <mesh position={[0, POP_H + 1.1, 0]} rotation={[Math.PI / 2, 0, 0]} geometry={discGeo} material={mat} />
+        <mesh position={[0, POP_H + 1.1, 0.02]} geometry={sphereGeo} material={whiteMat} />
       </group>
     )
   }

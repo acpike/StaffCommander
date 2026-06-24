@@ -84,16 +84,20 @@ try {
     throw new Error('noteCard never appeared; domState=' + JSON.stringify(report.domState))
   }
 
-  // sample the HUD over time to prove the game loop advances (score/hearts change)
+  // sample the HUD over time to prove the game loop advances (score/hearts change).
+  // Window is generous because the headless SwiftShader renderer is far slower
+  // than any real GPU; with the per-frame dt clamp, low fps means the car needs
+  // more wall-clock to travel to a gate. A real browser resolves waves in ~4s.
   const samples = []
-  for (let i = 0; i < 16; i++) {
+  for (let i = 0; i < 36; i++) {
     const txt = await page.locator('.hudStats').textContent().catch(() => '')
     samples.push((txt || '').replace(/\s+/g, ' ').trim())
-    if (i === 6) await page.keyboard.down('ArrowLeft')
-    if (i === 9) {
+    if (i === 8) await page.keyboard.down('ArrowLeft')
+    if (i === 14) {
       await page.keyboard.up('ArrowLeft')
       await page.keyboard.down('ArrowRight')
     }
+    if (i === 20) await page.keyboard.up('ArrowRight')
     await page.waitForTimeout(500)
   }
   await page.keyboard.up('ArrowRight')
