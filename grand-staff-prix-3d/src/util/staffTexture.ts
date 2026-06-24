@@ -84,9 +84,15 @@ export function drawNoteCard(
   if (note.clef === 'treble') {
     // gClef registration sits on the G line = staff step 2.
     ctx.fillText(GLYPH.gClef, clefX, yOfStep(2))
-  } else {
+  } else if (note.clef === 'bass') {
     // fClef registration sits on the F line = staff step 6.
     ctx.fillText(GLYPH.fClef, clefX, yOfStep(6))
+  } else if (note.clef === 'alto') {
+    // C-clef (U+E05C) centred on middle C — alto = middle line (step 4).
+    ctx.fillText(String.fromCharCode(0xe05c), clefX, yOfStep(4))
+  } else {
+    // tenor C-clef centred on middle C = 4th line (step 6).
+    ctx.fillText(String.fromCharCode(0xe05c), clefX, yOfStep(6))
   }
 
   // ── notehead ──

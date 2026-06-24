@@ -3,10 +3,10 @@ import { makeNote, staffStep, type Clef } from '../data/notes'
 
 // SMuFL codepoints (Bravura, vendored in /public/fonts).
 const CLEF_GLYPH: Record<Clef, string> = {
-  treble: '', // gClef
-  bass: '', // fClef
-  alto: '', // cClef
-  tenor: '', // cClef
+  treble: String.fromCharCode(0xe050), // gClef
+  bass: String.fromCharCode(0xe062), // fClef
+  alto: String.fromCharCode(0xe05c), // cClef
+  tenor: String.fromCharCode(0xe05c), // cClef
 }
 // Staff step the clef glyph registers on (treble G line = 2, bass F line = 6,
 // alto middle-C line = 4, tenor middle-C line = 6).
