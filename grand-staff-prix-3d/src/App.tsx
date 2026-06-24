@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useGame } from './state/store'
 import { input } from './game/input'
 import { ensureMusicFont } from './util/staffTexture'
@@ -7,9 +7,11 @@ import { Menu } from './ui/Menu'
 import { HUD } from './ui/HUD'
 import { Countdown } from './ui/Countdown'
 import { GameOver } from './ui/GameOver'
+import { Splash } from './ui/Splash'
 
 export function App() {
   const screen = useGame((s) => s.screen)
+  const [started, setStarted] = useState(false)
 
   useEffect(() => {
     input.attach()
@@ -18,6 +20,8 @@ export function App() {
   }, [])
 
   const inGame = screen !== 'menu'
+
+  if (!started) return <Splash onStart={() => setStarted(true)} />
 
   return (
     <>
