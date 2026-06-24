@@ -53,16 +53,33 @@ Before ticking any box or committing:
 - [x] Fix the roadside-prop popping bug — REMOVED the cheap procedural props + silhouette mountains entirely (no popping); HDRI horizon replaces distance. [v0.2]
 - [x] Wire HDRI skies as photographic backgrounds per theme via drei Environment. [v0.2]
 - [x] Texture the ground per theme with real PBR textures (public/tex) in Track. [v0.2]
-- [ ] (later) Add real CC0 vegetation/rock GLBs as instanced roadside scenery, smoothly recycled.
-- [ ] Cars: download the best CC0 sleek car GLB(s); route RealCarModel→GltfBody; tint paint per car; re-tune driver seat; integrate into CarModel.
-- [ ] Avatars: implement helmeted-racer (no face) now; wire Ready Player Me behind env var for later. Show full body in the builder preview.
-- [ ] San Francisco: keyless fallback now (panorama/HDRI + recognizable Golden Gate silhouette done tastefully); real 3D-tiles path behind the API-key env var.
+- [ ] **NAME-MATCH each map (HARD REQUIREMENT — the scene must look like its name):**
+  - **Mountain Pass** → full-environment mountain HDRI (real peaks+snow) + real CC0 pine trees + bright sun.
+  - **Desert Run** → desert HDRI (dunes/mesas) + real CC0 cacti + rocks.
+  - **San Francisco** → Golden Gate Bridge + SF skyline + fog. PRIMARY: Google Photorealistic 3D Tiles via
+    `3d-tiles-renderer/r3f` behind `VITE_GOOGLE_TILES_KEY` (user-provided). FALLBACK: hunt a CC0 Golden Gate
+    Bridge GLB + SF panorama; if neither, leave wired for the key + flag for morning. Do NOT ship a generic city as "SF".
+  - **Candy Canyon** → deliberately stylized candy hills + lollipops (no real-world place; make it charming, not cheap).
+  - **Deep Space** → starfield + real planet/asteroid models.
+  - GATE: each map's gameplay screenshot must read as its name, or revert.
+- [ ] Add real CC0 vegetation/rock/landmark GLBs as instanced scenery, smoothly recycled (per-theme list above).
+- [ ] Cars: use **OPEN-COCKPIT** car bodies so the driver/avatar is clearly visible (download CC0 open-top/F1-style GLB, or build a clean open-cockpit body). Tint paint per car; integrate into CarModel; re-tune the seated avatar.
+- [ ] Avatars (helmeted racer — NO uncanny face): a helmet with the visor showing only the skin around the eyes, hair peeking out under the helmet, racing suit. Customizable: **helmet color, suit/clothes color, hair style+color (under helmet), skin tone (visor opening), optional beard/mustache**. Replace the current full-face character. Full body shown in the builder preview; visible in the open cockpit.
+- [ ] San Francisco: see NAME-MATCH item above (Google 3D Tiles behind VITE_GOOGLE_TILES_KEY; else hunt Golden Gate GLB; never ship a generic city as SF).
 
 ## PHASE 2 — Features (subagent waves on disjoint files + main-thread backbone)
 - [ ] Curved-course backbone (main thread): spline-based track, straight for beginner levels → gentle curves later; car/camera/gates follow the spline. Verify drivable via smoke test.
 - [ ] Level creator: students build custom note sets (pick clef/notes/range) saved per profile, playable as a level. (store + notes + new UI)
 - [ ] Track types: multiple track styles selectable.
 - [ ] Gamification for 3D: XP/levels/ranks, achievements, gems, daily challenges (per README).
+- [ ] **Mastery-based level design (THINK THIS THROUGH — current "reach Stage 3" unlock is far too easy/short):**
+  - Stages must be longer and progressively harder (more notes, faster, fewer lives margin).
+  - Unlocking the NEXT level requires demonstrated **mastery**, not just survival — e.g. sustain a high
+    accuracy (~90%+) over a meaningful sample of notes AND clear the level's final stage, ideally across
+    more than one run. Track per-note-set accuracy/attempts so mastery is measured, not luck.
+  - Show a mastery meter / "X% to mastery" so students see the bar. Award a mastery badge + bonus XP on clearing.
+  - XP curve: meaningful, rewards accuracy + streaks + speed; ranks feel earned. Re-read README XP table and
+    design real numbers (don't hand-wave).
 - [ ] 2D game (`../grand-staff-prix.html`): main-thread redesign + gamification (subagents are permission-blocked on it; do it from main thread).
 
 ## PHASE 3 — QA
