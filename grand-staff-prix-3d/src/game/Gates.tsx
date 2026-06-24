@@ -81,6 +81,9 @@ function StaffBlock({ letter, octave, clef, baseY, index, size }: { letter: Lett
   const mat = useRef<THREE.MeshStandardMaterial>(null)
   const halo = useRef<THREE.Mesh>(null)
   const tex = useMemo(() => noteToStaffTexture(makeNote(`${letter}${octave}`, clef)), [letter, octave, clef])
+  // HDR-bright tint so the white survives the post-process ACES tone-map and lands
+  // back at true white (black stays black) — fixes the beige/grey wash.
+  const boost = useMemo(() => new THREE.Color(2.6, 2.6, 2.6), [])
   // dispose the canvas texture when the block unmounts (each wave) — avoids a GPU leak
   useEffect(() => () => tex.dispose(), [tex])
 
@@ -106,7 +109,7 @@ function StaffBlock({ letter, octave, clef, baseY, index, size }: { letter: Lett
           {/* staff card on the front face — fog OFF so the white stays white at distance */}
           <mesh position={[0, 0, size / 2 + 0.012]}>
             <planeGeometry args={[size * 0.96, size * 0.9]} />
-            <meshBasicMaterial map={tex} toneMapped={false} fog={false} />
+            <meshBasicMaterial map={tex} color={boost} toneMapped={false} fog={false} />
           </mesh>
           <Sparkles count={10} scale={size * 1.4} size={3.5} speed={0.45} color="#bfe8ff" />
         </group>
