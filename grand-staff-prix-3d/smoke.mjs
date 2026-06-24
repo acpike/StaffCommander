@@ -33,11 +33,12 @@ try {
   report.menuLoaded = true
   await page.screenshot({ path: shot('1-menu') })
 
-  // add a player
+  // add a player: Add Player -> name -> Next -> avatar builder -> Create Player
   await page.getByText('Add Player').click()
-  await page.locator('.input').fill('Tester')
-  await page.getByRole('button', { name: 'Save' }).click()
-  await page.waitForSelector('.levelList', { timeout: 5000 })
+  await page.locator('.input').first().fill('Tester')
+  await page.getByRole('button', { name: /next/i }).first().click()
+  await page.getByRole('button', { name: /create player/i }).first().click({ timeout: 15000 })
+  await page.waitForSelector('.levelList', { timeout: 8000 })
   report.setupReached = true
   await page.screenshot({ path: shot('2-setup') })
 

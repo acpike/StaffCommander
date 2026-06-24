@@ -1,72 +1,13 @@
-import { Suspense, useMemo, useRef } from 'react'
+import { Suspense, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Environment, Stars } from '@react-three/drei'
 import * as THREE from 'three'
 import { type Theme } from '../data/themes'
 import { carState } from './carState'
-import { Mountains } from './Mountains'
-import { Terrain } from './Terrain'
-import { RoadsideProps } from './RoadsideProps'
 
-const SKY_VERT = `
-  varying vec3 vDir;
-  void main() {
-    vDir = normalize(position);
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`
-const SKY_FRAG = `
-  uniform vec3 topColor;
-  uniform vec3 bottomColor;
-  uniform vec3 sunColor;
-  uniform vec3 sunDir;
-  varying vec3 vDir;
-  void main() {
-    vec3 dir = normalize(vDir);
-    float t = clamp(dir.y * 0.5 + 0.5, 0.0, 1.0);
-    t = pow(t, 0.7);
-    vec3 sky = mix(bottomColor, topColor, t);
-    // brighter haze band right at the horizon for depth
-    float horizon = 1.0 - smoothstep(0.0, 0.22, abs(dir.y));
-    sky = mix(sky, mix(bottomColor, vec3(1.0), 0.18), horizon * 0.5);
-    // soft sun glow toward the light direction
-    float sd = max(dot(dir, normalize(sunDir)), 0.0);
-    float glow = pow(sd, 8.0) * 0.6 + pow(sd, 64.0) * 0.9;
-    sky += sunColor * glow * smoothstep(-0.05, 0.15, dir.y);
-    gl_FragColor = vec4(sky, 1.0);
-  }
-`
-
-function SkyDome({ theme }: { theme: Theme }) {
-  const ref = useRef<THREE.Mesh>(null)
-  const camera = useThree((s) => s.camera)
-  const uniforms = useMemo(
-    () => ({
-      topColor: { value: new THREE.Color(theme.skyTop) },
-      bottomColor: { value: new THREE.Color(theme.skyBottom) },
-      sunColor: { value: new THREE.Color(theme.sun) },
-      sunDir: { value: new THREE.Vector3(...theme.sunDir).normalize() },
-    }),
-    [theme.skyTop, theme.skyBottom, theme.sun, theme.sunDir],
-  )
-  useFrame(() => {
-    if (ref.current) ref.current.position.copy(camera.position)
-  })
-  return (
-    <mesh ref={ref} frustumCulled={false}>
-      <sphereGeometry args={[300, 32, 16]} />
-      <shaderMaterial
-        key={theme.id}
-        vertexShader={SKY_VERT}
-        fragmentShader={SKY_FRAG}
-        uniforms={uniforms}
-        side={THREE.BackSide}
-        depthWrite={false}
-        fog={false}
-      />
-    </mesh>
-  )
-}
+// Real photographic skies: each theme loads a self-hosted CC0 HDRI (public/hdri)
+// as both the background and the image-based lighting. This replaces the old
+// procedural gradient dome + cheap silhouette mountains.
 
 function Sun({ theme }: { theme: Theme }) {
   const light = useRef<THREE.DirectionalLight>(null)
@@ -75,7 +16,7 @@ function Sun({ theme }: { theme: Theme }) {
     const l = light.current
     const t = target.current
     if (!l || !t) return
-    // bias the lit area ahead of the car so approaching gates cast contact shadows
+    // keep the lit/shadowed area on the car + the gates just ahead
     l.position.set(carState.x + theme.sunDir[0], theme.sunDir[1], carState.z - 30 + theme.sunDir[2])
     t.position.set(carState.x, 0, carState.z - 30)
     t.updateMatrixWorld()
@@ -86,7 +27,7 @@ function Sun({ theme }: { theme: Theme }) {
       <directionalLight
         ref={light}
         color={theme.sun}
-        intensity={1.7}
+        intensity={1.15}
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
@@ -111,7 +52,7 @@ function FollowStars() {
   })
   return (
     <group ref={ref}>
-      <Stars radius={120} depth={50} count={2200} factor={4} saturation={0} fade speed={0.5} />
+      <Stars radius={120} depth={50} count={2600} factor={4} saturation={0} fade speed={0.5} />
     </group>
   )
 }
@@ -119,25 +60,19 @@ function FollowStars() {
 export function Scenery({ theme }: { theme: Theme }) {
   return (
     <>
+      {/* fallback colour shown only until the HDRI background loads */}
       <color attach="background" args={[theme.skyBottom]} />
-      <fog attach="fog" args={[theme.fog, theme.fogNear, theme.fogFar]} />
+      {/* light fog so the ground melts into the horizon without hiding the sky */}
+      <fog attach="fog" args={[theme.fog, theme.fogNear + 60, theme.fogFar + 160]} />
 
-      <ambientLight intensity={0.55} color={theme.ambient} />
-      <hemisphereLight args={[theme.skyTop, theme.ground, 0.6]} />
+      <ambientLight intensity={0.3} color={theme.ambient} />
+      <hemisphereLight args={[theme.skyTop, theme.ground, 0.35]} />
       <Sun theme={theme} />
-
-      <SkyDome theme={theme} />
       {theme.id === 'space' && <FollowStars />}
 
-      {/* distant silhouette ranges, rolling flank terrain, streaming props */}
-      <Mountains themeId={theme.id} />
-      <Terrain themeId={theme.id} />
-      <RoadsideProps themeId={theme.id} />
-
-      {/* image-based lighting for reflections; loads async so the scene shows
-          instantly via the gradient dome above */}
+      {/* photographic sky + image-based lighting (loads async; fallback colour above) */}
       <Suspense fallback={null}>
-        <Environment preset={theme.envPreset} />
+        <Environment files={`/hdri/${theme.id}.hdr`} background backgroundBlurriness={0} environmentIntensity={1} />
       </Suspense>
     </>
   )

@@ -10,6 +10,15 @@ const DASH_PERIOD = 8 // world units per dash cycle
 const POSTS_PER_SIDE = 24
 const POST_SPACING = 14
 
+// real CC0 ground textures per theme (public/tex)
+const GROUND_TEX: Record<string, string> = {
+  mountain: '/tex/grass.jpg',
+  city: '/tex/asphalt.jpg',
+  desert: '/tex/sand.jpg',
+  candy: '/tex/grass.jpg',
+  space: '/tex/rock.jpg',
+}
+
 function makeRoadTexture(road: string, line: string): THREE.CanvasTexture {
   const c = document.createElement('canvas')
   c.width = 256
@@ -40,6 +49,14 @@ function makeRoadTexture(road: string, line: string): THREE.CanvasTexture {
 
 export function Track({ theme }: { theme: Theme }) {
   const roadTex = useMemo(() => makeRoadTexture(theme.road, theme.line), [theme.road, theme.line])
+  const groundTex = useMemo(() => {
+    const t = new THREE.TextureLoader().load(GROUND_TEX[theme.id] ?? '/tex/grass.jpg')
+    t.wrapS = t.wrapT = THREE.RepeatWrapping
+    t.repeat.set(120, 100)
+    t.anisotropy = 8
+    t.colorSpace = THREE.SRGBColorSpace
+    return t
+  }, [theme.id])
 
   const follow = useRef<THREE.Group>(null)
   const leftPosts = useRef<(THREE.Mesh | null)[]>([])
@@ -70,7 +87,7 @@ export function Track({ theme }: { theme: Theme }) {
         {/* ground apron */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.06, 0]} receiveShadow>
           <planeGeometry args={[500, ROAD_LEN]} />
-          <meshStandardMaterial color={theme.ground} roughness={1} metalness={0} />
+          <meshStandardMaterial map={groundTex} color={theme.id === 'candy' ? '#ffb3de' : '#ffffff'} roughness={1} metalness={0} />
         </mesh>
         {/* road surface */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
