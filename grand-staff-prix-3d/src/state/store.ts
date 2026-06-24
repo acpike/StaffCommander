@@ -206,7 +206,7 @@ export interface GameState {
 
   // ── settings actions ──
   setLevel: (id: string) => void
-  addCustomLevel: (name: string, clef: Clef, noteNames: string[], mode?: NoteMode) => void
+  addCustomLevel: (name: string, clef: Clef | 'grand', noteNames: string[], mode?: NoteMode) => void
   removeCustomLevel: (id: string) => void
   setCar: (id: string) => void
   setComposer: (id: string) => void

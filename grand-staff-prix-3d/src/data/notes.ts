@@ -169,19 +169,49 @@ export function candidateNoteNames(clef: Clef): string[] {
   return names
 }
 
-/** Build a custom NoteSet from chosen note names. */
+// ── Grand staff (treble + bass, one pitch axis) ─────────────────────────────
+const MIDDLE_C_DIATONIC = makeNote('C4', 'treble').diatonic // 28
+
+/** Bottom-line diatonic of a clef (for the staff picker geometry). */
+export function bottomLineDiatonic(clef: Clef): number {
+  return BOTTOM_LINE_DIATONIC[clef]
+}
+
+/** Diatonic value of a note name (clef-independent). */
+export function diatonicOfName(name: string): number {
+  return makeNote(name, 'treble').diatonic
+}
+
+/** On a grand staff a note belongs to the treble clef at/above middle C, else bass. */
+export function grandClefFor(name: string): Clef {
+  return diatonicOfName(name) >= MIDDLE_C_DIATONIC ? 'treble' : 'bass'
+}
+
+/** Grand-staff pickable notes: C2 → C6, each pitch once. */
+export function grandCandidateNames(): string[] {
+  const names: string[] = []
+  for (let d = diatonicOfName('C2'); d <= diatonicOfName('C6'); d++) names.push(diatonicToName(d))
+  return names
+}
+
+/** Build a custom NoteSet from chosen note names. `clef` may be 'grand', which
+ *  assigns each note to treble or bass by pitch. */
 export function customSet(
   id: string,
   name: string,
-  clef: Clef,
+  clef: Clef | 'grand',
   noteNames: string[],
   mode: NoteMode = 'name',
 ): NoteSet {
+  const notes =
+    clef === 'grand'
+      ? noteNames.map((n) => makeNote(n, grandClefFor(n)))
+      : noteNames.map((n) => makeNote(n, clef))
   return {
     id,
     name: name.trim().slice(0, 20) || 'My Level',
     blurb: `Custom · ${clef}${mode === 'find' ? ' · find' : ''}`,
-    notes: noteNames.map((n) => makeNote(n, clef)),
+    notes,
     mode,
   }
 }

@@ -1913,3 +1913,44 @@ body {
   margin: 0 auto;
   touch-action: pan-x;
 }
+
+/* ── visual clef + mode selectors (level creator) ── */
+.clefRow, .modeRow { display: flex; gap: 8px; }
+.clefBtn, .modeBtn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 6px;
+  background: var(--surf);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--dim);
+  cursor: pointer;
+  font-family: inherit;
+}
+.clefBtn.on, .modeBtn.on {
+  background: var(--acc-soft);
+  border-color: var(--acc-line);
+  color: var(--txt);
+}
+.clefGlyph {
+  font-family: 'Bravura';
+  font-size: 30px;
+  line-height: 1;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  letter-spacing: 1px;
+}
+.clefLabel { font-size: 12px; font-weight: 600; }
+.modeIcon {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modeLetter { font-size: 30px; font-weight: 800; line-height: 1; }
+.modeLabel { font-size: 13px; font-weight: 700; }
+.modeSub { font-size: 10px; color: var(--faint); text-align: center; }

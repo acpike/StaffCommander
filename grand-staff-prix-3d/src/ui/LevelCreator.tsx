@@ -1,19 +1,25 @@
 import { useState } from 'react'
 import { useGame } from '../state/store'
-import { candidateNoteNames, type Clef, type NoteMode } from '../data/notes'
-import { TapStaff } from './TapStaff'
+import { candidateNoteNames, grandCandidateNames, type NoteMode } from '../data/notes'
+import { TapStaff, type StaffKind } from './TapStaff'
 import { Icon } from './icons'
+
+const CLEF_OPTS: { id: StaffKind; glyph: string; label: string }[] = [
+  { id: 'treble', glyph: String.fromCharCode(0xe050), label: 'Treble' },
+  { id: 'bass', glyph: String.fromCharCode(0xe062), label: 'Bass' },
+  { id: 'grand', glyph: String.fromCharCode(0xe050, 0xe062), label: 'Grand' },
+]
 
 // Students build their own practice level: pick a clef + the exact notes they
 // want to drill, name it, and play it. Saved per device (always playable).
 export function LevelCreator({ onClose }: { onClose: () => void }) {
   const addCustomLevel = useGame((s) => s.addCustomLevel)
   const [name, setName] = useState('')
-  const [clef, setClef] = useState<Clef>('treble')
+  const [clef, setClef] = useState<StaffKind>('treble')
   const [mode, setMode] = useState<NoteMode>('name')
   const [selected, setSelected] = useState<Set<string>>(new Set())
 
-  const candidates = candidateNoteNames(clef)
+  const candidates = clef === 'grand' ? grandCandidateNames() : candidateNoteNames(clef)
   const toggle = (n: string) =>
     setSelected((prev) => {
       const next = new Set(prev)
@@ -52,31 +58,44 @@ export function LevelCreator({ onClose }: { onClose: () => void }) {
 
         <div className="card sec">
           <div className="secLabel">Clef</div>
-          <div className="seg">
-            <button className={clef === 'treble' ? 'on' : ''} onClick={() => { setClef('treble'); setSelected(new Set()) }}>
-              Treble
-            </button>
-            <button className={clef === 'bass' ? 'on' : ''} onClick={() => { setClef('bass'); setSelected(new Set()) }}>
-              Bass
-            </button>
+          <div className="clefRow">
+            {CLEF_OPTS.map((o) => (
+              <button
+                key={o.id}
+                className={`clefBtn${clef === o.id ? ' on' : ''}`}
+                onClick={() => { setClef(o.id); setSelected(new Set()) }}
+                aria-label={o.label}
+              >
+                <span className="clefGlyph">{o.glyph}</span>
+                <span className="clefLabel">{o.label}</span>
+              </button>
+            ))}
           </div>
         </div>
 
         <div className="card sec">
           <div className="secLabel">Mode</div>
-          <div className="seg">
-            <button className={mode === 'name' ? 'on' : ''} onClick={() => setMode('name')}>
-              Name the note
+          <div className="modeRow">
+            <button className={`modeBtn${mode === 'name' ? ' on' : ''}`} onClick={() => setMode('name')}>
+              <span className="modeIcon" aria-hidden>
+                <svg viewBox="0 0 46 30" width="46" height="30">
+                  {[5, 11, 17, 23, 29].map((y) => (
+                    <line key={y} x1="2" y1={y} x2="44" y2={y} stroke="currentColor" strokeWidth="1.3" />
+                  ))}
+                  <ellipse cx="30" cy="20" rx="5" ry="3.9" transform="rotate(-20 30 20)" fill="currentColor" />
+                </svg>
+              </span>
+              <span className="modeLabel">Name the note</span>
+              <span className="modeSub">see the note → name it</span>
             </button>
-            <button className={mode === 'find' ? 'on' : ''} onClick={() => setMode('find')}>
-              Find the note
+            <button className={`modeBtn${mode === 'find' ? ' on' : ''}`} onClick={() => setMode('find')}>
+              <span className="modeIcon" aria-hidden>
+                <span className="modeLetter">A</span>
+              </span>
+              <span className="modeLabel">Find the note</span>
+              <span className="modeSub">see a letter → find it</span>
             </button>
           </div>
-          <p className="tiny" style={{ marginTop: 2 }}>
-            {mode === 'name'
-              ? 'Staff shows a note; steer into the block with its letter.'
-              : 'A letter shows; steer into the block whose staff matches it.'}
-          </p>
         </div>
 
         <div className="card sec">
