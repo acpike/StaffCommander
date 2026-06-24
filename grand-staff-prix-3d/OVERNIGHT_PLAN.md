@@ -75,7 +75,8 @@ Before ticking any box or committing:
 - [ ] Level creator: students build custom note sets (pick clef/notes/range) saved per profile, playable as a level. (store + notes + new UI)
 - [ ] Track types: multiple track styles selectable.
 - [ ] Gamification for 3D: XP/levels/ranks, achievements, gems, daily challenges (per README).
-- [ ] **Mastery-based level design (THINK THIS THROUGH — current "reach Stage 3" unlock is far too easy/short):**
+- [x] **Mastery-based level design** [v0.5] — DONE: longer stages (8 notes), unlock next only at Stage 4 over ≥30 notes at ≥90% accuracy; accuracy-weighted score; +250 mastery XP; per-profile `mastered`; live HUD mastery meter. (Follow-up: mastery celebration on game-over + "Mastered ✓" badge in menu level list.)
+  Original spec:
   - Stages must be longer and progressively harder (more notes, faster, fewer lives margin).
   - Unlocking the NEXT level requires demonstrated **mastery**, not just survival — e.g. sustain a high
     accuracy (~90%+) over a meaningful sample of notes AND clear the level's final stage, ideally across
@@ -117,3 +118,4 @@ Before ticking any box or committing:
 - San Francisco ✗ GATED — needs Golden Gate (VITE_GOOGLE_TILES_KEY 3D-tiles, or a GG GLB model). Do not ship generic city.
 - Candy Canyon ✗ pastel sky only — needs deliberate STYLIZED candy art (hills/lollipops); no real-world asset exists.
 NEXT iterations: candy stylized art; mountain pines+snow; desert cacti; then cars (open cockpit), helmeted avatars, mastery levels.
+- `v0.5-mastery-levels` — mastery-based unlock (Stage 4 · 30+ notes · 90%+), longer stages, accuracy-weighted scoring, HUD mastery meter. Pure logic+UI, build green, meter verified on screen.
