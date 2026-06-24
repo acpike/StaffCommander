@@ -1,6 +1,6 @@
 import { useGame, activeProfile } from '../state/store'
 import { NOTE_SETS } from '../data/notes'
-import { rankForXp } from '../data/progression'
+import { rankForXp, achievementById } from '../data/progression'
 import { Icon } from './icons'
 
 export function GameOver() {
@@ -10,6 +10,7 @@ export function GameOver() {
   const unlocked = useGame((s) => s.unlockedThisRun)
   const mastered = useGame((s) => s.masteredThisRun)
   const gemsEarned = useGame((s) => s.gemsEarned)
+  const newAchievements = useGame((s) => s.newAchievements)
   const customLevels = useGame((s) => s.customLevels)
   const profile = useGame(activeProfile)
   const startGame = useGame((s) => s.startGame)
@@ -42,6 +43,12 @@ export function GameOver() {
 
         {mastered && <div className="unlockBanner">⭐ You mastered {mastered}!</div>}
         {unlocked && <div className="unlockBanner">🔓 New level unlocked: {unlocked}</div>}
+        {newAchievements.length > 0 && (
+          <div className="achWon">
+            🏆 New badge{newAchievements.length > 1 ? 's' : ''}:{' '}
+            {newAchievements.map((id) => achievementById(id)?.name).filter(Boolean).join(', ')}
+          </div>
+        )}
 
         <div className="lbl" style={{ marginTop: 2 }}>
           {rank.name} · Lv {rank.level}

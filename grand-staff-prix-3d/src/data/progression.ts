@@ -51,3 +51,45 @@ export function gemsForRun(score: number, mastered: boolean, accuracy: number): 
   if (mastered) g += 25
   return g
 }
+
+// ── Achievements ──────────────────────────────────────────────────────────
+export interface AchStats {
+  stageReached: number
+  accuracy: number
+  totalNotes: number
+  bestStreak: number
+  masteredThisRun: boolean
+  wrongThisRun: number
+  xp: number
+  gems: number
+  masteredCount: number
+}
+
+export interface Achievement {
+  id: string
+  name: string
+  desc: string
+  icon: string
+  test: (s: AchStats) => boolean
+}
+
+export const ACHIEVEMENTS: Achievement[] = [
+  { id: 'first-game', name: 'First Lap', desc: 'Finish your first race', icon: '🏁', test: () => true },
+  { id: 'sharp-ear', name: 'Sharp Ear', desc: 'Finish a run at 100% (12+ notes)', icon: '🎯', test: (s) => s.accuracy >= 1 && s.totalNotes >= 12 },
+  { id: 'on-fire', name: 'On Fire', desc: 'Reach a 15 streak', icon: '🔥', test: (s) => s.bestStreak >= 15 },
+  { id: 'top-class', name: 'Top of the Class', desc: 'Master a level', icon: '⭐', test: (s) => s.masteredCount >= 1 },
+  { id: 'scholar', name: 'Scholar', desc: 'Master 3 levels', icon: '🎓', test: (s) => s.masteredCount >= 3 },
+  { id: 'speedster', name: 'Speedster', desc: 'Reach Stage 6', icon: '⚡', test: (s) => s.stageReached >= 6 },
+  { id: 'untouchable', name: 'Untouchable', desc: 'Master a level with no mistakes', icon: '🛡️', test: (s) => s.masteredThisRun && s.wrongThisRun === 0 },
+  { id: 'dedicated', name: 'Dedicated', desc: 'Earn 5,000 XP', icon: '💪', test: (s) => s.xp >= 5000 },
+  { id: 'collector', name: 'Collector', desc: 'Bank 100 gems', icon: '💎', test: (s) => s.gems >= 100 },
+]
+
+/** Returns the ids of achievements newly satisfied (not already owned). */
+export function checkAchievements(stats: AchStats, have: string[]): string[] {
+  return ACHIEVEMENTS.filter((a) => !have.includes(a.id) && a.test(stats)).map((a) => a.id)
+}
+
+export function achievementById(id: string): Achievement | undefined {
+  return ACHIEVEMENTS.find((a) => a.id === id)
+}

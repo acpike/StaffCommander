@@ -4,7 +4,7 @@ import { CARS } from '../data/cars'
 import { THEMES } from '../data/themes'
 import { audio } from '../audio/sound'
 import { resetCarState } from '../game/carState'
-import { gemsForRun } from '../data/progression'
+import { gemsForRun, checkAchievements } from '../data/progression'
 import { DEFAULT_AVATAR, normalizeAvatar, type AvatarConfig } from '../data/avatars'
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -29,6 +29,8 @@ export interface Profile {
   xp: number
   /** Gem currency earned through play. */
   gems: number
+  /** Unlocked achievement ids (see data/progression.ts). */
+  achievements: string[]
   /** Built driver avatar (see data/avatars.ts). */
   avatar: AvatarConfig
 }
@@ -79,6 +81,7 @@ function freshProfile(name: string): Profile {
     mastered: [],
     xp: 0,
     gems: 0,
+    achievements: [],
     avatar: { ...DEFAULT_AVATAR },
   }
 }
@@ -115,6 +118,8 @@ export interface GameState {
   correctCount: number
   /** Wrong answers this run, for accuracy / mastery. */
   wrongCount: number
+  /** Highest streak reached this run (for achievements). */
+  bestStreak: number
   /** Index of the active note set (cached from settings.levelId at start). */
   note: GameNote | null
   gateLetters: Letter[]
@@ -129,6 +134,8 @@ export interface GameState {
   masteredThisRun: string | null
   /** Gems earned in the run just finished (for the game-over screen). */
   gemsEarned: number
+  /** Achievement ids unlocked in the run just finished. */
+  newAchievements: string[]
 
   // ── profile actions ──
   addProfile: (name: string, avatar?: AvatarConfig) => void
@@ -174,6 +181,7 @@ export const useGame = create<GameState>()((set, get) => {
     ...p,
     mastered: Array.isArray((p as { mastered?: unknown }).mastered) ? p.mastered : [],
     gems: typeof (p as { gems?: unknown }).gems === 'number' ? p.gems : 0,
+    achievements: Array.isArray((p as { achievements?: unknown }).achievements) ? p.achievements : [],
     avatar: normalizeAvatar((p as { avatar?: unknown }).avatar),
   }))
   const initialCurrent = loadJSON<string | null>(LS_CURRENT, null)
@@ -202,6 +210,7 @@ export const useGame = create<GameState>()((set, get) => {
     stage: 1,
     correctCount: 0,
     wrongCount: 0,
+    bestStreak: 0,
     note: null,
     gateLetters: [],
     waveId: 0,
@@ -210,6 +219,7 @@ export const useGame = create<GameState>()((set, get) => {
     unlockedThisRun: null,
     masteredThisRun: null,
     gemsEarned: 0,
+    newAchievements: [],
 
     addProfile: (name, avatar) => {
       const p = freshProfile(name)
@@ -292,11 +302,13 @@ export const useGame = create<GameState>()((set, get) => {
         stage: 1,
         correctCount: 0,
         wrongCount: 0,
+        bestStreak: 0,
         lastResult: null,
         flashTick: 0,
         unlockedThisRun: null,
         masteredThisRun: null,
         gemsEarned: 0,
+        newAchievements: [],
         waveId: 0,
         note: null,
         gateLetters: [],
@@ -356,7 +368,17 @@ export const useGame = create<GameState>()((set, get) => {
         audio.correct()
         audio.playNotePitch(st.note)
         audio.setStageTempo(stage)
-        set({ score, streak, stage, correctCount, lastResult: 'correct', flashTick: st.flashTick + 1, unlockedThisRun, masteredThisRun })
+        set({
+          score,
+          streak,
+          stage,
+          correctCount,
+          bestStreak: Math.max(st.bestStreak, streak),
+          lastResult: 'correct',
+          flashTick: st.flashTick + 1,
+          unlockedThisRun,
+          masteredThisRun,
+        })
         nextWave(stage)
       } else {
         const lives = st.lives - 1
@@ -376,12 +398,31 @@ export const useGame = create<GameState>()((set, get) => {
       const accuracy = total > 0 ? st.correctCount / total : 0
       const gems = gemsForRun(st.score, !!st.masteredThisRun, accuracy)
       const prof = st.currentId ? st.profiles.find((p) => p.id === st.currentId) : null
+      let newAchievements: string[] = []
       if (prof) {
         const prevBest = prof.best[st.settings.levelId] ?? 0
         const best =
           st.score > prevBest ? { ...prof.best, [st.settings.levelId]: st.score } : prof.best
+        const newXp = prof.xp + Math.round(st.score / 10)
+        const newGems = prof.gems + gems
+        // prof.mastered already reflects any mastery earned this run (set in answer)
+        newAchievements = checkAchievements(
+          {
+            stageReached: st.stage,
+            accuracy,
+            totalNotes: total,
+            bestStreak: st.bestStreak,
+            masteredThisRun: !!st.masteredThisRun,
+            wrongThisRun: st.wrongCount,
+            xp: newXp,
+            gems: newGems,
+            masteredCount: prof.mastered.length,
+          },
+          prof.achievements,
+        )
+        const achievements = [...prof.achievements, ...newAchievements]
         const profiles = st.profiles.map((p) =>
-          p.id === prof.id ? { ...p, best, xp: p.xp + Math.round(st.score / 10), gems: p.gems + gems } : p,
+          p.id === prof.id ? { ...p, best, xp: newXp, gems: newGems, achievements } : p,
         )
         set({ profiles })
         persistProfiles()
@@ -389,7 +430,7 @@ export const useGame = create<GameState>()((set, get) => {
       audio.crash()
       audio.setMusic(false)
       audio.stopEngine()
-      set({ screen: 'over', gemsEarned: gems })
+      set({ screen: 'over', gemsEarned: gems, newAchievements })
     },
   }
 })

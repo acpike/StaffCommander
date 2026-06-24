@@ -10,7 +10,7 @@ import { MenuCar3D } from './MenuCar3D'
 import { AvatarBuilder } from './AvatarBuilder'
 import { LevelCreator } from './LevelCreator'
 import { DEFAULT_AVATAR, type AvatarConfig } from '../data/avatars'
-import { rankForXp } from '../data/progression'
+import { rankForXp, ACHIEVEMENTS } from '../data/progression'
 
 function Hero() {
   return (
@@ -208,6 +208,16 @@ function Setup({ onSwitch }: { onSwitch: () => void }) {
               </div>
               <div className="rankXp">
                 {r.nextName ? `${r.xpInto} / ${r.xpForNext} XP → ${r.nextName}` : `${profile.xp} XP · max rank`}
+              </div>
+              <div className="badgeRow">
+                {ACHIEVEMENTS.map((a) => {
+                  const owned = profile.achievements.includes(a.id)
+                  return (
+                    <span key={a.id} className={`badge${owned ? ' owned' : ''}`} title={`${a.name} — ${a.desc}`}>
+                      {a.icon}
+                    </span>
+                  )
+                })}
               </div>
             </div>
           )
