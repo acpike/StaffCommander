@@ -9,7 +9,6 @@ import { Icon } from './icons'
 import { MenuBackground } from './MenuBackground'
 import { MenuCar3D } from './MenuCar3D'
 import { ComposerPicker } from './ComposerPicker'
-import { useThumbnails, type ThumbItem } from './useThumbnails'
 import { AssetThumb } from './AssetThumb'
 import { LevelCreator } from './LevelCreator'
 import { rankForXp, ACHIEVEMENTS, dailyChallenges } from '../data/progression'
@@ -29,14 +28,6 @@ function Hero() {
     </div>
   )
 }
-
-const CAR_THUMB_ITEMS: ThumbItem[] = CARS.filter((c) => c.model).map((c) => ({
-  id: c.id,
-  model: c.model as string,
-  rotationY: c.modelRotation,
-  kind: 'car',
-}))
-const CAR_THUMB_SIZE = { w: 384, h: 220 }
 
 // ───────────────────────── Class code bar ─────────────────────────
 function ClassBar({ onLeaderboard }: { onLeaderboard: () => void }) {
@@ -223,7 +214,6 @@ function CarGarage() {
   const profile = useGame(activeProfile)
   const settings = useGame((s) => s.settings)
   const setCar = useGame((s) => s.setCar)
-  const carThumbs = useThumbnails(CAR_THUMB_ITEMS, CAR_THUMB_SIZE)
   const car = carById(profile?.carId ?? settings.carId)
   return (
     <div className="garage card">
@@ -257,7 +247,7 @@ function CarGarage() {
             aria-label={c.name}
           >
             <span className="carThumbImg">
-              <AssetThumb src={`/thumbs/car_${c.id}.png`} fallback={carThumbs[c.id]} alt={c.name} />
+              <AssetThumb src={`/thumbs/car_${c.id}.png`} alt={c.name} />
             </span>
             <span className="thumbName">{c.name}</span>
           </button>

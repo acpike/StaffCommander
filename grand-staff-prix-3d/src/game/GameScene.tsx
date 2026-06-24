@@ -22,8 +22,8 @@ export function GameScene() {
       className="fill"
       shadows
       flat
-      dpr={isTouchDevice ? [1, 1.5] : [1, 2]}
-      gl={{ antialias: !isTouchDevice, powerPreference: 'high-performance' }}
+      dpr={isTouchDevice ? [1, 1.75] : [1, 2]}
+      gl={{ antialias: true, powerPreference: 'high-performance' }}
       camera={{ position: [0, 4.3, 9], fov: 55, near: 0.1, far: 320 }}
     >
       <Scenery theme={theme} />
