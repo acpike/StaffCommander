@@ -1003,12 +1003,14 @@ body {
   top: max(54px, calc(env(safe-area-inset-top) + 10px));
   left: 50%;
   transform: translateX(-50%);
-  /* cap by viewport HEIGHT too, so short screens (landscape phones) shrink it
-     instead of covering the gates below */
-  width: min(330px, 88vw, 48vh);
-  background: rgba(247, 245, 250, 0.97);
+  /* scale with screen: smaller on phones, bigger on tablets, capped by height */
+  width: min(clamp(260px, 60vw, 440px), 64vh);
+  background: rgba(214, 218, 227, 0.78);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 18px;
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.4);
   padding: clamp(8px, 1.6vh, 14px) 16px clamp(6px, 1.2vh, 10px);
   display: flex;
   flex-direction: column;

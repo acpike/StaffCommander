@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useGLTF } from '@react-three/drei'
 import { useGame, activeProfile } from '../state/store'
 import { leaderboard, type CloudPlayer } from '../lib/cloud'
 import { NOTE_SETS } from '../data/notes'
 import { CARS, carById } from '../data/cars'
+import { composerById } from '../data/composers'
 import { THEMES } from '../data/themes'
 import { input } from '../game/input'
 import { Icon } from './icons'
@@ -387,6 +389,14 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
   const customLevels = useGame((s) => s.customLevels)
   const removeCustomLevel = useGame((s) => s.removeCustomLevel)
   const [creating, setCreating] = useState(false)
+
+  // preload the chosen car + composer so the race starts smooth (no first-second hitch)
+  const carModel = carById(profile?.carId ?? settings.carId).model
+  const composerModel = composerById(profile?.composerId ?? settings.composerId).model
+  useEffect(() => {
+    if (carModel) useGLTF.preload(carModel)
+    if (composerModel) useGLTF.preload(composerModel)
+  }, [carModel, composerModel])
 
   const unlocked = new Set(profile?.unlocked ?? [NOTE_SETS[0].id])
   const mastered = new Set(profile?.mastered ?? [])
