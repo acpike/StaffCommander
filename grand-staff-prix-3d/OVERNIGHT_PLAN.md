@@ -50,10 +50,10 @@ Before ticking any box or committing:
   a clean **helmeted racer (visor down, NO face)** so there is never an uncanny face.
 
 ## PHASE 1 — Realism (main thread; uses downloaded assets in public/hdri, public/tex, public/models)
-- [ ] Fix the roadside-prop popping/recycling bug (props snap to new spots) — smooth streaming.
-- [ ] Wire HDRI skies (public/hdri/<theme>.hdr) as photographic backgrounds per theme in Scenery; drop the cheap gradient dome + cheap silhouette mountains where the HDRI horizon replaces them.
-- [ ] Texture the ground + road per theme with real PBR textures (public/tex) in Track.
-- [ ] Replace cheap procedural roadside props with real CC0 vegetation/rock GLBs (download best ones), instanced + smoothly recycled.
+- [x] Fix the roadside-prop popping bug — REMOVED the cheap procedural props + silhouette mountains entirely (no popping); HDRI horizon replaces distance. [v0.2]
+- [x] Wire HDRI skies as photographic backgrounds per theme via drei Environment. [v0.2]
+- [x] Texture the ground per theme with real PBR textures (public/tex) in Track. [v0.2]
+- [ ] (later) Add real CC0 vegetation/rock GLBs as instanced roadside scenery, smoothly recycled.
 - [ ] Cars: download the best CC0 sleek car GLB(s); route RealCarModel→GltfBody; tint paint per car; re-tune driver seat; integrate into CarModel.
 - [ ] Avatars: implement helmeted-racer (no face) now; wire Ready Player Me behind env var for later. Show full body in the builder preview.
 - [ ] San Francisco: keyless fallback now (panorama/HDRI + recognizable Golden Gate silhouette done tastefully); real 3D-tiles path behind the API-key env var.
@@ -84,5 +84,6 @@ Before ticking any box or committing:
 - [ ] Rhythm Recall (rhythmic dictation)
 - [ ] Scale Sprint (scales/key signatures)
 
-## Log
-- 42660b8 — checkpoint before overnight run.
+## Log / version list
+- `v0.1-overnight-baseline` (42660b8) — checkpoint before overnight run.
+- `v0.2-real-skies` — real photographic HDRI skies + PBR ground textures; removed cheap procedural mountains/props. Build green, smoke pass, screenshot reviewed (photographic sky + asphalt road — real, not slop).
