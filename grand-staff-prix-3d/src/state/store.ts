@@ -22,6 +22,8 @@ export interface Profile {
   best: Record<string, number>
   /** Unlocked level ids (first level always unlocked). */
   unlocked: string[]
+  /** Level ids the player has demonstrated MASTERY of (the unlock gate). */
+  mastered: string[]
   xp: number
   /** Built driver avatar (see data/avatars.ts). */
   avatar: AvatarConfig
@@ -70,6 +72,7 @@ function freshProfile(name: string): Profile {
     name: name.trim().slice(0, 14) || 'Player',
     best: {},
     unlocked: [NOTE_SETS[0].id],
+    mastered: [],
     xp: 0,
     avatar: { ...DEFAULT_AVATAR },
   }
@@ -77,8 +80,12 @@ function freshProfile(name: string): Profile {
 
 // Number of correct answers needed to advance a stage; reaching STAGE_TO_UNLOCK
 // clears the level and unlocks the next one.
-const CORRECT_PER_STAGE = 5
-const STAGE_TO_UNLOCK = 3
+const CORRECT_PER_STAGE = 8 // longer stages — sustain the skill, don't sprint
+// Mastery gate to unlock the next level: you must DEMONSTRATE the skill, not just survive —
+// reach a deep stage, over a meaningful sample of notes, at high accuracy.
+const MASTERY_STAGE = 4
+const MASTERY_MIN_NOTES = 30
+const MASTERY_ACCURACY = 0.9
 export const START_LIVES = 3
 const GATES_BASE = 3
 
@@ -99,6 +106,8 @@ export interface GameState {
   streak: number
   stage: number
   correctCount: number
+  /** Wrong answers this run, for accuracy / mastery. */
+  wrongCount: number
   /** Index of the active note set (cached from settings.levelId at start). */
   note: GameNote | null
   gateLetters: Letter[]
@@ -109,6 +118,8 @@ export interface GameState {
   flashTick: number
   /** Set true the run a new level was unlocked, for the game-over screen. */
   unlockedThisRun: string | null
+  /** Level name mastered this run (drives the mastery celebration). */
+  masteredThisRun: string | null
 
   // ── profile actions ──
   addProfile: (name: string, avatar?: AvatarConfig) => void
@@ -150,6 +161,7 @@ export const useGame = create<GameState>()((set, get) => {
     // `avatar` as a string id (or missing). normalizeAvatar maps anything to a
     // complete AvatarConfig so nothing crashes on load.
     ...p,
+    mastered: Array.isArray((p as { mastered?: unknown }).mastered) ? p.mastered : [],
     avatar: normalizeAvatar((p as { avatar?: unknown }).avatar),
   }))
   const initialCurrent = loadJSON<string | null>(LS_CURRENT, null)
@@ -176,12 +188,14 @@ export const useGame = create<GameState>()((set, get) => {
     streak: 0,
     stage: 1,
     correctCount: 0,
+    wrongCount: 0,
     note: null,
     gateLetters: [],
     waveId: 0,
     lastResult: null,
     flashTick: 0,
     unlockedThisRun: null,
+    masteredThisRun: null,
 
     addProfile: (name, avatar) => {
       const p = freshProfile(name)
@@ -251,9 +265,11 @@ export const useGame = create<GameState>()((set, get) => {
         streak: 0,
         stage: 1,
         correctCount: 0,
+        wrongCount: 0,
         lastResult: null,
         flashTick: 0,
         unlockedThisRun: null,
+        masteredThisRun: null,
         waveId: 0,
         note: null,
         gateLetters: [],
@@ -275,36 +291,50 @@ export const useGame = create<GameState>()((set, get) => {
 
       if (correct) {
         const correctCount = st.correctCount + 1
+        const total = correctCount + st.wrongCount
+        const accuracy = total > 0 ? correctCount / total : 1
         const stage = 1 + Math.floor(correctCount / CORRECT_PER_STAGE)
         const streak = st.streak + 1
-        const gained = Math.round(100 * (1 + streak * 0.12) * stage)
+        // accuracy bonus rewards reading well, not just surviving
+        const gained = Math.round(100 * (1 + streak * 0.12) * stage * (0.6 + 0.4 * accuracy))
         const score = st.score + gained
 
-        // Unlock next level when the player reaches the unlock stage.
+        // MASTERY GATE: unlock the next level only when the player demonstrates the
+        // skill — reach stage MASTERY_STAGE, over >= MASTERY_MIN_NOTES notes, at >= 90%.
         let unlockedThisRun = st.unlockedThisRun
-        if (stage >= STAGE_TO_UNLOCK && st.currentId) {
-          const idx = NOTE_SETS.findIndex((s) => s.id === st.settings.levelId)
+        let masteredThisRun = st.masteredThisRun
+        const levelId = st.settings.levelId
+        const prof = st.currentId ? st.profiles.find((p) => p.id === st.currentId) : null
+        if (
+          prof &&
+          !prof.mastered.includes(levelId) &&
+          stage >= MASTERY_STAGE &&
+          total >= MASTERY_MIN_NOTES &&
+          accuracy >= MASTERY_ACCURACY
+        ) {
+          const idx = NOTE_SETS.findIndex((s) => s.id === levelId)
           const next = NOTE_SETS[idx + 1]
-          const prof = st.profiles.find((p) => p.id === st.currentId)
-          if (next && prof && !prof.unlocked.includes(next.id)) {
-            unlockedThisRun = next.name
-            const profiles = st.profiles.map((p) =>
-              p.id === prof.id ? { ...p, unlocked: [...p.unlocked, next.id] } : p,
-            )
-            set({ profiles })
-            persistProfiles()
-          }
+          masteredThisRun = currentSet(levelId).name
+          if (next && !prof.unlocked.includes(next.id)) unlockedThisRun = next.name
+          const profiles = st.profiles.map((p) => {
+            if (p.id !== prof.id) return p
+            const mastered = [...p.mastered, levelId]
+            const unlocked = next && !p.unlocked.includes(next.id) ? [...p.unlocked, next.id] : p.unlocked
+            return { ...p, mastered, unlocked, xp: p.xp + 250 } // mastery XP bonus
+          })
+          set({ profiles })
+          persistProfiles()
         }
 
         audio.correct()
         audio.playNotePitch(st.note)
         audio.setStageTempo(stage)
-        set({ score, streak, stage, correctCount, lastResult: 'correct', flashTick: st.flashTick + 1, unlockedThisRun })
+        set({ score, streak, stage, correctCount, lastResult: 'correct', flashTick: st.flashTick + 1, unlockedThisRun, masteredThisRun })
         nextWave(stage)
       } else {
         const lives = st.lives - 1
         audio.wrong()
-        set({ lives, streak: 0, lastResult: 'wrong', flashTick: st.flashTick + 1 })
+        set({ lives, streak: 0, wrongCount: st.wrongCount + 1, lastResult: 'wrong', flashTick: st.flashTick + 1 })
         if (lives <= 0) {
           get().endGame()
         } else {
