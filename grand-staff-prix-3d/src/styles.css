@@ -1821,3 +1821,43 @@ body {
     height: 220px;
   }
 }
+
+/* ── play-menu nav + player chip ── */
+.playerChip { display: inline-flex; align-items: center; gap: 8px; }
+.playerChip .avatar.sm {
+  width: 24px; height: 24px; font-size: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: var(--acc-soft); color: var(--acc2); font-weight: 700;
+}
+.playerChip .pcName { font-weight: 700; }
+.playerChip .pcMeta { color: var(--dim); font-weight: 500; font-size: 12px; }
+.chip.head { cursor: default; font-weight: 700; }
+
+.navRow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.navBtn {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
+  padding: 13px 15px; border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border: 1px solid var(--line); color: var(--txt); cursor: pointer;
+  transition: border-color .15s, background .15s, transform .08s;
+}
+.navBtn:active { transform: scale(0.98); }
+.navBtn .ico { width: 18px; height: 18px; color: var(--acc2); margin-bottom: 3px; }
+.navBtn span { font-weight: 700; font-size: 15px; }
+.navBtn small { color: var(--dim); font-size: 11.5px; }
+
+/* ── achievements grid (profile screen) ── */
+.achGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.achItem {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 11px;
+  background: var(--surf); border: 1px solid var(--line);
+  opacity: 0.45;
+}
+.achItem.owned { opacity: 1; border-color: var(--acc-line); background: var(--acc-soft); }
+.achItem .achIcon { font-size: 17px; filter: grayscale(1); }
+.achItem.owned .achIcon { filter: none; }
+.achItem .achName { font-size: 12px; font-weight: 600; line-height: 1.1; }
+
+/* scenery tiles: roomier name */
+.themeTileName { font-size: 11px; font-weight: 600; }
