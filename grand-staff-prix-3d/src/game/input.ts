@@ -1,6 +1,6 @@
-// Unified steering input: keyboard + touch/drag + device tilt, combined into a
-// single steer value in [-1, 1] and a boost flag. Lives outside React so the
-// game loop can read it every frame without triggering re-renders.
+// Unified steering input: keyboard + on-screen touch pads + device tilt, combined
+// into a single steer value in [-1, 1] and a throttle flag. Lives outside React so
+// the game loop can read it every frame without triggering re-renders.
 
 type SteerMode = 'keys' | 'touch' | 'tilt'
 
@@ -8,8 +8,8 @@ class InputController {
   private left = false
   private right = false
   private up = false
-  private touchSteer = 0
-  private touchActive = false
+  private padSteer = 0 // from the on-screen steering pad
+  private throttle = false // from the on-screen throttle button
   private tiltSteer = 0
   private mode: SteerMode = 'keys'
   private attached = false
@@ -26,13 +26,21 @@ class InputController {
     let s = 0
     if (this.left) s -= 1
     if (this.right) s += 1
-    if (this.mode === 'touch' && this.touchActive) s += this.touchSteer
+    s += this.padSteer
     if (this.mode === 'tilt') s += this.tiltSteer
     return Math.max(-1, Math.min(1, s))
   }
 
   get boost(): boolean {
-    return this.up || this.touchActive
+    return this.up || this.throttle
+  }
+
+  // ── on-screen touch controls (driven by ui/TouchControls) ──
+  setPadSteer(v: number) {
+    this.padSteer = Math.max(-1, Math.min(1, v))
+  }
+  setThrottle(on: boolean) {
+    this.throttle = on
   }
 
   attach() {
@@ -40,10 +48,6 @@ class InputController {
     this.attached = true
     window.addEventListener('keydown', this.onKeyDown)
     window.addEventListener('keyup', this.onKeyUp)
-    window.addEventListener('pointerdown', this.onPointerDown)
-    window.addEventListener('pointermove', this.onPointerMove)
-    window.addEventListener('pointerup', this.onPointerUp)
-    window.addEventListener('pointercancel', this.onPointerUp)
   }
 
   detach() {
@@ -51,12 +55,9 @@ class InputController {
     this.attached = false
     window.removeEventListener('keydown', this.onKeyDown)
     window.removeEventListener('keyup', this.onKeyUp)
-    window.removeEventListener('pointerdown', this.onPointerDown)
-    window.removeEventListener('pointermove', this.onPointerMove)
-    window.removeEventListener('pointerup', this.onPointerUp)
-    window.removeEventListener('pointercancel', this.onPointerUp)
     window.removeEventListener('deviceorientation', this.onTilt)
-    this.left = this.right = this.up = this.touchActive = false
+    this.left = this.right = this.up = this.throttle = false
+    this.padSteer = 0
   }
 
   private onKeyDown = (e: KeyboardEvent) => {
@@ -68,23 +69,6 @@ class InputController {
     if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') this.left = false
     else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') this.right = false
     else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') this.up = false
-  }
-
-  private onPointerDown = (e: PointerEvent) => {
-    this.touchActive = true
-    this.updateTouch(e.clientX)
-  }
-  private onPointerMove = (e: PointerEvent) => {
-    if (this.touchActive) this.updateTouch(e.clientX)
-  }
-  private onPointerUp = () => {
-    this.touchActive = false
-    this.touchSteer = 0
-  }
-  private updateTouch(clientX: number) {
-    // Map horizontal screen position to steer: left third → -1, right third → +1.
-    const norm = (clientX / window.innerWidth) * 2 - 1
-    this.touchSteer = Math.max(-1, Math.min(1, norm * 1.6))
   }
 
   private requestTilt() {

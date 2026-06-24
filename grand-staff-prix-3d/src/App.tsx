@@ -8,6 +8,7 @@ import { HUD } from './ui/HUD'
 import { Countdown } from './ui/Countdown'
 import { GameOver } from './ui/GameOver'
 import { Splash } from './ui/Splash'
+import { TouchControls } from './ui/TouchControls'
 
 export function App() {
   const screen = useGame((s) => s.screen)
@@ -29,6 +30,7 @@ export function App() {
       {screen === 'menu' && <Menu />}
       {screen === 'countdown' && <Countdown />}
       {screen === 'playing' && <HUD />}
+      {screen === 'playing' && <TouchControls />}
       {screen === 'over' && <GameOver />}
     </>
   )
