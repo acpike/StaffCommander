@@ -61,50 +61,65 @@ export function HUD() {
         </div>
       )}
 
-      {/* mastery meter — shows the unlock bar (Stage 4 · 30 notes · 90%+) */}
+      {/* mastery meter — vertical bar pinned to the right edge (out of the play area) */}
       <div
         style={{
           position: 'absolute',
-          top: 'min(300px, calc(env(safe-area-inset-top) + 82px + 26vh))',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 'min(300px, 80vw)',
+          right: 'max(10px, calc(env(safe-area-inset-right) + 6px))',
+          top: '46%',
+          transform: 'translateY(-50%)',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          gap: 8,
-          padding: '6px 12px',
-          borderRadius: 12,
-          background: 'rgba(10,9,16,0.55)',
+          gap: 7,
+          padding: '9px 7px',
+          borderRadius: 16,
+          background: 'rgba(10,9,16,0.5)',
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(10px)',
           border: '1px solid rgba(255,255,255,0.09)',
-          font: '600 12px "Space Grotesk", system-ui, sans-serif',
-          color: '#f4f3f8',
           pointerEvents: 'none',
         }}
       >
-        {alreadyMastered ? (
-          <span style={{ color: '#46d27a', letterSpacing: 1 }}>✓ MASTERED — chasing high score</span>
-        ) : (
-          <>
-            <span style={{ color: '#9a96a6', letterSpacing: 1, fontSize: 10 }}>MASTERY</span>
-            <span style={{ flex: 1, height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.12)', overflow: 'hidden' }}>
-              <span
-                style={{
-                  display: 'block',
-                  height: '100%',
-                  width: `${notesPct}%`,
-                  borderRadius: 3,
-                  background: onTrack ? 'linear-gradient(90deg,#34d17a,#46d27a)' : 'linear-gradient(90deg,#ff8a3d,#ff5a2e)',
-                  transition: 'width .2s',
-                }}
-              />
-            </span>
-            <span style={{ color: onTrack ? '#46d27a' : '#ff9c6a', minWidth: 34, textAlign: 'right' }}>
-              {Math.round(accuracy * 100)}%
-            </span>
-          </>
-        )}
+        <span style={{ fontSize: 14, lineHeight: 1 }}>{alreadyMastered ? '✓' : '⭐'}</span>
+        <div
+          style={{
+            position: 'relative',
+            width: 9,
+            height: '32vh',
+            minHeight: 110,
+            maxHeight: 230,
+            borderRadius: 5,
+            background: 'rgba(255,255,255,0.14)',
+            overflow: 'hidden',
+          }}
+        >
+          <span
+            style={{
+              position: 'absolute',
+              left: 0,
+              bottom: 0,
+              width: '100%',
+              height: alreadyMastered ? '100%' : `${notesPct}%`,
+              borderRadius: 5,
+              background:
+                alreadyMastered || onTrack
+                  ? 'linear-gradient(0deg,#2fae62,#46d27a)'
+                  : 'linear-gradient(0deg,#ff5a2e,#ff8a3d)',
+              transition: 'height .2s',
+            }}
+          />
+        </div>
+        <span
+          style={{
+            font: '700 11px "Space Grotesk", system-ui, sans-serif',
+            color: alreadyMastered || onTrack ? '#46d27a' : '#ff9c6a',
+            minWidth: 28,
+            textAlign: 'center',
+          }}
+        >
+          {alreadyMastered ? 'MAX' : `${Math.round(accuracy * 100)}%`}
+        </span>
       </div>
 
       {flashTick > 0 && lastResult && <div key={flashTick} className={`flash ${lastResult}`} />}
