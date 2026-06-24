@@ -150,12 +150,23 @@ export function buildGateLetters(set: NoteSet, answer: Letter, count: number): L
 // expose a sensible candidate range per clef and build a NoteSet from a pick.
 // ──────────────────────────────────────────────────────────────────────────
 
-const TREBLE_RANGE = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5', 'G5']
-const BASS_RANGE = ['C2', 'D2', 'E2', 'F2', 'G2', 'A2', 'B2', 'C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'B3', 'C4']
+/** Note name (naturals only) for a diatonic value. C4 = 28. */
+function diatonicToName(diatonic: number): string {
+  const octave = Math.floor(diatonic / 7)
+  return `${LETTERS[diatonic - octave * 7]}${octave}`
+}
 
-/** Selectable note names for the level creator, per clef. */
+// Staff spans steps 0–8; ledger lines sit at ±2, ±4, ±6. So 3 ledger lines below
+// the bottom line = step -6, and the space just past it = -7; likewise +14/+15 above.
+export const LEDGER_MIN_STEP = -7 // 3 ledger lines below (incl. the space under)
+export const LEDGER_MAX_STEP = 15 // 3 ledger lines above (incl. the space over)
+
+/** Selectable notes for a clef: the staff plus 3 ledger lines above & below. */
 export function candidateNoteNames(clef: Clef): string[] {
-  return clef === 'treble' ? TREBLE_RANGE : BASS_RANGE
+  const bottom = BOTTOM_LINE_DIATONIC[clef]
+  const names: string[] = []
+  for (let step = LEDGER_MIN_STEP; step <= LEDGER_MAX_STEP; step++) names.push(diatonicToName(bottom + step))
+  return names
 }
 
 /** Build a custom NoteSet from chosen note names. */

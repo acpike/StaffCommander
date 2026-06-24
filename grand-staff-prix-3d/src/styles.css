@@ -1908,7 +1908,7 @@ body {
 }
 .tapStaff {
   display: block;
-  height: 158px;
+  height: 212px;
   width: auto;
   margin: 0 auto;
   touch-action: pan-x;

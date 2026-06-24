@@ -29,7 +29,7 @@ export function TapStaff({
   onToggle: (n: string) => void
 }) {
   const G = 16 // one staff space, px
-  const colW = 34 // horizontal spacing per note
+  const colW = 27 // horizontal spacing per note
   const steps = useMemo(() => notes.map((n) => staffStep(makeNote(n, clef))), [notes, clef])
 
   const maxStep = Math.max(8, ...steps)
