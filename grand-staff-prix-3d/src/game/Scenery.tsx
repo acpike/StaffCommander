@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { type Theme } from '../data/themes'
 import { carState } from './carState'
 import { CandyScene } from './CandyScene'
+import { SFScene } from './SFScene'
 
 // Deep Space: a real Milky-Way galaxy sky (public-domain equirect) + textured
 // planets (NASA-derived public-domain maps), so the map matches its name.
@@ -122,6 +123,13 @@ export function Scenery({ theme }: { theme: Theme }) {
           {/* dim IBL so the car still catches light in space */}
           <Suspense fallback={null}>
             <Environment files="/hdri/space.hdr" environmentIntensity={0.6} />
+          </Suspense>
+        </>
+      ) : theme.id === 'city' ? (
+        <>
+          <SFScene />
+          <Suspense fallback={null}>
+            <Environment files="/hdri/city.hdr" environmentIntensity={0.7} />
           </Suspense>
         </>
       ) : theme.id === 'candy' ? (
