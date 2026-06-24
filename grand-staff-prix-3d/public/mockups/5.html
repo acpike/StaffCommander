@@ -1,0 +1,62 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mockup 5 — Journey Map</title>
+<link rel="stylesheet" href="_base.css">
+<style>
+.map { flex: 1; position: relative; overflow: hidden; }
+.map svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.track { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 26; stroke-linecap: round; }
+.trackDash { fill: none; stroke: rgba(255,255,255,0.22); stroke-width: 2.5; stroke-dasharray: 2 16; stroke-linecap: round; }
+.node { stroke: #0a0910; stroke-width: 4; }
+.done { fill: #ff7a3a; }
+.cur { fill: #fff; }
+.lock { fill: #2a2735; }
+.curRing { fill: none; stroke: #ff7a3a; stroke-width: 3; opacity: 0.8; }
+.nlabel { font-family: 'Bravura'; font-size: 26px; fill: #efeef4; text-anchor: middle; }
+.nlabel.l { fill: var(--faint); }
+.sect { font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; fill: var(--dim); }
+.you { font-size: 11px; font-weight: 700; fill: var(--acc2); text-anchor: middle; }
+
+.detail { margin: 0 16px max(16px, env(safe-area-inset-bottom)); padding: 16px; border-radius: 20px;
+  background: rgba(16,14,24,0.86); backdrop-filter: blur(10px); border: 1px solid var(--acc-line); box-shadow: 0 16px 40px rgba(0,0,0,0.5); }
+.detail .row { display: flex; align-items: center; gap: 12px; }
+.detail .clef { font-family: 'Bravura'; font-size: 30px; color: var(--acc2); }
+.detail .nm { font-weight: 800; font-size: 18px; }
+.detail .ds { font-size: 12px; color: var(--dim); }
+.detail .stars { margin-left: auto; color: var(--acc2); }
+.start { margin-top: 12px; width: 100%; padding: 16px; border-radius: 14px; background: var(--acc-grad); color: #fff; font-weight: 800; font-size: 18px; box-shadow: var(--acc-glow); }
+</style></head>
+<body><div class="screen">
+  <div class="aurora a1"></div><div class="aurora a2"></div>
+  <div class="topbar"><div class="brand">GRAND <b>STAFF</b> <span class="x">PRIX</span></div><button class="avatar">A</button></div>
+
+  <div class="map">
+    <svg viewBox="0 0 300 560" preserveAspectRatio="xMidYMid slice">
+      <path class="track" d="M60,70 H200 Q250,70 250,120 Q250,170 200,170 H90 Q40,170 40,220 Q40,270 90,270 H210 Q260,270 260,320 Q260,370 210,370 H80 Q40,370 40,420 Q40,470 90,470 H180"/>
+      <path class="trackDash" d="M60,70 H200 Q250,70 250,120 Q250,170 200,170 H90 Q40,170 40,220 Q40,270 90,270 H210 Q260,270 260,320 Q260,370 210,370 H80 Q40,370 40,420 Q40,470 90,470 H180"/>
+
+      <text class="sect" x="24" y="44">Beginner</text>
+      <circle class="node done" cx="60" cy="70" r="20"/><text class="nlabel" x="60" y="79">&#xE050;</text>
+      <circle class="node done" cx="200" cy="70" r="20"/><text class="nlabel" x="200" y="79">&#xE062;</text>
+      <circle class="node done" cx="200" cy="170" r="20"/><text class="nlabel" x="200" y="179">&#xE050;</text>
+      <circle class="curRing" cx="90" cy="270" r="26"/>
+      <circle class="node cur" cx="90" cy="270" r="20"/><text class="nlabel l" x="90" y="279" style="fill:#1a1820">&#xE050;</text>
+      <text class="you" x="90" y="232">YOU</text>
+
+      <text class="sect" x="24" y="345">Intermediate</text>
+      <circle class="node lock" cx="210" cy="370" r="20"/><text class="nlabel l" x="210" y="379">🔒</text>
+      <circle class="node lock" cx="90" cy="470" r="20"/><text class="nlabel l" x="90" y="479">🔒</text>
+
+      <text class="sect" x="150" y="540">Advanced ▾</text>
+    </svg>
+  </div>
+
+  <div class="detail">
+    <div class="row">
+      <span class="clef">&#xE050;</span>
+      <div><div class="nm">G Position</div><div class="ds">Treble · G–D · Beginner</div></div>
+      <span class="stars">★★☆</span>
+    </div>
+    <button class="start">▶  START</button>
+  </div>
+</div></body></html>

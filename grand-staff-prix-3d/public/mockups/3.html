@@ -1,0 +1,61 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mockup 3 — Two Panel</title>
+<link rel="stylesheet" href="_base.css">
+<style>
+.screen { max-width: 1100px; }
+.topbar { padding: 16px 24px 8px; }
+.split { display: grid; grid-template-columns: 1.05fr 1fr; gap: 18px; padding: 8px 24px 24px; flex: 1; min-height: 0; }
+@media (max-width: 760px) { .split { grid-template-columns: 1fr; } .ride { height: 30vh; min-height: 220px; } }
+
+.panel { background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015)); border: 1px solid var(--line); border-radius: 22px; display: flex; flex-direction: column; }
+.ride { position: relative; overflow: hidden; padding: 16px; flex: 1; }
+.rideGlow { position: absolute; width: 70%; height: 45%; bottom: 30%; left: 15%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,90,46,0.4), transparent); filter: blur(28px); }
+.ride .car { position: relative; z-index: 1; width: 100%; max-height: 46%; object-fit: contain; margin-top: 6px; filter: drop-shadow(0 20px 28px rgba(0,0,0,0.6)); }
+.rideNav { position: relative; z-index: 1; text-align: center; font-weight: 600; margin-top: 6px; }
+.rideNav span { color: var(--acc2); padding: 0 8px; }
+.rideRow { position: relative; z-index: 1; display: flex; gap: 10px; margin-top: 12px; }
+.miniChip { flex: 1; display: flex; align-items: center; gap: 8px; padding: 9px 11px; border-radius: 12px; background: var(--surf); border: 1px solid var(--line); font-size: 13px; font-weight: 600; }
+.miniChip .sw { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(120deg, #5b8f6a, #1c3a33); flex: none; }
+.start { margin-top: auto; padding: 17px; border-radius: 16px; background: var(--acc-grad); color: #fff; font-weight: 800; font-size: 18px; box-shadow: var(--acc-glow); }
+
+.browser { padding: 14px; overflow: auto; }
+.browser h3 { font-size: 13px; letter-spacing: 1px; color: var(--dim); margin: 10px 4px 8px; text-transform: uppercase; }
+.lv { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: var(--surf); border: 1px solid var(--line); margin-bottom: 8px; }
+.lv.on { background: var(--acc-soft); border-color: var(--acc-line); }
+.lv.lock { opacity: 0.45; }
+.lv .clef { font-family: 'Bravura'; font-size: 22px; width: 40px; text-align: center; color: var(--dim); }
+.lv.on .clef { color: var(--acc2); }
+.lv .info { flex: 1; }
+.lv .nm { font-weight: 700; font-size: 15px; }
+.lv .ds { font-size: 12px; color: var(--faint); }
+.lv .stars { color: var(--acc2); font-size: 12px; }
+</style></head>
+<body><div class="screen">
+  <div class="aurora a1"></div><div class="aurora a2"></div>
+  <div class="topbar">
+    <div class="brand">GRAND <b>STAFF</b> <span class="x">PRIX</span></div>
+    <button class="avatar">A</button>
+  </div>
+  <div class="split">
+    <div class="panel ride">
+      <div class="rideGlow"></div>
+      <img class="car" src="/thumbs/car_vortex.png">
+      <div class="rideNav"><span>‹</span> Vortex · Beethoven <span>›</span></div>
+      <div class="rideRow">
+        <div class="miniChip"><span class="sw"></span> Mountain</div>
+        <div class="miniChip">★★☆ &nbsp;C Position</div>
+      </div>
+      <button class="start">▶  START RACE</button>
+    </div>
+    <div class="panel browser">
+      <h3>Beginner</h3>
+      <div class="lv on"><span class="clef">&#xE050;</span><div class="info"><div class="nm">C Position</div><div class="ds">Treble · C–G</div></div><span class="stars">★★☆</span></div>
+      <div class="lv"><span class="clef">&#xE062;</span><div class="info"><div class="nm">Middle C Position</div><div class="ds">Bass · F–C</div></div><span class="stars">★☆☆</span></div>
+      <div class="lv"><span class="clef">&#xE050;&#xE062;</span><div class="info"><div class="nm">G Position</div><div class="ds">Grand · hands apart</div></div></div>
+      <h3>Intermediate</h3>
+      <div class="lv lock"><span class="clef">&#xE050;</span><div class="info"><div class="nm">Treble Staff</div><div class="ds">All lines &amp; spaces</div></div>🔒</div>
+      <div class="lv lock"><span class="clef">&#xE062;</span><div class="info"><div class="nm">Bass Staff</div><div class="ds">All lines &amp; spaces</div></div>🔒</div>
+    </div>
+  </div>
+</div></body></html>

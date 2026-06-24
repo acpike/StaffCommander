@@ -1,0 +1,52 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mockup 4 — Minimal</title>
+<link rel="stylesheet" href="_base.css">
+<style>
+.center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 24px; text-align: center; }
+.band { font-size: 12px; font-weight: 700; letter-spacing: 3px; color: var(--acc2); text-transform: uppercase; }
+.card { margin-top: 14px; width: 100%; max-width: 340px; aspect-ratio: 4/3; border-radius: 26px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02)); border: 1px solid var(--line2);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; position: relative; }
+.staff { width: 70%; height: 86px; }
+.staff line { stroke: #efeef4; stroke-width: 2; }
+.staff .clef { font-family: 'Bravura'; font-size: 80px; fill: #efeef4; }
+.note { fill: #efeef4; }
+.card .nm { font-size: 26px; font-weight: 800; margin-top: 6px; }
+.card .sub { font-size: 13px; color: var(--dim); }
+.stars { margin-top: 16px; font-size: 18px; }
+.change { margin-top: 8px; color: var(--acc2); font-weight: 600; font-size: 14px; }
+.start { margin: 22px 24px 10px; padding: 19px; border-radius: 18px; background: var(--acc-grad); color: #fff; font-weight: 800; font-size: 20px; box-shadow: var(--acc-glow); }
+.chips { display: flex; gap: 18px; justify-content: center; padding: 4px 16px max(20px, env(safe-area-inset-bottom)); }
+.chips button { display: flex; flex-direction: column; align-items: center; gap: 5px; color: var(--dim); font-size: 12px; font-weight: 600; }
+.chips img { width: 46px; height: 46px; border-radius: 12px; object-fit: cover; border: 1px solid var(--line); }
+.chips .sw { width: 46px; height: 46px; border-radius: 12px; background: linear-gradient(120deg, #5b8f6a, #1c3a33); }
+</style></head>
+<body><div class="screen">
+  <div class="aurora a1"></div><div class="aurora a2"></div>
+  <div class="topbar"><button class="ic">⚙</button><div class="brand">GRAND <b>STAFF</b> <span class="x">PRIX</span></div><button class="avatar">A</button></div>
+
+  <div class="center">
+    <div class="band">Beginner</div>
+    <div class="card">
+      <svg class="staff" viewBox="0 0 200 100" preserveAspectRatio="xMidYMid meet">
+        <line x1="14" y1="30" x2="196" y2="30"/><line x1="14" y1="45" x2="196" y2="45"/>
+        <line x1="14" y1="60" x2="196" y2="60"/><line x1="14" y1="75" x2="196" y2="75"/>
+        <line x1="14" y1="90" x2="196" y2="90"/>
+        <text class="clef" x="8" y="84">&#xE050;</text>
+        <ellipse class="note" cx="140" cy="67" rx="8" ry="6" transform="rotate(-20 140 67)"/>
+      </svg>
+      <div class="nm">C Position</div>
+      <div class="sub">Treble · C–G</div>
+    </div>
+    <div class="stars"><span style="color:var(--acc2)">★★</span><span style="color:var(--faint)">☆</span></div>
+    <div class="change">change level ›</div>
+  </div>
+
+  <button class="start">▶  START</button>
+  <div class="chips">
+    <button><img src="/thumbs/car_vortex.png"> Vortex</button>
+    <button><img src="/thumbs/composer_beethoven.png"> Beethoven</button>
+    <button><span class="sw"></span> Mountain</button>
+  </div>
+</div></body></html>
