@@ -50,6 +50,7 @@ export function drawNoteCard(
 
   // Staff geometry. gap = distance between adjacent staff lines (one staff space).
   const gap = Math.round(Math.min(cssH / (tight ? 5.2 : 7.5), cssW / (tight ? 8 : 11)))
+  const boldF = tight ? 2.1 : 1 // much thicker lines on the gate blocks so they read at speed
   const staffSpace = gap // one space = one gap
   const staffWidth = gap * 7.2
   const left = (cssW - staffWidth) / 2
@@ -62,7 +63,7 @@ export function drawNoteCard(
 
   // ── staff lines (steps 0,2,4,6,8) ──
   ctx.strokeStyle = colors.staff
-  ctx.lineWidth = Math.max(1, gap * 0.07)
+  ctx.lineWidth = Math.max(1.5, gap * 0.07 * boldF)
   ctx.lineCap = 'round'
   for (let s = 0; s <= 8; s += 2) {
     const y = yOfStep(s)
@@ -95,7 +96,7 @@ export function drawNoteCard(
 
   // Ledger lines for notes outside the staff.
   ctx.strokeStyle = colors.staff
-  ctx.lineWidth = Math.max(1, gap * 0.08)
+  ctx.lineWidth = Math.max(1.5, gap * 0.08 * boldF)
   const ledgerHalf = gap * 0.9
   if (step < 0) {
     for (let s = -2; s >= step; s -= 2) {
@@ -119,7 +120,7 @@ export function drawNoteCard(
   const stemUp = step < 4
   const stemLen = gap * 3.3
   ctx.strokeStyle = colors.note
-  ctx.lineWidth = Math.max(1.4, gap * 0.11)
+  ctx.lineWidth = Math.max(1.8, gap * 0.11 * boldF)
   ctx.beginPath()
   if (stemUp) {
     const sx = noteX + staffSpace * 0.62
@@ -151,7 +152,7 @@ export async function ensureMusicFont(): Promise<void> {
 }
 
 /** Render a note's staff to a CanvasTexture — for the "find the note" gate blocks. */
-export function noteToStaffTexture(note: GameNote, w = 320, h = 300): THREE.CanvasTexture {
+export function noteToStaffTexture(note: GameNote, w = 384, h = 360): THREE.CanvasTexture {
   const canvas = document.createElement('canvas')
   drawNoteCard(
     canvas,
@@ -163,7 +164,7 @@ export function noteToStaffTexture(note: GameNote, w = 320, h = 300): THREE.Canv
   )
   const tex = new THREE.CanvasTexture(canvas)
   tex.colorSpace = THREE.SRGBColorSpace
-  tex.anisotropy = 4
+  tex.anisotropy = 8
   tex.needsUpdate = true
   return tex
 }

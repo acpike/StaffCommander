@@ -181,8 +181,12 @@ export function Gates() {
     <group>
       {wave.gates.map((gate, i) => {
         const halfX = gate.width / 2 - 0.06
-        // bigger blocks when there are fewer lanes (beginner), smaller as lanes grow
-        const size = Math.max(1.7, Math.min(3.0, gate.width * 0.64))
+        // bigger blocks when there are fewer lanes (beginner), smaller as lanes grow.
+        // find-the-note blocks are larger so the staff reads clearly.
+        const size =
+          wave.mode === 'find'
+            ? Math.max(2.3, Math.min(4.0, gate.width * 0.86))
+            : Math.max(1.7, Math.min(3.0, gate.width * 0.64))
         // hover each block at its own height (raised by its size so it clears the road)
         const baseY = size / 2 + 0.5 + Math.sin(i * 1.3 + 0.6) * 0.4
         return (
