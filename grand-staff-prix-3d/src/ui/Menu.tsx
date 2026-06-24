@@ -10,6 +10,7 @@ import { MenuCar3D } from './MenuCar3D'
 import { AvatarBuilder } from './AvatarBuilder'
 import { LevelCreator } from './LevelCreator'
 import { DEFAULT_AVATAR, type AvatarConfig } from '../data/avatars'
+import { rankForXp } from '../data/progression'
 
 function Hero() {
   return (
@@ -90,7 +91,7 @@ function Players({ onDone }: { onDone: () => void }) {
                 {p.name}
               </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span className="meta">Lv {1 + Math.floor(p.xp / 500)} · {p.xp} XP</span>
+                <span className="meta">{rankForXp(p.xp).name} · 💎 {p.gems}</span>
                 <button
                   className="del"
                   aria-label="Delete player"
@@ -189,6 +190,28 @@ function Setup({ onSwitch }: { onSwitch: () => void }) {
           Switch player {Icon.chevDown}
         </button>
       </div>
+
+      {profile &&
+        (() => {
+          const r = rankForXp(profile.xp)
+          const pct = r.xpForNext === Infinity ? 100 : Math.round((r.xpInto / r.xpForNext) * 100)
+          return (
+            <div className="rankStrip card">
+              <div className="rankTop">
+                <span className="rankName">
+                  <span className="rankLvl">LV {r.level}</span> {r.name}
+                </span>
+                <span className="rankGems">💎 {profile.gems}</span>
+              </div>
+              <div className="rankBarTrack">
+                <span className="rankBarFill" style={{ width: `${pct}%` }} />
+              </div>
+              <div className="rankXp">
+                {r.nextName ? `${r.xpInto} / ${r.xpForNext} XP → ${r.nextName}` : `${profile.xp} XP · max rank`}
+              </div>
+            </div>
+          )
+        })()}
 
       {/* CAR GARAGE — live 3D showroom */}
       <div className="sec garageSec">

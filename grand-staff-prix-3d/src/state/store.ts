@@ -4,6 +4,7 @@ import { CARS } from '../data/cars'
 import { THEMES } from '../data/themes'
 import { audio } from '../audio/sound'
 import { resetCarState } from '../game/carState'
+import { gemsForRun } from '../data/progression'
 import { DEFAULT_AVATAR, normalizeAvatar, type AvatarConfig } from '../data/avatars'
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -26,6 +27,8 @@ export interface Profile {
   /** Level ids the player has demonstrated MASTERY of (the unlock gate). */
   mastered: string[]
   xp: number
+  /** Gem currency earned through play. */
+  gems: number
   /** Built driver avatar (see data/avatars.ts). */
   avatar: AvatarConfig
 }
@@ -75,6 +78,7 @@ function freshProfile(name: string): Profile {
     unlocked: [NOTE_SETS[0].id],
     mastered: [],
     xp: 0,
+    gems: 0,
     avatar: { ...DEFAULT_AVATAR },
   }
 }
@@ -123,6 +127,8 @@ export interface GameState {
   unlockedThisRun: string | null
   /** Level name mastered this run (drives the mastery celebration). */
   masteredThisRun: string | null
+  /** Gems earned in the run just finished (for the game-over screen). */
+  gemsEarned: number
 
   // ── profile actions ──
   addProfile: (name: string, avatar?: AvatarConfig) => void
@@ -167,6 +173,7 @@ export const useGame = create<GameState>()((set, get) => {
     // complete AvatarConfig so nothing crashes on load.
     ...p,
     mastered: Array.isArray((p as { mastered?: unknown }).mastered) ? p.mastered : [],
+    gems: typeof (p as { gems?: unknown }).gems === 'number' ? p.gems : 0,
     avatar: normalizeAvatar((p as { avatar?: unknown }).avatar),
   }))
   const initialCurrent = loadJSON<string | null>(LS_CURRENT, null)
@@ -202,6 +209,7 @@ export const useGame = create<GameState>()((set, get) => {
     flashTick: 0,
     unlockedThisRun: null,
     masteredThisRun: null,
+    gemsEarned: 0,
 
     addProfile: (name, avatar) => {
       const p = freshProfile(name)
@@ -288,6 +296,7 @@ export const useGame = create<GameState>()((set, get) => {
         flashTick: 0,
         unlockedThisRun: null,
         masteredThisRun: null,
+        gemsEarned: 0,
         waveId: 0,
         note: null,
         gateLetters: [],
@@ -363,13 +372,16 @@ export const useGame = create<GameState>()((set, get) => {
 
     endGame: () => {
       const st = get()
+      const total = st.correctCount + st.wrongCount
+      const accuracy = total > 0 ? st.correctCount / total : 0
+      const gems = gemsForRun(st.score, !!st.masteredThisRun, accuracy)
       const prof = st.currentId ? st.profiles.find((p) => p.id === st.currentId) : null
       if (prof) {
         const prevBest = prof.best[st.settings.levelId] ?? 0
         const best =
           st.score > prevBest ? { ...prof.best, [st.settings.levelId]: st.score } : prof.best
         const profiles = st.profiles.map((p) =>
-          p.id === prof.id ? { ...p, best, xp: p.xp + Math.round(st.score / 10) } : p,
+          p.id === prof.id ? { ...p, best, xp: p.xp + Math.round(st.score / 10), gems: p.gems + gems } : p,
         )
         set({ profiles })
         persistProfiles()
@@ -377,7 +389,7 @@ export const useGame = create<GameState>()((set, get) => {
       audio.crash()
       audio.setMusic(false)
       audio.stopEngine()
-      set({ screen: 'over' })
+      set({ screen: 'over', gemsEarned: gems })
     },
   }
 })

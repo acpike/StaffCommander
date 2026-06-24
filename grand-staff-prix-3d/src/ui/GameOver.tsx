@@ -1,5 +1,6 @@
 import { useGame, activeProfile } from '../state/store'
 import { NOTE_SETS } from '../data/notes'
+import { rankForXp } from '../data/progression'
 import { Icon } from './icons'
 
 export function GameOver() {
@@ -7,12 +8,16 @@ export function GameOver() {
   const stage = useGame((s) => s.stage)
   const levelId = useGame((s) => s.settings.levelId)
   const unlocked = useGame((s) => s.unlockedThisRun)
+  const mastered = useGame((s) => s.masteredThisRun)
+  const gemsEarned = useGame((s) => s.gemsEarned)
+  const customLevels = useGame((s) => s.customLevels)
   const profile = useGame(activeProfile)
   const startGame = useGame((s) => s.startGame)
   const goMenu = useGame((s) => s.goMenu)
 
   const best = profile?.best[levelId] ?? score
-  const levelName = NOTE_SETS.find((s) => s.id === levelId)?.name ?? ''
+  const levelName = [...NOTE_SETS, ...customLevels].find((s) => s.id === levelId)?.name ?? ''
+  const rank = rankForXp(profile?.xp ?? 0)
 
   return (
     <div className="overlay">
@@ -26,16 +31,21 @@ export function GameOver() {
             <div className="k">Stage</div>
           </div>
           <div className="overStat">
+            <div className="v">💎 {gemsEarned}</div>
+            <div className="k">Gems</div>
+          </div>
+          <div className="overStat">
             <div className="v">{best}</div>
             <div className="k">Best</div>
           </div>
-          <div className="overStat">
-            <div className="v">{profile ? 1 + Math.floor(profile.xp / 500) : 1}</div>
-            <div className="k">Level</div>
-          </div>
         </div>
 
+        {mastered && <div className="unlockBanner">⭐ You mastered {mastered}!</div>}
         {unlocked && <div className="unlockBanner">🔓 New level unlocked: {unlocked}</div>}
+
+        <div className="lbl" style={{ marginTop: 2 }}>
+          {rank.name} · Lv {rank.level}
+        </div>
 
         <div className="startWrap" style={{ width: '100%' }}>
           <button className="btn" onClick={startGame}>
