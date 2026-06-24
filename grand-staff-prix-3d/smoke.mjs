@@ -42,6 +42,18 @@ try {
   report.setupReached = true
   await page.screenshot({ path: shot('2-setup') })
 
+  // verify the level creator opens + renders, then close it
+  try {
+    await page.getByText('Create a Level').click()
+    await page.waitForSelector('.noteGrid', { timeout: 5000 })
+    await page.screenshot({ path: shot('2b-creator') })
+    report.creatorOpened = true
+    await page.getByRole('button', { name: /cancel/i }).click()
+    await page.waitForSelector('.levelList', { timeout: 5000 })
+  } catch (e) {
+    report.creatorError = String(e)
+  }
+
   // optional theme selection (THEME_INDEX: 0=mountain 1=SF 2=desert 3=candy 4=space)
   const themeIdx = process.env.THEME_INDEX != null ? parseInt(process.env.THEME_INDEX, 10) : null
   if (themeIdx != null) {

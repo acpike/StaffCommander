@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { NOTE_SETS, pickNote, buildGateLetters, type GameNote, type Letter, type NoteSet } from '../data/notes'
+import { NOTE_SETS, pickNote, buildGateLetters, customSet, type GameNote, type Letter, type NoteSet, type Clef } from '../data/notes'
 import { CARS } from '../data/cars'
 import { THEMES } from '../data/themes'
 import { audio } from '../audio/sound'
@@ -14,6 +14,7 @@ import { DEFAULT_AVATAR, normalizeAvatar, type AvatarConfig } from '../data/avat
 const LS_PROFILES = 'gsp3d.profiles'
 const LS_CURRENT = 'gsp3d.current'
 const LS_SETTINGS = 'gsp3d.settings'
+const LS_CUSTOM = 'gsp3d.custom'
 
 export interface Profile {
   id: string
@@ -100,6 +101,8 @@ export interface GameState {
   currentId: string | null
   // ── menu selections ──
   settings: Settings
+  /** Student-built custom practice levels (persisted, always playable). */
+  customLevels: NoteSet[]
   // ── live run ──
   score: number
   lives: number
@@ -130,6 +133,8 @@ export interface GameState {
 
   // ── settings actions ──
   setLevel: (id: string) => void
+  addCustomLevel: (name: string, clef: Clef, noteNames: string[]) => void
+  removeCustomLevel: (id: string) => void
   setCar: (id: string) => void
   setTheme: (id: string) => void
   toggleMusic: () => void
@@ -144,8 +149,8 @@ export interface GameState {
   endGame: () => void
 }
 
-function currentSet(levelId: string): NoteSet {
-  return NOTE_SETS.find((s) => s.id === levelId) ?? NOTE_SETS[0]
+function currentSet(levelId: string, custom: NoteSet[]): NoteSet {
+  return NOTE_SETS.find((s) => s.id === levelId) ?? custom.find((s) => s.id === levelId) ?? NOTE_SETS[0]
 }
 
 function gatesForStage(stage: number): number {
@@ -171,7 +176,7 @@ export const useGame = create<GameState>()((set, get) => {
   const persistSettings = () => saveJSON(LS_SETTINGS, get().settings)
 
   const nextWave = (stage: number) => {
-    const s = currentSet(get().settings.levelId)
+    const s = currentSet(get().settings.levelId, get().customLevels)
     const note = pickNote(s)
     const gateLetters = buildGateLetters(s, note.letter, gatesForStage(stage))
     set((st) => ({ note, gateLetters, waveId: st.waveId + 1 }))
@@ -182,6 +187,7 @@ export const useGame = create<GameState>()((set, get) => {
     profiles: initialProfiles,
     currentId: initialCurrent && initialProfiles.some((p) => p.id === initialCurrent) ? initialCurrent : null,
     settings: initialSettings,
+    customLevels: loadJSON<NoteSet[]>(LS_CUSTOM, []),
 
     score: 0,
     lives: START_LIVES,
@@ -229,6 +235,18 @@ export const useGame = create<GameState>()((set, get) => {
     setLevel: (id) => {
       set((st) => ({ settings: { ...st.settings, levelId: id } }))
       persistSettings()
+    },
+    addCustomLevel: (name, clef, noteNames) => {
+      if (noteNames.length < 2) return
+      const id = 'cl-' + Math.random().toString(36).slice(2, 8)
+      const level = customSet(id, name, clef, noteNames)
+      set((st) => ({ customLevels: [...st.customLevels, level], settings: { ...st.settings, levelId: id } }))
+      saveJSON(LS_CUSTOM, get().customLevels)
+      persistSettings()
+    },
+    removeCustomLevel: (id) => {
+      set((st) => ({ customLevels: st.customLevels.filter((l) => l.id !== id) }))
+      saveJSON(LS_CUSTOM, get().customLevels)
     },
     setCar: (id) => {
       set((st) => ({ settings: { ...st.settings, carId: id } }))
@@ -314,7 +332,7 @@ export const useGame = create<GameState>()((set, get) => {
         ) {
           const idx = NOTE_SETS.findIndex((s) => s.id === levelId)
           const next = NOTE_SETS[idx + 1]
-          masteredThisRun = currentSet(levelId).name
+          masteredThisRun = currentSet(levelId, st.customLevels).name
           if (next && !prof.unlocked.includes(next.id)) unlockedThisRun = next.name
           const profiles = st.profiles.map((p) => {
             if (p.id !== prof.id) return p

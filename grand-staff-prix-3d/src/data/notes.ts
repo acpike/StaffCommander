@@ -136,3 +136,26 @@ export function buildGateLetters(set: NoteSet, answer: Letter, count: number): L
   }
   return chosen
 }
+
+// ──────────────────────────────────────────────────────────────────────────
+// Custom levels: students pick the notes they want to practice. These helpers
+// expose a sensible candidate range per clef and build a NoteSet from a pick.
+// ──────────────────────────────────────────────────────────────────────────
+
+const TREBLE_RANGE = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5', 'G5']
+const BASS_RANGE = ['C2', 'D2', 'E2', 'F2', 'G2', 'A2', 'B2', 'C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'B3', 'C4']
+
+/** Selectable note names for the level creator, per clef. */
+export function candidateNoteNames(clef: Clef): string[] {
+  return clef === 'treble' ? TREBLE_RANGE : BASS_RANGE
+}
+
+/** Build a custom NoteSet from chosen note names. */
+export function customSet(id: string, name: string, clef: Clef, noteNames: string[]): NoteSet {
+  return {
+    id,
+    name: name.trim().slice(0, 20) || 'My Level',
+    blurb: `Custom · ${clef}`,
+    notes: noteNames.map((n) => makeNote(n, clef)),
+  }
+}

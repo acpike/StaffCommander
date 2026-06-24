@@ -1487,3 +1487,36 @@ body {
     min-height: 240px;
   }
 }
+
+/* ── Level creator (custom note sets) ── */
+.noteGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  gap: 8px;
+}
+.noteChip {
+  padding: 12px 0;
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: var(--surf);
+  color: var(--txt);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.14s, border-color 0.14s, transform 0.08s;
+}
+.noteChip:active {
+  transform: scale(0.95);
+}
+.noteChip.on {
+  background: var(--acc-soft);
+  border-color: var(--acc-line);
+  color: #fff;
+}
+.masteredTag {
+  color: #46d27a;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+}

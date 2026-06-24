@@ -8,6 +8,7 @@ import { Icon } from './icons'
 import { MenuBackground } from './MenuBackground'
 import { MenuCar3D } from './MenuCar3D'
 import { AvatarBuilder } from './AvatarBuilder'
+import { LevelCreator } from './LevelCreator'
 import { DEFAULT_AVATAR, type AvatarConfig } from '../data/avatars'
 
 function Hero() {
@@ -142,9 +143,12 @@ function Setup({ onSwitch }: { onSwitch: () => void }) {
   const setSteering = useGame((s) => s.setSteering)
   const setAvatar = useGame((s) => s.setAvatar)
   const startGame = useGame((s) => s.startGame)
+  const customLevels = useGame((s) => s.customLevels)
+  const removeCustomLevel = useGame((s) => s.removeCustomLevel)
 
   // Driver builder (editing the current profile's avatar).
   const [editing, setEditing] = useState(false)
+  const [creating, setCreating] = useState(false)
   const [draft, setDraft] = useState<AvatarConfig>(profile?.avatar ?? DEFAULT_AVATAR)
 
   const openBuilder = () => {
@@ -158,6 +162,7 @@ function Setup({ onSwitch }: { onSwitch: () => void }) {
 
   const car = carById(settings.carId)
   const unlocked = new Set(profile?.unlocked ?? [NOTE_SETS[0].id])
+  const mastered = new Set(profile?.mastered ?? [])
   const activeTheme = THEMES.find((t) => t.id === settings.themeId) ?? THEMES[0]
 
   const onStart = () => {
@@ -268,6 +273,8 @@ function Setup({ onSwitch }: { onSwitch: () => void }) {
         />
       )}
 
+      {creating && <LevelCreator onClose={() => setCreating(false)} />}
+
       {/* LEVELS */}
       <div className="sec">
         <div className="secLabel">Level</div>
@@ -290,21 +297,53 @@ function Setup({ onSwitch }: { onSwitch: () => void }) {
                   <div className="ds">{s.blurb}</div>
                 </span>
                 {isUnlocked ? (
-                  best ? (
-                    <span className="best">
-                      <span className="bestV">{best}</span>
-                      <span className="bestK">BEST</span>
-                    </span>
-                  ) : (
-                    on && <span className="nowTag">Selected</span>
-                  )
+                  <>
+                    {mastered.has(s.id) && <span className="masteredTag">✓ Mastered</span>}
+                    {best ? (
+                      <span className="best">
+                        <span className="bestV">{best}</span>
+                        <span className="bestK">BEST</span>
+                      </span>
+                    ) : (
+                      on && !mastered.has(s.id) && <span className="nowTag">Selected</span>
+                    )}
+                  </>
                 ) : (
-                  <span className="lock">{Icon.lock} Reach Stage 3</span>
+                  <span className="lock">{Icon.lock} Master previous</span>
                 )}
               </button>
             )
           })}
+
+          {/* student-built custom levels (always playable) */}
+          {customLevels.map((s) => {
+            const on = settings.levelId === s.id
+            return (
+              <button key={s.id} className={`levelRow${on ? ' on' : ''}`} onClick={() => setLevel(s.id)}>
+                <span className="bar" />
+                <span className="num">★</span>
+                <span className="info">
+                  <div className="nm">{s.name}</div>
+                  <div className="ds">{s.blurb}</div>
+                </span>
+                <span
+                  className="del"
+                  role="button"
+                  aria-label="Delete custom level"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    removeCustomLevel(s.id)
+                  }}
+                >
+                  {Icon.trash}
+                </span>
+              </button>
+            )
+          })}
         </div>
+        <button className="btn ghost" onClick={() => setCreating(true)} style={{ marginTop: 4 }}>
+          {Icon.plus} Create a Level
+        </button>
       </div>
 
       {/* SCENERY */}
