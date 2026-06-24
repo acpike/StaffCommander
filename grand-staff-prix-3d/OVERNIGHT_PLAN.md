@@ -107,4 +107,13 @@ Before ticking any box or committing:
 ## Log / version list
 - `v0.1-overnight-baseline` (42660b8) — checkpoint before overnight run.
 - `v0.2-real-skies` — real photographic HDRI skies + PBR ground textures; removed cheap procedural mountains/props. Build green, smoke pass, screenshot reviewed (photographic sky + asphalt road — real, not slop).
-- `v0.3-real-mountains` — swapped sky-only HDRIs for FULL-ENVIRONMENT ones: Mountain Pass shows real alpine mountains (verified screenshot), Desert Run uses real semi-desert (goegap). NEXT: add CC0 pine trees + snow (mountain) and cacti (desert) for full name-match; get full-env HDRIs for candy/space; verify each theme's screenshot (need theme-select in smoke.mjs); SF still needs Golden Gate (key/model gated).
+- `v0.3-real-mountains` — full-environment HDRIs: Mountain Pass = real alpine mountains (verified), Desert Run = real semi-desert (goegap).
+- `v0.4-deep-space` — Deep Space = real Milky-Way galaxy + Jupiter/Mars planets (verified). Added THEME_INDEX to smoke.mjs to screenshot each map.
+
+### NAME-MATCH AUDIT (verified via screenshots)
+- Mountain Pass ✅ real mountains (TODO: add pine trees + snow for full polish)
+- Desert Run ✅ real arid landscape (TODO: add cacti/dunes polish)
+- Deep Space ✅ galaxy + planets
+- San Francisco ✗ GATED — needs Golden Gate (VITE_GOOGLE_TILES_KEY 3D-tiles, or a GG GLB model). Do not ship generic city.
+- Candy Canyon ✗ pastel sky only — needs deliberate STYLIZED candy art (hills/lollipops); no real-world asset exists.
+NEXT iterations: candy stylized art; mountain pines+snow; desert cacti; then cars (open cockpit), helmeted avatars, mastery levels.
