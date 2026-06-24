@@ -86,7 +86,7 @@ function StaffBlock({ letter, octave, clef, baseY, index, size }: { letter: Lett
     if (!cv.current) return
     const draw = () =>
       cv.current &&
-      drawNoteCard(cv.current, makeNote(`${letter}${octave}`, clef), { bg: '#ffffff', staff: '#000000', note: '#000000', clef: '#000000' }, undefined, undefined, true)
+      drawNoteCard(cv.current, makeNote(`${letter}${octave}`, clef), { bg: '#ffffff', staff: '#000000', note: '#000000', clef: '#000000' }, undefined, { w: 300, h: 264 }, true)
     draw()
     if ('fonts' in document) (document as Document).fonts.ready.then(draw)
   }, [letter, octave, clef])
@@ -111,20 +111,20 @@ function StaffBlock({ letter, octave, clef, baseY, index, size }: { letter: Lett
           {/* crisp DOM staff (drei Html) — bypasses tone-mapping / bloom / fog entirely */}
           <Html
             center
-            distanceFactor={9}
+            distanceFactor={34}
             position={[0, 0, size / 2 + 0.04]}
-            zIndexRange={[0, 0]}
+            zIndexRange={[5, 0]}
             style={{ pointerEvents: 'none', userSelect: 'none' }}
           >
             <canvas
               ref={cv}
               style={{
-                width: `${Math.round(size * 62)}px`,
-                height: `${Math.round(size * 56)}px`,
+                width: '150px',
+                height: '132px',
                 background: '#ffffff',
                 borderRadius: '12px',
                 display: 'block',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
               }}
             />
           </Html>
