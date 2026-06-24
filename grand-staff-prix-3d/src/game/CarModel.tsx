@@ -1,6 +1,6 @@
 import { type CarSpec } from '../data/cars'
 import { composerById } from '../data/composers'
-import { useGame } from '../state/store'
+import { useGame, activeProfile } from '../state/store'
 import { RealCar } from './RealCar'
 import { DriverModel } from './DriverModel'
 
@@ -8,7 +8,7 @@ import { DriverModel } from './DriverModel'
 // and the menu showroom (ui/MenuCar3D.tsx). A real artist-made model tinted per
 // car color (or the car's own GLB), plus the chosen composer seated in open cockpits.
 export function CarModel({ car }: { car: CarSpec }) {
-  const composerId = useGame((s) => s.settings.composerId)
+  const composerId = useGame((s) => activeProfile(s)?.composerId ?? s.settings.composerId)
   const composer = composerById(composerId)
   return (
     <group>

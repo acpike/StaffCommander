@@ -2,7 +2,7 @@ import { Suspense, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { RigidBody, CuboidCollider, type RapierRigidBody } from '@react-three/rapier'
 import * as THREE from 'three'
-import { useGame } from '../state/store'
+import { useGame, activeProfile } from '../state/store'
 import { carById } from '../data/cars'
 import { input } from './input'
 import { audio } from '../audio/sound'
@@ -13,7 +13,7 @@ import { CAR_Y, CLAMP_X, BASE_SPEED, STAGE_SPEED, BOOST_SPEED, STEER_RATE, MAX_V
 const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v)
 
 export function Car() {
-  const carId = useGame((s) => s.settings.carId)
+  const carId = useGame((s) => activeProfile(s)?.carId ?? s.settings.carId)
   const spec = useMemo(() => carById(carId), [carId])
 
   const body = useRef<RapierRigidBody>(null)

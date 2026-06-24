@@ -39,7 +39,11 @@ export interface Profile {
   gems: number
   /** Unlocked achievement ids (see data/progression.ts). */
   achievements: string[]
-  /** Built driver avatar (see data/avatars.ts). */
+  /** This player's chosen car. */
+  carId: string
+  /** This player's chosen composer (driver). */
+  composerId: string
+  /** Built driver avatar (see data/avatars.ts) — legacy, kept for migration. */
   avatar: AvatarConfig
 }
 
@@ -92,6 +96,8 @@ function freshProfile(name: string): Profile {
     xp: 0,
     gems: 0,
     achievements: [],
+    carId: CARS[0].id,
+    composerId: COMPOSERS[0].id,
     avatar: { ...DEFAULT_AVATAR },
   }
 }
@@ -150,7 +156,7 @@ export interface GameState {
   newAchievements: string[]
 
   // ── profile actions ──
-  addProfile: (name: string, avatar?: AvatarConfig) => void
+  addProfile: (name: string, carId?: string, composerId?: string) => void
   selectProfile: (id: string) => void
   removeProfile: (id: string) => void
   /** Set the current profile's driver avatar config. */
@@ -195,6 +201,8 @@ export const useGame = create<GameState>()((set, get) => {
     mastered: Array.isArray((p as { mastered?: unknown }).mastered) ? p.mastered : [],
     gems: typeof (p as { gems?: unknown }).gems === 'number' ? p.gems : 0,
     achievements: Array.isArray((p as { achievements?: unknown }).achievements) ? p.achievements : [],
+    carId: typeof (p as { carId?: unknown }).carId === 'string' ? (p as { carId: string }).carId : CARS[0].id,
+    composerId: typeof (p as { composerId?: unknown }).composerId === 'string' ? (p as { composerId: string }).composerId : COMPOSERS[0].id,
     avatar: normalizeAvatar((p as { avatar?: unknown }).avatar),
   }))
   const initialCurrent = loadJSON<string | null>(LS_CURRENT, null)
@@ -247,9 +255,10 @@ export const useGame = create<GameState>()((set, get) => {
     gemsEarned: 0,
     newAchievements: [],
 
-    addProfile: (name, avatar) => {
+    addProfile: (name, carId, composerId) => {
       const p = freshProfile(name)
-      if (avatar) p.avatar = { ...avatar }
+      if (carId) p.carId = carId
+      if (composerId) p.composerId = composerId
       set((st) => ({ profiles: [...st.profiles, p], currentId: p.id }))
       persistProfiles()
       saveJSON(LS_CURRENT, p.id)
@@ -298,12 +307,24 @@ export const useGame = create<GameState>()((set, get) => {
       persistSettings()
     },
     setCar: (id) => {
-      set((st) => ({ settings: { ...st.settings, carId: id } }))
-      persistSettings()
+      const cur = get().currentId
+      if (cur) {
+        set((st) => ({ profiles: st.profiles.map((p) => (p.id === cur ? { ...p, carId: id } : p)) }))
+        persistProfiles()
+      } else {
+        set((st) => ({ settings: { ...st.settings, carId: id } }))
+        persistSettings()
+      }
     },
     setComposer: (id) => {
-      set((st) => ({ settings: { ...st.settings, composerId: id } }))
-      persistSettings()
+      const cur = get().currentId
+      if (cur) {
+        set((st) => ({ profiles: st.profiles.map((p) => (p.id === cur ? { ...p, composerId: id } : p)) }))
+        persistProfiles()
+      } else {
+        set((st) => ({ settings: { ...st.settings, composerId: id } }))
+        persistSettings()
+      }
     },
     setTheme: (id) => {
       set((st) => ({ settings: { ...st.settings, themeId: id } }))

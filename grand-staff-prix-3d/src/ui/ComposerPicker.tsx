@@ -1,5 +1,5 @@
 import { COMPOSERS } from '../data/composers'
-import { useGame } from '../state/store'
+import { useGame, activeProfile } from '../state/store'
 import { useThumbnails, type ThumbItem } from './useThumbnails'
 import { AssetThumb } from './AssetThumb'
 
@@ -7,7 +7,7 @@ const ITEMS: ThumbItem[] = COMPOSERS.map((c) => ({ id: c.id, model: c.model, rot
 
 // Compact composer picker: small static avatar thumbnail + name, several per row.
 export function ComposerPicker() {
-  const composerId = useGame((s) => s.settings.composerId)
+  const composerId = useGame((s) => activeProfile(s)?.composerId ?? s.settings.composerId)
   const setComposer = useGame((s) => s.setComposer)
   const thumbs = useThumbnails(ITEMS, 256)
   return (

@@ -11,7 +11,6 @@ import { ComposerPicker } from './ComposerPicker'
 import { useThumbnails, type ThumbItem } from './useThumbnails'
 import { AssetThumb } from './AssetThumb'
 import { LevelCreator } from './LevelCreator'
-import { DEFAULT_AVATAR } from '../data/avatars'
 import { rankForXp, ACHIEVEMENTS, dailyChallenges } from '../data/progression'
 
 function Hero() {
@@ -37,7 +36,7 @@ function Players({ onDone }: { onDone: () => void }) {
   const [adding, setAdding] = useState(false)
   const save = () => {
     if (!name.trim()) return
-    addProfile(name, { ...DEFAULT_AVATAR })
+    addProfile(name)
     setName('')
     setAdding(false)
     onDone()
@@ -139,7 +138,7 @@ function Setup({ onSwitch }: { onSwitch: () => void }) {
   // static car thumbnails (real asset rendered once) for the selector
   const carThumbs = useThumbnails(CAR_THUMB_ITEMS, CAR_THUMB_SIZE)
 
-  const car = carById(settings.carId)
+  const car = carById(profile?.carId ?? settings.carId)
   const unlocked = new Set(profile?.unlocked ?? [NOTE_SETS[0].id])
   const mastered = new Set(profile?.mastered ?? [])
   const activeTheme = THEMES.find((t) => t.id === settings.themeId) ?? THEMES[0]
@@ -222,7 +221,7 @@ function Setup({ onSwitch }: { onSwitch: () => void }) {
         <div className="secLabel">Garage</div>
         <div className="garage card">
           <div className="carStage" style={{ ['--carColor' as string]: car.color }}>
-            <MenuCar3D carId={settings.carId} />
+            <MenuCar3D carId={car.id} />
             <div className="stageGlare" />
           </div>
 
@@ -253,7 +252,7 @@ function Setup({ onSwitch }: { onSwitch: () => void }) {
             {CARS.map((c) => (
               <button
                 key={c.id}
-                className={`carThumb${settings.carId === c.id ? ' on' : ''}`}
+                className={`carThumb${car.id === c.id ? ' on' : ''}`}
                 onClick={() => setCar(c.id)}
                 aria-label={c.name}
               >
