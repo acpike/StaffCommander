@@ -74,7 +74,7 @@ Before ticking any box or committing:
 - [ ] Curved-course backbone (main thread): spline-based track, straight for beginner levels → gentle curves later; car/camera/gates follow the spline. Verify drivable via smoke test.
 - [x] Level creator [v0.6]: students pick clef + exact notes, name + play custom practice levels; persisted, deletable, always playable.
 - [ ] Track types: multiple track styles selectable.
-- [ ] Gamification for 3D: XP/levels/ranks, achievements, gems, daily challenges (per README).
+- [~] Gamification for 3D: XP ranks + gems currency DONE [v0.7]; TODO: achievements/badges + daily challenges.
 - [x] **Mastery-based level design** [v0.5] — DONE: longer stages (8 notes), unlock next only at Stage 4 over ≥30 notes at ≥90% accuracy; accuracy-weighted score; +250 mastery XP; per-profile `mastered`; live HUD mastery meter. (Follow-up: mastery celebration on game-over + "Mastered ✓" badge in menu level list.)
   Original spec:
   - Stages must be longer and progressively harder (more notes, faster, fewer lives margin).
@@ -120,3 +120,4 @@ Before ticking any box or committing:
 NEXT iterations: candy stylized art; mountain pines+snow; desert cacti; then cars (open cockpit), helmeted avatars, mastery levels.
 - `v0.5-mastery-levels` — mastery-based unlock (Stage 4 · 30+ notes · 90%+), longer stages, accuracy-weighted scoring, HUD mastery meter. Pure logic+UI, build green, meter verified on screen.
 - `v0.6-level-creator` — student Level Creator (pick clef + notes → custom practice level). Clean on-brand UI verified by screenshot; build green, smoke confirms it opens/renders/closes + game plays.
+- `v0.7-ranks-gems` — named XP ranks (Beginner→Maestro) + gem currency; menu rank/XP/gems strip + game-over gems. Verified on screen; build green.
