@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { NOTE_SETS, pickNote, buildGateLetters, customSet, type GameNote, type Letter, type NoteSet, type Clef } from '../data/notes'
+import { NOTE_SETS, pickNote, buildGateLetters, customSet, type GameNote, type Letter, type NoteSet, type Clef, type NoteMode } from '../data/notes'
 import { CARS } from '../data/cars'
 import { COMPOSERS } from '../data/composers'
 import { cloudEnabled, fetchPlayers, insertPlayer, updatePlayer, deletePlayer } from '../lib/cloud'
@@ -178,6 +178,7 @@ export interface GameState {
   /** Index of the active note set (cached from settings.levelId at start). */
   note: GameNote | null
   gateLetters: Letter[]
+  noteMode: NoteMode
   /** Increments on every new wave so the spawner can react. */
   waveId: number
   lastResult: RoundResult
@@ -205,7 +206,7 @@ export interface GameState {
 
   // ── settings actions ──
   setLevel: (id: string) => void
-  addCustomLevel: (name: string, clef: Clef, noteNames: string[]) => void
+  addCustomLevel: (name: string, clef: Clef, noteNames: string[], mode?: NoteMode) => void
   removeCustomLevel: (id: string) => void
   setCar: (id: string) => void
   setComposer: (id: string) => void
@@ -301,6 +302,7 @@ export const useGame = create<GameState>()((set, get) => {
     bestStreak: 0,
     note: null,
     gateLetters: [],
+    noteMode: 'name',
     waveId: 0,
     lastResult: null,
     flashTick: 0,
@@ -377,10 +379,10 @@ export const useGame = create<GameState>()((set, get) => {
       set((st) => ({ settings: { ...st.settings, levelId: id } }))
       persistSettings()
     },
-    addCustomLevel: (name, clef, noteNames) => {
+    addCustomLevel: (name, clef, noteNames, mode = 'name') => {
       if (noteNames.length < 2) return
       const id = 'cl-' + Math.random().toString(36).slice(2, 8)
-      const level = customSet(id, name, clef, noteNames)
+      const level = customSet(id, name, clef, noteNames, mode)
       set((st) => ({ customLevels: [...st.customLevels, level], settings: { ...st.settings, levelId: id } }))
       saveJSON(LS_CUSTOM, get().customLevels)
       persistSettings()
@@ -456,6 +458,7 @@ export const useGame = create<GameState>()((set, get) => {
         waveId: 0,
         note: null,
         gateLetters: [],
+        noteMode: currentSet(get().settings.levelId, get().customLevels).mode ?? 'name',
       })
     },
 

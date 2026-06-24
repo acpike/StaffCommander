@@ -63,12 +63,17 @@ export function staffStep(note: GameNote): number {
 // Curriculum: five progressive note sets, matching the original game's levels.
 // ──────────────────────────────────────────────────────────────────────────
 
+/** 'name' = staff shown, pick the letter block (default). 'find' = letter shown,
+ *  pick the block whose staff-note matches. */
+export type NoteMode = 'name' | 'find'
+
 export interface NoteSet {
   id: string
   name: string
   /** Short hint shown beside the level, e.g. "C D E · A B C". */
   blurb: string
   notes: GameNote[]
+  mode?: NoteMode
 }
 
 function set(id: string, name: string, blurb: string, specs: [string, Clef][]): NoteSet {
@@ -151,11 +156,18 @@ export function candidateNoteNames(clef: Clef): string[] {
 }
 
 /** Build a custom NoteSet from chosen note names. */
-export function customSet(id: string, name: string, clef: Clef, noteNames: string[]): NoteSet {
+export function customSet(
+  id: string,
+  name: string,
+  clef: Clef,
+  noteNames: string[],
+  mode: NoteMode = 'name',
+): NoteSet {
   return {
     id,
     name: name.trim().slice(0, 20) || 'My Level',
-    blurb: `Custom · ${clef}`,
+    blurb: `Custom · ${clef}${mode === 'find' ? ' · find' : ''}`,
     notes: noteNames.map((n) => makeNote(n, clef)),
+    mode,
   }
 }

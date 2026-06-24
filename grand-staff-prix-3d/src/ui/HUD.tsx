@@ -11,6 +11,7 @@ export function HUD() {
   const streak = useGame((s) => s.streak)
   const lives = useGame((s) => s.lives)
   const note = useGame((s) => s.note)
+  const noteMode = useGame((s) => s.noteMode)
   const lastResult = useGame((s) => s.lastResult)
   const flashTick = useGame((s) => s.flashTick)
   const goMenu = useGame((s) => s.goMenu)
@@ -28,14 +29,14 @@ export function HUD() {
   const canvas = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
-    if (!note || !canvas.current) return
+    if (!note || !canvas.current || noteMode !== 'name') return
     const el = canvas.current
-    const draw = () => drawNoteCard(el, note, { bg: '#f7f5fa', staff: '#2a2733', note: '#14121c', clef: '#14121c' })
+    const draw = () => drawNoteCard(el, note, { bg: 'transparent', staff: '#2a2733', note: '#14121c', clef: '#14121c' })
     draw()
     ensureMusicFont().then(draw)
     window.addEventListener('resize', draw)
     return () => window.removeEventListener('resize', draw)
-  }, [note])
+  }, [note, noteMode])
 
   return (
     <div className="hud">
@@ -54,12 +55,18 @@ export function HUD() {
         </div>
       </div>
 
-      {note && (
-        <div className="noteCard">
-          <canvas ref={canvas} />
-          <div className="cap">Name this note</div>
-        </div>
-      )}
+      {note &&
+        (noteMode === 'find' ? (
+          <div className="noteCard letterCard">
+            <div className="bigLetter">{note.letter}</div>
+            <div className="cap">Find this note</div>
+          </div>
+        ) : (
+          <div className="noteCard">
+            <canvas ref={canvas} />
+            <div className="cap">Name this note</div>
+          </div>
+        ))}
 
       {/* mastery meter — vertical bar pinned to the right edge (out of the play area) */}
       <div

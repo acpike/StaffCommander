@@ -2,6 +2,7 @@
 // (Bravura font, vendored in /public/fonts). Used by the HUD note card. Drawing
 // is derived from staffStep() so every note lands in the musically correct spot.
 
+import * as THREE from 'three'
 import { staffStep, type GameNote } from '../data/notes'
 
 // SMuFL codepoints (Bravura).
@@ -27,9 +28,10 @@ export function drawNoteCard(
   note: GameNote,
   colors: CardColors,
   dpr = Math.min(window.devicePixelRatio || 1, 3),
+  size?: { w: number; h: number },
 ) {
-  const cssW = canvas.clientWidth || 240
-  const cssH = canvas.clientHeight || 150
+  const cssW = size?.w ?? (canvas.clientWidth || 240)
+  const cssH = size?.h ?? (canvas.clientHeight || 150)
   if (canvas.width !== Math.round(cssW * dpr) || canvas.height !== Math.round(cssH * dpr)) {
     canvas.width = Math.round(cssW * dpr)
     canvas.height = Math.round(cssH * dpr)
@@ -38,6 +40,12 @@ export function drawNoteCard(
   if (!ctx) return
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   ctx.clearRect(0, 0, cssW, cssH)
+  // optional opaque background (used by the gate-block texture; the HUD card
+  // passes 'transparent' so its own frosted div shows through)
+  if (colors.bg && colors.bg !== 'transparent') {
+    ctx.fillStyle = colors.bg
+    ctx.fillRect(0, 0, cssW, cssH)
+  }
 
   // Staff geometry. gap = distance between adjacent staff lines (one staff space).
   const gap = Math.round(Math.min(cssH / 7.5, cssW / 11))
@@ -139,4 +147,21 @@ export async function ensureMusicFont(): Promise<void> {
   } catch {
     /* fall back to whatever renders */
   }
+}
+
+/** Render a note's staff to a CanvasTexture — for the "find the note" gate blocks. */
+export function noteToStaffTexture(note: GameNote, w = 300, h = 240): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas')
+  drawNoteCard(
+    canvas,
+    note,
+    { bg: '#f4f4f8', staff: '#14121c', note: '#0a0814', clef: '#0a0814' },
+    Math.min(window.devicePixelRatio || 1, 2),
+    { w, h },
+  )
+  const tex = new THREE.CanvasTexture(canvas)
+  tex.colorSpace = THREE.SRGBColorSpace
+  tex.anisotropy = 4
+  tex.needsUpdate = true
+  return tex
 }

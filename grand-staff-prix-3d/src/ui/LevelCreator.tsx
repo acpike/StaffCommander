@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useGame } from '../state/store'
-import { candidateNoteNames, type Clef } from '../data/notes'
+import { candidateNoteNames, type Clef, type NoteMode } from '../data/notes'
 import { Icon } from './icons'
 
 // Students build their own practice level: pick a clef + the exact notes they
@@ -9,6 +9,7 @@ export function LevelCreator({ onClose }: { onClose: () => void }) {
   const addCustomLevel = useGame((s) => s.addCustomLevel)
   const [name, setName] = useState('')
   const [clef, setClef] = useState<Clef>('treble')
+  const [mode, setMode] = useState<NoteMode>('name')
   const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const candidates = candidateNoteNames(clef)
@@ -23,7 +24,7 @@ export function LevelCreator({ onClose }: { onClose: () => void }) {
 
   const save = () => {
     if (!canSave) return
-    addCustomLevel(name, clef, candidates.filter((n) => selected.has(n)))
+    addCustomLevel(name, clef, candidates.filter((n) => selected.has(n)), mode)
     onClose()
   }
 
@@ -58,6 +59,23 @@ export function LevelCreator({ onClose }: { onClose: () => void }) {
               Bass
             </button>
           </div>
+        </div>
+
+        <div className="card sec">
+          <div className="secLabel">Mode</div>
+          <div className="seg">
+            <button className={mode === 'name' ? 'on' : ''} onClick={() => setMode('name')}>
+              Name the note
+            </button>
+            <button className={mode === 'find' ? 'on' : ''} onClick={() => setMode('find')}>
+              Find the note
+            </button>
+          </div>
+          <p className="tiny" style={{ marginTop: 2 }}>
+            {mode === 'name'
+              ? 'Staff shows a note; steer into the block with its letter.'
+              : 'A letter shows; steer into the block whose staff matches it.'}
+          </p>
         </div>
 
         <div className="card sec">

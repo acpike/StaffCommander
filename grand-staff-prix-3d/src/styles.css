@@ -1886,3 +1886,13 @@ body {
 .lbRow.top .lbRank { background: var(--acc-grad); color: #fff; }
 .lbName { flex: 1; font-weight: 600; }
 .lbXp { color: var(--dim); font-weight: 700; font-size: 13px; }
+
+/* ── 'find the note' letter card ── */
+.noteCard.letterCard { padding: clamp(10px, 2vh, 18px) 16px clamp(6px, 1.2vh, 10px); }
+.bigLetter {
+  font-weight: 800;
+  font-size: clamp(56px, 16vh, 120px);
+  line-height: 0.9;
+  color: #14121c;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.4);
+}
