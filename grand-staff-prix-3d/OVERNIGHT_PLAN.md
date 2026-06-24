@@ -116,7 +116,7 @@ Before ticking any box or committing:
 - Desert Run ✅ real arid landscape (TODO: add cacti/dunes polish)
 - Deep Space ✅ galaxy + planets
 - San Francisco ✗ GATED — needs Golden Gate (VITE_GOOGLE_TILES_KEY 3D-tiles, or a GG GLB model). Do not ship generic city.
-- Candy Canyon ✗ pastel sky only — needs deliberate STYLIZED candy art (hills/lollipops); no real-world asset exists.
+- Candy Canyon ✅ stylized candy world (pink sky, lollipops, gumdrop hills) [v0.11]
 NEXT iterations: candy stylized art; mountain pines+snow; desert cacti; then cars (open cockpit), helmeted avatars, mastery levels.
 - `v0.5-mastery-levels` — mastery-based unlock (Stage 4 · 30+ notes · 90%+), longer stages, accuracy-weighted scoring, HUD mastery meter. Pure logic+UI, build green, meter verified on screen.
 - `v0.6-level-creator` — student Level Creator (pick clef + notes → custom practice level). Clean on-brand UI verified by screenshot; build green, smoke confirms it opens/renders/closes + game plays.
@@ -124,3 +124,4 @@ NEXT iterations: candy stylized art; mountain pines+snow; desert cacti; then car
 - `v0.8-achievements` — 9 achievements with triggers (checked at game-over); menu badge row (dim=locked/lit=earned) + game-over unlock banner. Verified on screen; build green.
 - `v0.9-daily-challenges` — 3 deterministic per-day challenges with progress + gem rewards + date reset; menu Today’s Challenges card. Verified on screen; build green. GAMIFICATION LAYER COMPLETE (ranks/gems/achievements/daily).
 - `v0.10-detailed-car` — swapped the box car for the detailed sculpted ProceduralBody (swept shell, glass canopy, wing, diffuser, detailed wheels), shared by game + menu. Rear-view verified; build green. Follow-up: open-cockpit body + helmeted avatar (avatar still the full-face character).
+- `v0.11-candy-canyon` — stylized Candy Canyon: pink gradient sky, gumdrop hills, streaming lollipops. Verified on screen (reads as candy). 4/5 maps name-match; only San Francisco gated (Google key / Golden Gate model).
