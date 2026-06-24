@@ -87,7 +87,7 @@ function StaffBlock({ letter, octave, clef, baseY, index, size }: { letter: Lett
     (el: HTMLCanvasElement | null) => {
       if (!el) return
       const render = () =>
-        drawNoteCard(el, makeNote(`${letter}${octave}`, clef), { bg: '#ffffff', staff: '#000000', note: '#000000', clef: '#000000' }, undefined, { w: 300, h: 264 }, true)
+        drawNoteCard(el, makeNote(`${letter}${octave}`, clef), { bg: '#ffffff', staff: '#000000', note: '#000000', clef: '#000000' }, undefined, { w: 300, h: 340 }, true)
       render()
       if ('fonts' in document) (document as Document).fonts.ready.then(render)
     },
@@ -114,7 +114,7 @@ function StaffBlock({ letter, octave, clef, baseY, index, size }: { letter: Lett
           {/* crisp DOM staff (drei Html) — bypasses tone-mapping / bloom / fog entirely */}
           <Html
             center
-            distanceFactor={34}
+            distanceFactor={40}
             position={[0, 0, size / 2 + 0.04]}
             zIndexRange={[5, 0]}
             style={{ pointerEvents: 'none', userSelect: 'none' }}
@@ -123,7 +123,7 @@ function StaffBlock({ letter, octave, clef, baseY, index, size }: { letter: Lett
               ref={drawStaff}
               style={{
                 width: '150px',
-                height: '132px',
+                height: '170px',
                 background: '#ffffff',
                 borderRadius: '12px',
                 display: 'block',
