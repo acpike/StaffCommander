@@ -74,7 +74,7 @@ Before ticking any box or committing:
 - [ ] Curved-course backbone (main thread): spline-based track, straight for beginner levels → gentle curves later; car/camera/gates follow the spline. Verify drivable via smoke test.
 - [x] Level creator [v0.6]: students pick clef + exact notes, name + play custom practice levels; persisted, deletable, always playable.
 - [ ] Track types: multiple track styles selectable.
-- [~] Gamification for 3D: XP ranks + gems [v0.7] + achievements/badges [v0.8] DONE; TODO: daily challenges.
+- [x] Gamification for 3D DONE: XP ranks + gems [v0.7], achievements/badges [v0.8], daily challenges [v0.9].
 - [x] **Mastery-based level design** [v0.5] — DONE: longer stages (8 notes), unlock next only at Stage 4 over ≥30 notes at ≥90% accuracy; accuracy-weighted score; +250 mastery XP; per-profile `mastered`; live HUD mastery meter. (Follow-up: mastery celebration on game-over + "Mastered ✓" badge in menu level list.)
   Original spec:
   - Stages must be longer and progressively harder (more notes, faster, fewer lives margin).
@@ -122,3 +122,4 @@ NEXT iterations: candy stylized art; mountain pines+snow; desert cacti; then car
 - `v0.6-level-creator` — student Level Creator (pick clef + notes → custom practice level). Clean on-brand UI verified by screenshot; build green, smoke confirms it opens/renders/closes + game plays.
 - `v0.7-ranks-gems` — named XP ranks (Beginner→Maestro) + gem currency; menu rank/XP/gems strip + game-over gems. Verified on screen; build green.
 - `v0.8-achievements` — 9 achievements with triggers (checked at game-over); menu badge row (dim=locked/lit=earned) + game-over unlock banner. Verified on screen; build green.
+- `v0.9-daily-challenges` — 3 deterministic per-day challenges with progress + gem rewards + date reset; menu Today’s Challenges card. Verified on screen; build green. GAMIFICATION LAYER COMPLETE (ranks/gems/achievements/daily).
