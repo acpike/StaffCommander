@@ -123,3 +123,4 @@ NEXT iterations: candy stylized art; mountain pines+snow; desert cacti; then car
 - `v0.7-ranks-gems` — named XP ranks (Beginner→Maestro) + gem currency; menu rank/XP/gems strip + game-over gems. Verified on screen; build green.
 - `v0.8-achievements` — 9 achievements with triggers (checked at game-over); menu badge row (dim=locked/lit=earned) + game-over unlock banner. Verified on screen; build green.
 - `v0.9-daily-challenges` — 3 deterministic per-day challenges with progress + gem rewards + date reset; menu Today’s Challenges card. Verified on screen; build green. GAMIFICATION LAYER COMPLETE (ranks/gems/achievements/daily).
+- `v0.10-detailed-car` — swapped the box car for the detailed sculpted ProceduralBody (swept shell, glass canopy, wing, diffuser, detailed wheels), shared by game + menu. Rear-view verified; build green. Follow-up: open-cockpit body + helmeted avatar (avatar still the full-face character).
