@@ -8,6 +8,7 @@ import { Icon } from './icons'
 import { MenuBackground } from './MenuBackground'
 import { MenuCar3D } from './MenuCar3D'
 import { ComposerPicker } from './ComposerPicker'
+import { useThumbnails, type ThumbItem } from './useThumbnails'
 import { LevelCreator } from './LevelCreator'
 import { DEFAULT_AVATAR } from '../data/avatars'
 import { rankForXp, ACHIEVEMENTS, dailyChallenges } from '../data/progression'
@@ -111,6 +112,13 @@ function Players({ onDone }: { onDone: () => void }) {
   )
 }
 
+const CAR_THUMB_ITEMS: ThumbItem[] = CARS.filter((c) => c.model).map((c) => ({
+  id: c.id,
+  model: c.model as string,
+  rotationY: c.modelRotation,
+  kind: 'car',
+}))
+
 function Setup({ onSwitch }: { onSwitch: () => void }) {
   const profile = useGame(activeProfile)
   const settings = useGame((s) => s.settings)
@@ -126,6 +134,8 @@ function Setup({ onSwitch }: { onSwitch: () => void }) {
 
   // Level creator overlay.
   const [creating, setCreating] = useState(false)
+  // static car thumbnails (real asset rendered once) for the selector
+  const carThumbs = useThumbnails(CAR_THUMB_ITEMS, 320)
 
   const car = carById(settings.carId)
   const unlocked = new Set(profile?.unlocked ?? [NOTE_SETS[0].id])
@@ -244,9 +254,10 @@ function Setup({ onSwitch }: { onSwitch: () => void }) {
                 className={`carThumb${settings.carId === c.id ? ' on' : ''}`}
                 onClick={() => setCar(c.id)}
                 aria-label={c.name}
-                style={{ ['--chipColor' as string]: c.color, ['--chipAccent' as string]: c.accent }}
               >
-                <span className="swatch" />
+                <span className="carThumbImg">
+                  {carThumbs[c.id] ? <img src={carThumbs[c.id]} alt={c.name} /> : <span className="thumbSpin" />}
+                </span>
                 <span className="thumbName">{c.name}</span>
               </button>
             ))}
