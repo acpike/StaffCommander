@@ -9,6 +9,7 @@ import { MenuBackground } from './MenuBackground'
 import { MenuCar3D } from './MenuCar3D'
 import { ComposerPicker } from './ComposerPicker'
 import { useThumbnails, type ThumbItem } from './useThumbnails'
+import { AssetThumb } from './AssetThumb'
 import { LevelCreator } from './LevelCreator'
 import { DEFAULT_AVATAR } from '../data/avatars'
 import { rankForXp, ACHIEVEMENTS, dailyChallenges } from '../data/progression'
@@ -257,7 +258,7 @@ function Setup({ onSwitch }: { onSwitch: () => void }) {
                 aria-label={c.name}
               >
                 <span className="carThumbImg">
-                  {carThumbs[c.id] ? <img src={carThumbs[c.id]} alt={c.name} /> : <span className="thumbSpin" />}
+                  <AssetThumb src={`/thumbs/car_${c.id}.png`} fallback={carThumbs[c.id]} alt={c.name} />
                 </span>
                 <span className="thumbName">{c.name}</span>
               </button>

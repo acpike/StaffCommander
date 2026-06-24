@@ -1,6 +1,7 @@
 import { COMPOSERS } from '../data/composers'
 import { useGame } from '../state/store'
 import { useThumbnails, type ThumbItem } from './useThumbnails'
+import { AssetThumb } from './AssetThumb'
 
 const ITEMS: ThumbItem[] = COMPOSERS.map((c) => ({ id: c.id, model: c.model, rotationY: c.rotationY, kind: 'bust' }))
 
@@ -19,7 +20,7 @@ export function ComposerPicker() {
           aria-label={c.name}
         >
           <span className="composerAvatar">
-            {thumbs[c.id] ? <img src={thumbs[c.id]} alt={c.name} /> : <span className="thumbSpin" />}
+            <AssetThumb src={`/thumbs/composer_${c.id}.png`} fallback={thumbs[c.id]} alt={c.name} />
           </span>
           <span className="composerName">{c.name}</span>
         </button>
