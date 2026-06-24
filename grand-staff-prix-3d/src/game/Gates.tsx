@@ -113,8 +113,9 @@ function StaffBlock({ letter, octave, clef, baseY, index, size }: { letter: Lett
           </RoundedBox>
           {/* crisp DOM staff (drei Html) — bypasses tone-mapping / bloom / fog entirely */}
           <Html
+            transform
             center
-            distanceFactor={40}
+            distanceFactor={size * 2.5}
             position={[0, 0, size / 2 + 0.04]}
             zIndexRange={[5, 0]}
             style={{ pointerEvents: 'none', userSelect: 'none' }}
