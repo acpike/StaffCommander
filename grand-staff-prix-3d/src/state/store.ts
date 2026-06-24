@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { NOTE_SETS, pickNote, buildGateLetters, customSet, type GameNote, type Letter, type NoteSet, type Clef } from '../data/notes'
 import { CARS } from '../data/cars'
+import { COMPOSERS } from '../data/composers'
 import { THEMES } from '../data/themes'
 import { audio } from '../audio/sound'
 import { resetCarState } from '../game/carState'
@@ -45,6 +46,7 @@ export interface Profile {
 interface Settings {
   levelId: string
   carId: string
+  composerId: string
   themeId: string
   music: boolean
   steering: 'touch' | 'tilt' | 'keys'
@@ -53,6 +55,7 @@ interface Settings {
 const DEFAULT_SETTINGS: Settings = {
   levelId: NOTE_SETS[0].id,
   carId: CARS[0].id,
+  composerId: COMPOSERS[0].id,
   themeId: THEMES[0].id,
   music: true,
   steering: 'keys',
@@ -158,6 +161,7 @@ export interface GameState {
   addCustomLevel: (name: string, clef: Clef, noteNames: string[]) => void
   removeCustomLevel: (id: string) => void
   setCar: (id: string) => void
+  setComposer: (id: string) => void
   setTheme: (id: string) => void
   toggleMusic: () => void
   setSteering: (s: Settings['steering']) => void
@@ -200,6 +204,8 @@ export const useGame = create<GameState>()((set, get) => {
     const q = new URLSearchParams(location.search)
     const car = q.get('car')
     if (car && CARS.some((c) => c.id === car)) initialSettings.carId = car
+    const composer = q.get('composer')
+    if (composer && COMPOSERS.some((c) => c.id === composer)) initialSettings.composerId = composer
   }
 
   const persistProfiles = () => saveJSON(LS_PROFILES, get().profiles)
@@ -293,6 +299,10 @@ export const useGame = create<GameState>()((set, get) => {
     },
     setCar: (id) => {
       set((st) => ({ settings: { ...st.settings, carId: id } }))
+      persistSettings()
+    },
+    setComposer: (id) => {
+      set((st) => ({ settings: { ...st.settings, composerId: id } }))
       persistSettings()
     },
     setTheme: (id) => {

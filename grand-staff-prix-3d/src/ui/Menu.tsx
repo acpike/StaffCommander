@@ -7,9 +7,9 @@ import { input } from '../game/input'
 import { Icon } from './icons'
 import { MenuBackground } from './MenuBackground'
 import { MenuCar3D } from './MenuCar3D'
-import { AvatarBuilder } from './AvatarBuilder'
+import { ComposerPicker } from './ComposerPicker'
 import { LevelCreator } from './LevelCreator'
-import { DEFAULT_AVATAR, type AvatarConfig } from '../data/avatars'
+import { DEFAULT_AVATAR } from '../data/avatars'
 import { rankForXp, ACHIEVEMENTS, dailyChallenges } from '../data/progression'
 
 function Hero() {
@@ -33,35 +33,12 @@ function Players({ onDone }: { onDone: () => void }) {
   const removeProfile = useGame((s) => s.removeProfile)
   const [name, setName] = useState('')
   const [adding, setAdding] = useState(false)
-  // New-player flow: 'name' (enter name) → 'build' (customize avatar).
-  const [step, setStep] = useState<'name' | 'build'>('name')
-  const [draft, setDraft] = useState<AvatarConfig>({ ...DEFAULT_AVATAR })
-
-  const toBuild = () => {
-    if (!name.trim()) return
-    setStep('build')
-  }
-
   const save = () => {
-    addProfile(name, draft)
+    if (!name.trim()) return
+    addProfile(name, { ...DEFAULT_AVATAR })
     setName('')
     setAdding(false)
-    setStep('name')
-    setDraft({ ...DEFAULT_AVATAR })
     onDone()
-  }
-
-  if (adding && step === 'build') {
-    return (
-      <AvatarBuilder
-        title={`Create ${name.trim() || 'Player'}'s driver`}
-        saveLabel="Create Player"
-        value={draft}
-        onChange={setDraft}
-        onSave={save}
-        onCancel={() => setStep('name')}
-      />
-    )
   }
 
   return (
@@ -116,11 +93,11 @@ function Players({ onDone }: { onDone: () => void }) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') toBuild()
+                if (e.key === 'Enter') save()
               }}
             />
-            <button className="btn mini" onClick={toBuild}>
-              Next
+            <button className="btn mini" onClick={save}>
+              Create
             </button>
           </div>
         ) : (
@@ -142,25 +119,13 @@ function Setup({ onSwitch }: { onSwitch: () => void }) {
   const setTheme = useGame((s) => s.setTheme)
   const toggleMusic = useGame((s) => s.toggleMusic)
   const setSteering = useGame((s) => s.setSteering)
-  const setAvatar = useGame((s) => s.setAvatar)
   const startGame = useGame((s) => s.startGame)
   const customLevels = useGame((s) => s.customLevels)
   const removeCustomLevel = useGame((s) => s.removeCustomLevel)
   const daily = useGame((s) => s.daily)
 
-  // Driver builder (editing the current profile's avatar).
-  const [editing, setEditing] = useState(false)
+  // Level creator overlay.
   const [creating, setCreating] = useState(false)
-  const [draft, setDraft] = useState<AvatarConfig>(profile?.avatar ?? DEFAULT_AVATAR)
-
-  const openBuilder = () => {
-    setDraft(profile?.avatar ?? DEFAULT_AVATAR)
-    setEditing(true)
-  }
-  const saveDriver = () => {
-    setAvatar(draft)
-    setEditing(false)
-  }
 
   const car = carById(settings.carId)
   const unlocked = new Set(profile?.unlocked ?? [NOTE_SETS[0].id])
@@ -289,39 +254,11 @@ function Setup({ onSwitch }: { onSwitch: () => void }) {
         </div>
       </div>
 
-      {/* DRIVER AVATAR */}
+      {/* DRIVER — pick your composer */}
       <div className="sec">
-        <div className="secLabel">Driver</div>
-        <button className="driverCard card" onClick={openBuilder}>
-          <span
-            className="driverChip"
-            style={{
-              ['--dOutfit' as string]: (profile?.avatar ?? DEFAULT_AVATAR).outfitColor,
-              ['--dHair' as string]: (profile?.avatar ?? DEFAULT_AVATAR).hairColor,
-              ['--dSkin' as string]: (profile?.avatar ?? DEFAULT_AVATAR).skinTone,
-            }}
-          >
-            <span className="dHead" />
-            <span className="dBody" />
-          </span>
-          <span className="driverInfo">
-            <span className="driverName">Your driver</span>
-            <span className="driverSub">Tap to customize face, hair, eyes & outfit</span>
-          </span>
-          <span className="driverEdit">Edit {Icon.chevDown}</span>
-        </button>
+        <div className="secLabel">Driver — pick your composer</div>
+        <ComposerPicker />
       </div>
-
-      {editing && (
-        <AvatarBuilder
-          title="Customize your driver"
-          saveLabel="Save Driver"
-          value={draft}
-          onChange={setDraft}
-          onSave={saveDriver}
-          onCancel={() => setEditing(false)}
-        />
-      )}
 
       {creating && <LevelCreator onClose={() => setCreating(false)} />}
 

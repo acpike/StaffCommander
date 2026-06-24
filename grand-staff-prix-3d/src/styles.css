@@ -1631,3 +1631,22 @@ body {
 .dailyRow.done .dailyProg {
   color: #8fd2ff;
 }
+
+/* ── composer driver picker (visual 3D thumbnails) ── */
+.composerThumbs { display: flex; flex-wrap: wrap; gap: 10px; }
+.composerThumb {
+  flex: 1 1 calc(33.333% - 10px);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 8px; border-radius: 14px;
+  background: var(--card); border: 2px solid var(--line);
+  color: var(--txt); cursor: pointer;
+  transition: border-color .15s, background .15s, transform .1s;
+}
+.composerThumb:hover { transform: translateY(-2px); }
+.composerThumb.on { border-color: var(--acc); background: var(--acc-soft); }
+.composerCanvas {
+  width: 100%; aspect-ratio: 1 / 1; border-radius: 10px;
+  background: radial-gradient(circle at 50% 35%, rgba(255,255,255,0.10), rgba(0,0,0,0.18));
+  overflow: hidden;
+}
+.composerName { font-weight: 600; font-size: 12.5px; text-align: center; line-height: 1.15; }
