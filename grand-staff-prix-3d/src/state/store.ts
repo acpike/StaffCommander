@@ -195,6 +195,12 @@ export const useGame = create<GameState>()((set, get) => {
   }))
   const initialCurrent = loadJSON<string | null>(LS_CURRENT, null)
   const initialSettings = { ...DEFAULT_SETTINGS, ...loadJSON<Partial<Settings>>(LS_SETTINGS, {}) }
+  // dev/test override: ?car=<id> &theme=<id> &level=<id> to preview a specific combo
+  if (typeof location !== 'undefined') {
+    const q = new URLSearchParams(location.search)
+    const car = q.get('car')
+    if (car && CARS.some((c) => c.id === car)) initialSettings.carId = car
+  }
 
   const persistProfiles = () => saveJSON(LS_PROFILES, get().profiles)
   const persistSettings = () => saveJSON(LS_SETTINGS, get().settings)
