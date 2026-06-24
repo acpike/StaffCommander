@@ -1964,3 +1964,53 @@ body {
   color: var(--acc2);
   padding: 4px 2px 0;
 }
+
+/* ── difficulty bands within a clef group ── */
+.bandGroup { display: flex; flex-direction: column; gap: 8px; }
+.bandGroup + .bandGroup { margin-top: 6px; }
+.bandHead {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--faint);
+  padding: 2px 2px 0 2px;
+}
+
+/* ── level creator: fits the viewport, no scroll ── */
+.createOverlay { padding: 0; overflow: hidden; }
+.createSheet {
+  width: min(760px, 100%);
+  height: 100dvh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: max(12px, env(safe-area-inset-top)) 16px max(14px, env(safe-area-inset-bottom));
+  position: relative;
+  z-index: 1;
+}
+.createHead { display: flex; align-items: center; gap: 12px; }
+.createTitle { font-weight: 800; font-size: clamp(16px, 4.5vw, 22px); white-space: nowrap; color: var(--txt); }
+.createName { flex: 1; min-width: 0; }
+.createBlock { display: flex; flex-direction: column; gap: 6px; }
+.miniLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.createStaffArea { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
+.createStaffArea .tapStaffWrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.createStaffArea .tapStaff { width: 100%; height: 100%; }
+.createActions { display: flex; gap: 12px; }
+.createActions .btn { flex: 1; }
+.modeBtn { padding: 8px 6px; gap: 2px; }
+.modeSvg { width: 40px; height: 26px; }

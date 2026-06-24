@@ -74,6 +74,14 @@ export type NoteMode = 'name' | 'find' | 'mix'
 /** Which clef "track" a level belongs to (drives the grouped level menu). */
 export type ClefGroup = 'treble' | 'bass' | 'grand' | 'alto' | 'tenor'
 
+/** Difficulty band within a clef track. */
+export type Difficulty = 'beginner' | 'intermediate' | 'advanced'
+export const DIFFICULTIES: { id: Difficulty; label: string }[] = [
+  { id: 'beginner', label: 'Beginner' },
+  { id: 'intermediate', label: 'Intermediate' },
+  { id: 'advanced', label: 'Advanced' },
+]
+
 export interface NoteSet {
   id: string
   name: string
@@ -84,6 +92,7 @@ export interface NoteSet {
   /** Clef track + difficulty tier (1 = first), for the curriculum. */
   group?: ClefGroup
   tier?: number
+  band?: Difficulty
 }
 
 /** Distinct letters that appear in a note set (used to build gate options). */
@@ -220,9 +229,15 @@ function spread(low: string, high: string): string[] {
   return out
 }
 
+function bandOf(group: ClefGroup, tier: number): Difficulty {
+  const optional = group === 'alto' || group === 'tenor'
+  if (optional) return tier === 1 ? 'beginner' : tier === 2 ? 'intermediate' : 'advanced'
+  return tier <= 3 ? 'beginner' : tier === 4 ? 'intermediate' : 'advanced'
+}
+
 function level(group: ClefGroup, tier: number, name: string, blurb: string, clef: Clef | 'grand', names: string[]): NoteSet {
   const notes = clef === 'grand' ? names.map((n) => makeNote(n, grandClefFor(n))) : names.map((n) => makeNote(n, clef))
-  return { id: `${group}-${tier}`, name, blurb, notes, mode: 'mix', group, tier }
+  return { id: `${group}-${tier}`, name, blurb, notes, mode: 'mix', group, tier, band: bandOf(group, tier) }
 }
 
 export const NOTE_SETS: NoteSet[] = [

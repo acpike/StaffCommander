@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useGLTF } from '@react-three/drei'
 import { useGame, activeProfile } from '../state/store'
 import { leaderboard, type CloudPlayer } from '../lib/cloud'
-import { NOTE_SETS, CLEF_GROUPS } from '../data/notes'
+import { NOTE_SETS, CLEF_GROUPS, DIFFICULTIES } from '../data/notes'
 import { CARS, carById } from '../data/cars'
 import { composerById } from '../data/composers'
 import { THEMES } from '../data/themes'
@@ -439,7 +439,13 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
           {CLEF_GROUPS.filter((g) => !g.optional).map((group) => (
             <div key={group.id} className="clefGroup">
               <div className="clefGroupHead">{group.label}</div>
-              {NOTE_SETS.filter((s) => s.group === group.id).map((s) => {
+              {DIFFICULTIES.map((band) => {
+                const bandLevels = NOTE_SETS.filter((s) => s.group === group.id && s.band === band.id)
+                if (!bandLevels.length) return null
+                return (
+                  <div key={band.id} className="bandGroup">
+                    <div className="bandHead">{band.label}</div>
+                    {bandLevels.map((s) => {
                 const isUnlocked = unlocked.has(s.id)
                 const on = settings.levelId === s.id
                 const best = profile?.best[s.id]
@@ -469,6 +475,9 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
                       <span className="lock">{Icon.lock} Locked</span>
                     )}
                   </button>
+                      )
+                    })}
+                  </div>
                 )
               })}
             </div>
