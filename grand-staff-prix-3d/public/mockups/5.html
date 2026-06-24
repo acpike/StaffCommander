@@ -3,60 +3,111 @@
 <title>Mockup 5 — Journey Map</title>
 <link rel="stylesheet" href="_base.css">
 <style>
-.map { flex: 1; position: relative; overflow: hidden; }
-.map svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.track { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 26; stroke-linecap: round; }
-.trackDash { fill: none; stroke: rgba(255,255,255,0.22); stroke-width: 2.5; stroke-dasharray: 2 16; stroke-linecap: round; }
-.node { stroke: #0a0910; stroke-width: 4; }
-.done { fill: #ff7a3a; }
-.cur { fill: #fff; }
-.lock { fill: #2a2735; }
-.curRing { fill: none; stroke: #ff7a3a; stroke-width: 3; opacity: 0.8; }
-.nlabel { font-family: 'Bravura'; font-size: 26px; fill: #efeef4; text-anchor: middle; }
-.nlabel.l { fill: var(--faint); }
-.sect { font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; fill: var(--dim); }
-.you { font-size: 11px; font-weight: 700; fill: var(--acc2); text-anchor: middle; }
+.screen { overflow: hidden; }
+.maphead { position: absolute; top: 0; left: 0; right: 0; z-index: 5; padding: 12px 16px 18px;
+  background: linear-gradient(180deg, #14101f 60%, transparent); display: flex; align-items: center; justify-content: space-between; }
+.maphead .t { font-weight: 800; font-size: 16px; letter-spacing: 0.5px; }
+.maphead .rank { font-size: 12px; color: var(--dim); }
 
-.detail { margin: 0 16px max(16px, env(safe-area-inset-bottom)); padding: 16px; border-radius: 20px;
-  background: rgba(16,14,24,0.86); backdrop-filter: blur(10px); border: 1px solid var(--acc-line); box-shadow: 0 16px 40px rgba(0,0,0,0.5); }
+.scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.map { width: 100%; display: block; }
+
+/* zone bands */
+.zoneBeg { fill: rgba(74,160,110,0.10); }
+.zoneInt { fill: rgba(255,150,60,0.09); }
+.zoneAdv { fill: rgba(150,90,255,0.10); }
+.zoneLine { stroke: rgba(255,255,255,0.10); stroke-width: 1.5; stroke-dasharray: 4 6; }
+.banner { fill: rgba(255,255,255,0.06); stroke: rgba(255,255,255,0.12); }
+.bannerTx { font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 13px; letter-spacing: 3px; text-transform: uppercase; }
+.begTx { fill: #7fd0a0; } .intTx { fill: #ffae6a; } .advTx { fill: #b99bff; }
+
+/* road */
+.road { fill: none; stroke: #211d2e; stroke-width: 30; stroke-linecap: round; stroke-linejoin: round; }
+.roadEdge { fill: none; stroke: #2f2a40; stroke-width: 34; stroke-linecap: round; stroke-linejoin: round; }
+.roadDash { fill: none; stroke: rgba(255,255,255,0.28); stroke-width: 2.5; stroke-dasharray: 3 18; stroke-linecap: round; }
+
+/* nodes */
+.nd { stroke: #0a0910; stroke-width: 5; }
+.done { fill: #ffa23a; } .doneG { fill: #ffd089; }
+.cur { fill: #ffffff; }
+.lock { fill: #211e2c; stroke: #34303f; }
+.ring { fill: none; stroke: #ffb05a; stroke-width: 3.5; opacity: 0.9; }
+.gl { font-family: 'Bravura'; text-anchor: middle; }
+.glDark { fill: #15131d; } .glLight { fill: #fff; } .glLock { fill: #5a5668; }
+.nlab { font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 600; fill: #cfcbd8; text-anchor: middle; }
+.nlab.dim { fill: #6b6678; }
+.star { fill: #ffd089; font-size: 13px; text-anchor: middle; }
+.you { fill: #ffb05a; font-weight: 800; font-size: 11px; letter-spacing: 1px; text-anchor: middle; }
+
+/* detail card */
+.detail { position: absolute; left: 14px; right: 14px; bottom: max(14px, env(safe-area-inset-bottom)); z-index: 6;
+  padding: 14px 16px; border-radius: 20px; background: rgba(16,14,24,0.9); backdrop-filter: blur(12px);
+  border: 1px solid var(--acc-line); box-shadow: 0 18px 44px rgba(0,0,0,0.55); }
 .detail .row { display: flex; align-items: center; gap: 12px; }
 .detail .clef { font-family: 'Bravura'; font-size: 30px; color: var(--acc2); }
-.detail .nm { font-weight: 800; font-size: 18px; }
+.detail .nm { font-weight: 800; font-size: 17px; }
 .detail .ds { font-size: 12px; color: var(--dim); }
 .detail .stars { margin-left: auto; color: var(--acc2); }
-.start { margin-top: 12px; width: 100%; padding: 16px; border-radius: 14px; background: var(--acc-grad); color: #fff; font-weight: 800; font-size: 18px; box-shadow: var(--acc-glow); }
+.detail .start { margin-top: 12px; width: 100%; padding: 15px; border-radius: 13px; background: var(--acc-grad); color: #fff; font-weight: 800; font-size: 17px; box-shadow: var(--acc-glow); }
 </style></head>
 <body><div class="screen">
-  <div class="aurora a1"></div><div class="aurora a2"></div>
-  <div class="topbar"><div class="brand">GRAND <b>STAFF</b> <span class="x">PRIX</span></div><button class="avatar">A</button></div>
+  <div class="maphead"><div class="t">Your Journey</div><div class="rank">Apprentice · 1,240 XP</div></div>
 
-  <div class="map">
-    <svg viewBox="0 0 300 560" preserveAspectRatio="xMidYMid slice">
-      <path class="track" d="M60,70 H200 Q250,70 250,120 Q250,170 200,170 H90 Q40,170 40,220 Q40,270 90,270 H210 Q260,270 260,320 Q260,370 210,370 H80 Q40,370 40,420 Q40,470 90,470 H180"/>
-      <path class="trackDash" d="M60,70 H200 Q250,70 250,120 Q250,170 200,170 H90 Q40,170 40,220 Q40,270 90,270 H210 Q260,270 260,320 Q260,370 210,370 H80 Q40,370 40,420 Q40,470 90,470 H180"/>
+  <div class="scroll">
+  <svg class="map" viewBox="0 0 360 860" preserveAspectRatio="xMidYMin meet">
+    <!-- zone bands -->
+    <rect class="zoneBeg" x="0" y="0" width="360" height="470"/>
+    <rect class="zoneInt" x="0" y="470" width="360" height="200"/>
+    <rect class="zoneAdv" x="0" y="670" width="360" height="190"/>
+    <line class="zoneLine" x1="0" y1="470" x2="360" y2="470"/>
+    <line class="zoneLine" x1="0" y1="670" x2="360" y2="670"/>
 
-      <text class="sect" x="24" y="44">Beginner</text>
-      <circle class="node done" cx="60" cy="70" r="20"/><text class="nlabel" x="60" y="79">&#xE050;</text>
-      <circle class="node done" cx="200" cy="70" r="20"/><text class="nlabel" x="200" y="79">&#xE062;</text>
-      <circle class="node done" cx="200" cy="170" r="20"/><text class="nlabel" x="200" y="179">&#xE050;</text>
-      <circle class="curRing" cx="90" cy="270" r="26"/>
-      <circle class="node cur" cx="90" cy="270" r="20"/><text class="nlabel l" x="90" y="279" style="fill:#1a1820">&#xE050;</text>
-      <text class="you" x="90" y="232">YOU</text>
+    <!-- road through all 15 nodes -->
+    <path class="roadEdge" d="M80,150 L185,205 L290,165 L300,275 L195,315 L95,290 L85,400 L190,445 L295,420 L95,560 L195,600 L300,565 L95,730 L195,775 L300,740"/>
+    <path class="road"     d="M80,150 L185,205 L290,165 L300,275 L195,315 L95,290 L85,400 L190,445 L295,420 L95,560 L195,600 L300,565 L95,730 L195,775 L300,740"/>
+    <path class="roadDash" d="M80,150 L185,205 L290,165 L300,275 L195,315 L95,290 L85,400 L190,445 L295,420 L95,560 L195,600 L300,565 L95,730 L195,775 L300,740"/>
 
-      <text class="sect" x="24" y="345">Intermediate</text>
-      <circle class="node lock" cx="210" cy="370" r="20"/><text class="nlabel l" x="210" y="379">🔒</text>
-      <circle class="node lock" cx="90" cy="470" r="20"/><text class="nlabel l" x="90" y="479">🔒</text>
+    <!-- banners -->
+    <g><rect class="banner" x="18" y="36" rx="13" width="150" height="30"/><text class="bannerTx begTx" x="36" y="56">BEGINNER</text></g>
+    <g><rect class="banner" x="18" y="486" rx="13" width="180" height="30"/><text class="bannerTx intTx" x="36" y="506">INTERMEDIATE</text></g>
+    <g><rect class="banner" x="18" y="686" rx="13" width="150" height="30"/><text class="bannerTx advTx" x="36" y="706">ADVANCED</text></g>
 
-      <text class="sect" x="150" y="540">Advanced ▾</text>
-    </svg>
+    <!-- BEGINNER · Treble positions -->
+    <text class="star" x="80" y="116">★★★</text>
+    <circle class="nd done" cx="80" cy="150" r="23"/><text class="gl glDark" x="80" y="160" font-size="24">&#xE050;</text><text class="nlab" x="80" y="192">Middle C</text>
+    <text class="star" x="185" y="171">★★☆</text>
+    <circle class="nd done" cx="185" cy="205" r="23"/><text class="gl glDark" x="185" y="215" font-size="24">&#xE050;</text><text class="nlab" x="185" y="247">C Pos</text>
+    <text class="you" x="290" y="128">YOU</text><circle class="ring" cx="290" cy="165" r="29"/>
+    <circle class="nd cur" cx="290" cy="165" r="23"/><text class="gl glDark" x="290" y="175" font-size="24">&#xE050;</text><text class="nlab" x="290" y="207">G Pos</text>
+
+    <!-- BEGINNER · Bass positions -->
+    <circle class="nd lock" cx="300" cy="275" r="23"/><text class="gl" x="300" y="285" font-size="24" fill="#5a5668">&#xE062;</text><text class="nlab dim" x="300" y="317">Middle C</text>
+    <circle class="nd lock" cx="195" cy="315" r="23"/><text class="gl" x="195" y="325" font-size="24" fill="#5a5668">&#xE062;</text><text class="nlab dim" x="195" y="357">C Pos</text>
+    <circle class="nd lock" cx="95" cy="290" r="23"/><text class="gl" x="95" y="300" font-size="24" fill="#5a5668">&#xE062;</text><text class="nlab dim" x="95" y="332">G Pos</text>
+
+    <!-- BEGINNER · Grand positions -->
+    <circle class="nd lock" cx="85" cy="400" r="23"/><text class="gl" x="85" y="409" font-size="16" fill="#5a5668">&#xE050;&#xE062;</text><text class="nlab dim" x="85" y="442">Middle C</text>
+    <circle class="nd lock" cx="190" cy="445" r="23"/><text class="gl" x="190" y="454" font-size="16" fill="#5a5668">&#xE050;&#xE062;</text><text class="nlab dim" x="190" y="487">C Pos</text>
+    <circle class="nd lock" cx="295" cy="420" r="23"/><text class="gl" x="295" y="429" font-size="16" fill="#5a5668">&#xE050;&#xE062;</text><text class="nlab dim" x="295" y="462">G Pos</text>
+
+    <!-- INTERMEDIATE -->
+    <circle class="nd lock" cx="95" cy="560" r="23"/><text class="gl" x="95" y="570" font-size="24" fill="#5a5668">&#xE050;</text><text class="nlab dim" x="95" y="592">Staff</text>
+    <circle class="nd lock" cx="195" cy="600" r="23"/><text class="gl" x="195" y="610" font-size="24" fill="#5a5668">&#xE062;</text><text class="nlab dim" x="195" y="632">Staff</text>
+    <circle class="nd lock" cx="300" cy="565" r="23"/><text class="gl" x="300" y="574" font-size="16" fill="#5a5668">&#xE050;&#xE062;</text><text class="nlab dim" x="300" y="597">Staff</text>
+
+    <!-- ADVANCED -->
+    <circle class="nd lock" cx="95" cy="730" r="23"/><text class="gl" x="95" y="740" font-size="24" fill="#5a5668">&#xE050;</text><text class="nlab dim" x="95" y="762">Ledgers</text>
+    <circle class="nd lock" cx="195" cy="775" r="23"/><text class="gl" x="195" y="785" font-size="24" fill="#5a5668">&#xE062;</text><text class="nlab dim" x="195" y="807">Ledgers</text>
+    <circle class="nd lock" cx="300" cy="740" r="23"/><text class="gl" x="300" y="749" font-size="16" fill="#5a5668">&#xE050;&#xE062;</text><text class="nlab dim" x="300" y="772">Ledgers</text>
+  </svg>
   </div>
 
   <div class="detail">
     <div class="row">
       <span class="clef">&#xE050;</span>
-      <div><div class="nm">G Position</div><div class="ds">Treble · G–D · Beginner</div></div>
+      <div><div class="nm">G Position</div><div class="ds">Treble · Beginner · G–D</div></div>
       <span class="stars">★★☆</span>
     </div>
-    <button class="start">▶  START</button>
+    <button class="start">▶  START RACE</button>
   </div>
 </div></body></html>
