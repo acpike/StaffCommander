@@ -17,6 +17,7 @@ export function App() {
   useEffect(() => {
     input.attach()
     void ensureMusicFont()
+    void useGame.getState().refreshClass() // pull latest class roster from the cloud
     return () => input.detach()
   }, [])
 

@@ -1861,3 +1861,20 @@ body {
 
 /* scenery tiles: roomier name */
 .themeTileName { font-size: 11px; font-weight: 600; }
+
+/* ── class bar + leaderboard ── */
+.classRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.classCode { font-weight: 800; font-size: 20px; letter-spacing: 3px; color: var(--acc2); }
+.lbRow {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 4px; border-bottom: 1px solid var(--line);
+}
+.lbRow:last-child { border-bottom: none; }
+.lbRank {
+  width: 26px; height: 26px; flex: none; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 13px; background: var(--surf); color: var(--dim);
+}
+.lbRow.top .lbRank { background: var(--acc-grad); color: #fff; }
+.lbName { flex: 1; font-weight: 600; }
+.lbXp { color: var(--dim); font-weight: 700; font-size: 13px; }

@@ -19,6 +19,7 @@ export const COMPOSERS: Composer[] = [
   { id: 'mozart', name: 'Mozart', era: 'Classical', model: '/models/composer_mozart.glb', rotationY: Math.PI / 2, scale: 1 },
   { id: 'clara', name: 'Clara Schumann', era: 'Romantic', model: '/models/composer_clara.glb', rotationY: Math.PI / 2, scale: 1 },
   { id: 'hildegard', name: 'Hildegard von Bingen', era: 'Medieval', model: '/models/composer_hildegard.glb', rotationY: Math.PI / 2, scale: 1 },
+  { id: 'joplin', name: 'Scott Joplin', era: 'Ragtime', model: '/models/composer_joplin.glb', rotationY: Math.PI / 2, scale: 1 },
 ]
 
 export function composerById(id: string): Composer {

@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { NOTE_SETS, pickNote, buildGateLetters, customSet, type GameNote, type Letter, type NoteSet, type Clef } from '../data/notes'
 import { CARS } from '../data/cars'
 import { COMPOSERS } from '../data/composers'
+import { cloudEnabled, fetchPlayers, insertPlayer, updatePlayer, deletePlayer } from '../lib/cloud'
 import { THEMES } from '../data/themes'
 import { audio } from '../audio/sound'
 import { resetCarState } from '../game/carState'
@@ -54,6 +55,23 @@ interface Settings {
   themeId: string
   music: boolean
   steering: 'touch' | 'tilt' | 'keys'
+  /** Class code grouping players for cloud sync + leaderboard (empty = local only). */
+  classCode: string
+}
+
+/** Map a profile to the cloud `data` blob (everything except id + name). */
+function toCloudData(p: Profile): Record<string, unknown> {
+  return {
+    best: p.best,
+    unlocked: p.unlocked,
+    mastered: p.mastered,
+    xp: p.xp,
+    gems: p.gems,
+    achievements: p.achievements,
+    carId: p.carId,
+    composerId: p.composerId,
+    avatar: p.avatar,
+  }
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -63,6 +81,25 @@ const DEFAULT_SETTINGS: Settings = {
   themeId: THEMES[0].id,
   music: true,
   steering: 'keys',
+  classCode: '',
+}
+
+/** Build a local Profile from a cloud row. */
+function cloudToProfile(row: { id: string; name: string; data?: Record<string, unknown> }): Profile {
+  const d = row.data ?? {}
+  return {
+    id: row.id,
+    name: row.name,
+    best: (d.best as Record<string, number>) ?? {},
+    unlocked: (d.unlocked as string[]) ?? [NOTE_SETS[0].id],
+    mastered: (d.mastered as string[]) ?? [],
+    xp: (d.xp as number) ?? 0,
+    gems: (d.gems as number) ?? 0,
+    achievements: (d.achievements as string[]) ?? [],
+    carId: (d.carId as string) ?? CARS[0].id,
+    composerId: (d.composerId as string) ?? COMPOSERS[0].id,
+    avatar: normalizeAvatar(d.avatar),
+  }
 }
 
 function loadJSON<T>(key: string, fallback: T): T {
@@ -159,6 +196,10 @@ export interface GameState {
   addProfile: (name: string, carId?: string, composerId?: string) => void
   selectProfile: (id: string) => void
   removeProfile: (id: string) => void
+  /** Join/switch class code: loads that class's roster from the cloud. */
+  joinClass: (code: string) => Promise<void>
+  /** Re-pull the current class roster from the cloud. */
+  refreshClass: () => Promise<void>
   /** Set the current profile's driver avatar config. */
   setAvatar: (config: AvatarConfig) => void
 
@@ -216,7 +257,20 @@ export const useGame = create<GameState>()((set, get) => {
     if (composer && COMPOSERS.some((c) => c.id === composer)) initialSettings.composerId = composer
   }
 
-  const persistProfiles = () => saveJSON(LS_PROFILES, get().profiles)
+  let cloudSyncTimer: ReturnType<typeof setTimeout> | undefined
+  const persistProfiles = () => {
+    saveJSON(LS_PROFILES, get().profiles)
+    // debounced cloud sync of the active player (when a class is joined)
+    const st = get()
+    if (st.settings.classCode && cloudEnabled) {
+      clearTimeout(cloudSyncTimer)
+      cloudSyncTimer = setTimeout(() => {
+        const s2 = get()
+        const p = s2.profiles.find((x) => x.id === s2.currentId)
+        if (p) void updatePlayer(p.id, toCloudData(p))
+      }, 700)
+    }
+  }
   const persistSettings = () => saveJSON(LS_SETTINGS, get().settings)
 
   const nextWave = (stage: number) => {
@@ -262,6 +316,39 @@ export const useGame = create<GameState>()((set, get) => {
       set((st) => ({ profiles: [...st.profiles, p], currentId: p.id }))
       persistProfiles()
       saveJSON(LS_CURRENT, p.id)
+      // if in a class, create the cloud row and swap in its id
+      const code = get().settings.classCode
+      if (code && cloudEnabled) {
+        void insertPlayer(p.name, code, toCloudData(p)).then((row) => {
+          if (!row) return
+          set((st) => ({
+            profiles: st.profiles.map((x) => (x.id === p.id ? { ...x, id: row.id } : x)),
+            currentId: st.currentId === p.id ? row.id : st.currentId,
+          }))
+          saveJSON(LS_PROFILES, get().profiles)
+          saveJSON(LS_CURRENT, get().currentId)
+        })
+      }
+    },
+    joinClass: async (code) => {
+      const c = code.trim().toUpperCase().slice(0, 12)
+      set((st) => ({ settings: { ...st.settings, classCode: c } }))
+      persistSettings()
+      if (!c || !cloudEnabled) return
+      const rows = await fetchPlayers(c)
+      const profiles = rows.map(cloudToProfile)
+      set({ profiles, currentId: null })
+      saveJSON(LS_PROFILES, profiles)
+      saveJSON(LS_CURRENT, null)
+    },
+    refreshClass: async () => {
+      const code = get().settings.classCode
+      if (!code || !cloudEnabled) return
+      const rows = await fetchPlayers(code)
+      const profiles = rows.map(cloudToProfile)
+      const cur = get().currentId
+      set({ profiles, currentId: profiles.some((p) => p.id === cur) ? cur : null })
+      saveJSON(LS_PROFILES, profiles)
     },
     selectProfile: (id) => {
       set({ currentId: id })
@@ -273,8 +360,9 @@ export const useGame = create<GameState>()((set, get) => {
         const currentId = st.currentId === id ? null : st.currentId
         return { profiles, currentId }
       })
-      persistProfiles()
+      saveJSON(LS_PROFILES, get().profiles)
       saveJSON(LS_CURRENT, get().currentId)
+      if (get().settings.classCode && cloudEnabled) void deletePlayer(id)
     },
     setAvatar: (config) => {
       const cur = get().currentId

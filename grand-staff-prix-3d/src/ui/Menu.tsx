@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useGame, activeProfile } from '../state/store'
+import { leaderboard, type CloudPlayer } from '../lib/cloud'
 import { NOTE_SETS } from '../data/notes'
 import { CARS, carById } from '../data/cars'
 import { THEMES } from '../data/themes'
@@ -13,7 +14,7 @@ import { AssetThumb } from './AssetThumb'
 import { LevelCreator } from './LevelCreator'
 import { rankForXp, ACHIEVEMENTS, dailyChallenges } from '../data/progression'
 
-type View = 'select' | 'create' | 'play' | 'garage' | 'profile'
+type View = 'select' | 'create' | 'play' | 'garage' | 'profile' | 'leaderboard'
 
 function Hero() {
   return (
@@ -37,14 +38,101 @@ const CAR_THUMB_ITEMS: ThumbItem[] = CARS.filter((c) => c.model).map((c) => ({
 }))
 const CAR_THUMB_SIZE = { w: 384, h: 220 }
 
+// ───────────────────────── Class code bar ─────────────────────────
+function ClassBar({ onLeaderboard }: { onLeaderboard: () => void }) {
+  const classCode = useGame((s) => s.settings.classCode)
+  const joinClass = useGame((s) => s.joinClass)
+  const [editing, setEditing] = useState(!classCode)
+  const [code, setCode] = useState(classCode)
+  const join = () => {
+    if (!code.trim()) return
+    void joinClass(code)
+    setEditing(false)
+  }
+  return (
+    <div className="card sec">
+      <div className="secLabel">Class</div>
+      {editing ? (
+        <div className="addRow">
+          <input
+            className="input"
+            placeholder="Class code (e.g. PIANO1)"
+            maxLength={12}
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            onKeyDown={(e) => e.key === 'Enter' && join()}
+          />
+          <button className="btn mini" onClick={join}>Join</button>
+        </div>
+      ) : (
+        <div className="classRow">
+          <span className="classCode">{classCode || 'Local only'}</span>
+          <span style={{ display: 'flex', gap: 8 }}>
+            <button className="chip ghost" onClick={() => setEditing(true)}>Change</button>
+            {classCode && (
+              <button className="chip ghost" onClick={onLeaderboard}>{Icon.trophy} Leaderboard</button>
+            )}
+          </span>
+        </div>
+      )}
+      <p className="tiny">Use the same class code on any device to sync scores + see the leaderboard.</p>
+    </div>
+  )
+}
+
+// ───────────────────────── Leaderboard ─────────────────────────
+function Leaderboard({ onBack }: { onBack: () => void }) {
+  const classCode = useGame((s) => s.settings.classCode)
+  const [rows, setRows] = useState<CloudPlayer[]>([])
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    let alive = true
+    setLoading(true)
+    leaderboard(classCode).then((r) => {
+      if (alive) {
+        setRows(r)
+        setLoading(false)
+      }
+    })
+    return () => {
+      alive = false
+    }
+  }, [classCode])
+  return (
+    <div className="sheet">
+      <div className="topbar">
+        <button className="chip ghost" onClick={onBack}>{Icon.back} Back</button>
+        <div className="chip head">Class {classCode}</div>
+      </div>
+      <div className="card sec">
+        <div className="secLabel">🏆 Leaderboard</div>
+        {loading ? (
+          <div className="empty">Loading…</div>
+        ) : rows.length === 0 ? (
+          <div className="empty">No players in this class yet.</div>
+        ) : (
+          rows.map((p, i) => (
+            <div key={p.id} className={`lbRow${i < 3 ? ' top' : ''}`}>
+              <span className="lbRank">{i + 1}</span>
+              <span className="lbName">{p.name}</span>
+              <span className="lbXp">{Number(p.data?.xp ?? 0).toLocaleString()} XP</span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ───────────────────────── Player Select ─────────────────────────
-function PlayerSelect({ onPlay, onCreate }: { onPlay: () => void; onCreate: () => void }) {
+function PlayerSelect({ onPlay, onCreate, onLeaderboard }: { onPlay: () => void; onCreate: () => void; onLeaderboard: () => void }) {
   const profiles = useGame((s) => s.profiles)
   const selectProfile = useGame((s) => s.selectProfile)
   const removeProfile = useGame((s) => s.removeProfile)
   return (
     <div className="sheet">
       <Hero />
+      <ClassBar onLeaderboard={onLeaderboard} />
       <div className="card sec">
         <div className="secLabel">Who's playing?</div>
         <div className="playerList">
@@ -454,7 +542,16 @@ export function Menu() {
   let screen: React.ReactNode
   switch (view) {
     case 'select':
-      screen = <PlayerSelect onPlay={() => setView('play')} onCreate={() => setView('create')} />
+      screen = (
+        <PlayerSelect
+          onPlay={() => setView('play')}
+          onCreate={() => setView('create')}
+          onLeaderboard={() => setView('leaderboard')}
+        />
+      )
+      break
+    case 'leaderboard':
+      screen = <Leaderboard onBack={() => setView('select')} />
       break
     case 'create':
       screen = (
