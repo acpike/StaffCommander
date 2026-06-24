@@ -107,3 +107,4 @@ Before ticking any box or committing:
 ## Log / version list
 - `v0.1-overnight-baseline` (42660b8) — checkpoint before overnight run.
 - `v0.2-real-skies` — real photographic HDRI skies + PBR ground textures; removed cheap procedural mountains/props. Build green, smoke pass, screenshot reviewed (photographic sky + asphalt road — real, not slop).
+- `v0.3-real-mountains` — swapped sky-only HDRIs for FULL-ENVIRONMENT ones: Mountain Pass shows real alpine mountains (verified screenshot), Desert Run uses real semi-desert (goegap). NEXT: add CC0 pine trees + snow (mountain) and cacti (desert) for full name-match; get full-env HDRIs for candy/space; verify each theme's screenshot (need theme-select in smoke.mjs); SF still needs Golden Gate (key/model gated).
