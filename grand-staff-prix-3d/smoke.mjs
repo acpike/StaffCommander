@@ -42,6 +42,15 @@ try {
   report.setupReached = true
   await page.screenshot({ path: shot('2-setup') })
 
+  // optional theme selection (THEME_INDEX: 0=mountain 1=SF 2=desert 3=candy 4=space)
+  const themeIdx = process.env.THEME_INDEX != null ? parseInt(process.env.THEME_INDEX, 10) : null
+  if (themeIdx != null) {
+    const tiles = page.locator('.themeTile')
+    if ((await tiles.count()) > themeIdx) await tiles.nth(themeIdx).click()
+    await page.waitForTimeout(300)
+  }
+  const suffix = themeIdx != null ? `-t${themeIdx}` : ''
+
   // start the race
   await page.getByRole('button', { name: 'Start Race' }).click()
   await page.waitForSelector('.countdown', { timeout: 8000 }).catch(() => {})
@@ -78,7 +87,7 @@ try {
   await page.keyboard.up('ArrowRight')
   report.hudSamples = samples
   report.hudChanged = new Set(samples).size > 1
-  await page.screenshot({ path: shot('3-playing') })
+  await page.screenshot({ path: shot('3-playing' + suffix) })
 
   // canvas present + sized
   report.canvas = await page.evaluate(() => {

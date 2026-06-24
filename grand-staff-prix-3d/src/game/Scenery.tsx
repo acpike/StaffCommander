@@ -1,9 +1,52 @@
-import { Suspense, useRef } from 'react'
+import { Suspense, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Environment, Stars } from '@react-three/drei'
 import * as THREE from 'three'
 import { type Theme } from '../data/themes'
 import { carState } from './carState'
+
+// Deep Space: a real Milky-Way galaxy sky (public-domain equirect) + textured
+// planets (NASA-derived public-domain maps), so the map matches its name.
+function SpaceSky() {
+  const camera = useThree((s) => s.camera)
+  const ref = useRef<THREE.Mesh>(null)
+  const tex = useMemo(() => {
+    const t = new THREE.TextureLoader().load('/tex/stars_milkyway.jpg')
+    t.colorSpace = THREE.SRGBColorSpace
+    return t
+  }, [])
+  useFrame(() => {
+    if (ref.current) ref.current.position.copy(camera.position)
+  })
+  return (
+    <mesh ref={ref} frustumCulled={false}>
+      <sphereGeometry args={[300, 48, 24]} />
+      <meshBasicMaterial map={tex} side={THREE.BackSide} fog={false} depthWrite={false} />
+    </mesh>
+  )
+}
+
+function Planet({ tex, size, dir, spin }: { tex: string; size: number; dir: [number, number, number]; spin: number }) {
+  const camera = useThree((s) => s.camera)
+  const ref = useRef<THREE.Mesh>(null)
+  const map = useMemo(() => {
+    const t = new THREE.TextureLoader().load(tex)
+    t.colorSpace = THREE.SRGBColorSpace
+    return t
+  }, [tex])
+  const d = useMemo(() => new THREE.Vector3(...dir).normalize(), [dir])
+  useFrame((_, delta) => {
+    if (!ref.current) return
+    ref.current.position.copy(camera.position).addScaledVector(d, 190)
+    ref.current.rotation.y += Math.min(delta, 0.05) * spin
+  })
+  return (
+    <mesh ref={ref} frustumCulled={false}>
+      <sphereGeometry args={[size, 48, 32]} />
+      <meshStandardMaterial map={map} emissiveMap={map} emissive="#ffffff" emissiveIntensity={0.35} roughness={1} metalness={0} fog={false} />
+    </mesh>
+  )
+}
 
 // Real photographic skies: each theme loads a self-hosted CC0 HDRI (public/hdri)
 // as both the background and the image-based lighting. This replaces the old
@@ -68,12 +111,24 @@ export function Scenery({ theme }: { theme: Theme }) {
       <ambientLight intensity={0.3} color={theme.ambient} />
       <hemisphereLight args={[theme.skyTop, theme.ground, 0.35]} />
       <Sun theme={theme} />
-      {theme.id === 'space' && <FollowStars />}
 
-      {/* photographic sky + image-based lighting (loads async; fallback colour above) */}
-      <Suspense fallback={null}>
-        <Environment files={`/hdri/${theme.id}.hdr`} background backgroundBlurriness={0} environmentIntensity={1} />
-      </Suspense>
+      {theme.id === 'space' ? (
+        <>
+          <SpaceSky />
+          <Planet tex="/tex/planet_jupiter.jpg" size={34} dir={[-0.24, 0.12, -0.96]} spin={0.04} />
+          <Planet tex="/tex/planet_mars.jpg" size={12} dir={[0.3, 0.09, -0.95]} spin={0.06} />
+          <FollowStars />
+          {/* dim IBL so the car still catches light in space */}
+          <Suspense fallback={null}>
+            <Environment files="/hdri/space.hdr" environmentIntensity={0.6} />
+          </Suspense>
+        </>
+      ) : (
+        /* photographic sky + image-based lighting (loads async; fallback colour above) */
+        <Suspense fallback={null}>
+          <Environment files={`/hdri/${theme.id}.hdr`} background backgroundBlurriness={0} environmentIntensity={1} />
+        </Suspense>
+      )}
     </>
   )
 }
