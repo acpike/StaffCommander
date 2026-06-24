@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useGLTF } from '@react-three/drei'
 import { useGame, activeProfile } from '../state/store'
 import { leaderboard, type CloudPlayer } from '../lib/cloud'
-import { NOTE_SETS } from '../data/notes'
+import { NOTE_SETS, CLEF_GROUPS } from '../data/notes'
 import { CARS, carById } from '../data/cars'
 import { composerById } from '../data/composers'
 import { THEMES } from '../data/themes'
@@ -436,38 +436,43 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
       <div className="sec">
         <div className="secLabel">Level</div>
         <div className="levelList">
-          {NOTE_SETS.map((s, i) => {
-            const isUnlocked = unlocked.has(s.id)
-            const on = settings.levelId === s.id
-            const best = profile?.best[s.id]
-            return (
-              <button
-                key={s.id}
-                className={`levelRow${on ? ' on' : ''}${isUnlocked ? '' : ' locked'}`}
-                disabled={!isUnlocked}
-                onClick={() => isUnlocked && setLevel(s.id)}
-              >
-                <span className="bar" />
-                <span className="num">{i + 1}</span>
-                <span className="info">
-                  <div className="nm">{s.name}</div>
-                  <div className="ds">{s.blurb}</div>
-                </span>
-                {isUnlocked ? (
-                  <>
-                    {mastered.has(s.id) && <span className="masteredTag">✓ Mastered</span>}
-                    {best ? (
-                      <span className="best"><span className="bestV">{best}</span><span className="bestK">BEST</span></span>
+          {CLEF_GROUPS.filter((g) => !g.optional).map((group) => (
+            <div key={group.id} className="clefGroup">
+              <div className="clefGroupHead">{group.label}</div>
+              {NOTE_SETS.filter((s) => s.group === group.id).map((s) => {
+                const isUnlocked = unlocked.has(s.id)
+                const on = settings.levelId === s.id
+                const best = profile?.best[s.id]
+                return (
+                  <button
+                    key={s.id}
+                    className={`levelRow${on ? ' on' : ''}${isUnlocked ? '' : ' locked'}`}
+                    disabled={!isUnlocked}
+                    onClick={() => isUnlocked && setLevel(s.id)}
+                  >
+                    <span className="bar" />
+                    <span className="num">{s.tier}</span>
+                    <span className="info">
+                      <div className="nm">{s.name}</div>
+                      <div className="ds">{s.blurb}</div>
+                    </span>
+                    {isUnlocked ? (
+                      <>
+                        {mastered.has(s.id) && <span className="masteredTag">✓ Mastered</span>}
+                        {best ? (
+                          <span className="best"><span className="bestV">{best}</span><span className="bestK">BEST</span></span>
+                        ) : (
+                          on && !mastered.has(s.id) && <span className="nowTag">Selected</span>
+                        )}
+                      </>
                     ) : (
-                      on && !mastered.has(s.id) && <span className="nowTag">Selected</span>
+                      <span className="lock">{Icon.lock} Locked</span>
                     )}
-                  </>
-                ) : (
-                  <span className="lock">{Icon.lock} Master previous</span>
-                )}
-              </button>
-            )
-          })}
+                  </button>
+                )
+              })}
+            </div>
+          ))}
           {customLevels.map((s) => {
             const on = settings.levelId === s.id
             return (

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { NOTE_SETS, pickNote, buildGateLetters, customSet, type GameNote, type Letter, type NoteSet, type Clef, type NoteMode } from '../data/notes'
+import { NOTE_SETS, pickNote, buildGateLetters, customSet, nextLevel, starterLevelIds, type GameNote, type Letter, type NoteSet, type Clef, type NoteMode } from '../data/notes'
 import { CARS } from '../data/cars'
 import { COMPOSERS } from '../data/composers'
 import { cloudEnabled, fetchPlayers, insertPlayer, updatePlayer, deletePlayer } from '../lib/cloud'
@@ -91,7 +91,7 @@ function cloudToProfile(row: { id: string; name: string; data?: Record<string, u
     id: row.id,
     name: row.name,
     best: (d.best as Record<string, number>) ?? {},
-    unlocked: (d.unlocked as string[]) ?? [NOTE_SETS[0].id],
+    unlocked: Array.from(new Set([...starterLevelIds(), ...((d.unlocked as string[]) ?? [])])),
     mastered: (d.mastered as string[]) ?? [],
     xp: (d.xp as number) ?? 0,
     gems: (d.gems as number) ?? 0,
@@ -128,7 +128,7 @@ function freshProfile(name: string): Profile {
     id: newId(),
     name: name.trim().slice(0, 14) || 'Player',
     best: {},
-    unlocked: [NOTE_SETS[0].id],
+    unlocked: starterLevelIds(),
     mastered: [],
     xp: 0,
     gems: 0,
@@ -178,7 +178,8 @@ export interface GameState {
   /** Index of the active note set (cached from settings.levelId at start). */
   note: GameNote | null
   gateLetters: Letter[]
-  noteMode: NoteMode
+  /** Active rendered mode for THIS wave (mix levels alternate it each wave). */
+  noteMode: 'name' | 'find'
   /** Increments on every new wave so the spawner can react. */
   waveId: number
   lastResult: RoundResult
@@ -240,6 +241,11 @@ export const useGame = create<GameState>()((set, get) => {
     // `avatar` as a string id (or missing). normalizeAvatar maps anything to a
     // complete AvatarConfig so nothing crashes on load.
     ...p,
+    // ensure every clef track's first level is unlocked (also migrates profiles
+    // saved before the curriculum reshuffle, whose old level ids no longer exist)
+    unlocked: Array.from(
+      new Set([...starterLevelIds(), ...(Array.isArray((p as { unlocked?: unknown }).unlocked) ? (p as { unlocked: string[] }).unlocked : [])]),
+    ),
     mastered: Array.isArray((p as { mastered?: unknown }).mastered) ? p.mastered : [],
     gems: typeof (p as { gems?: unknown }).gems === 'number' ? p.gems : 0,
     achievements: Array.isArray((p as { achievements?: unknown }).achievements) ? p.achievements : [],
@@ -249,6 +255,10 @@ export const useGame = create<GameState>()((set, get) => {
   }))
   const initialCurrent = loadJSON<string | null>(LS_CURRENT, null)
   const initialSettings = { ...DEFAULT_SETTINGS, ...loadJSON<Partial<Settings>>(LS_SETTINGS, {}) }
+  // reset a stale selected level (old curriculum ids) to the first level
+  if (!NOTE_SETS.some((s) => s.id === initialSettings.levelId) && !initialSettings.levelId.startsWith('cl-')) {
+    initialSettings.levelId = NOTE_SETS[0].id
+  }
   // dev/test override: ?car=<id> &theme=<id> &level=<id> to preview a specific combo
   if (typeof location !== 'undefined') {
     const q = new URLSearchParams(location.search)
@@ -278,7 +288,10 @@ export const useGame = create<GameState>()((set, get) => {
     const s = currentSet(get().settings.levelId, get().customLevels)
     const note = pickNote(s)
     const gateLetters = buildGateLetters(s, note.letter, gatesForStage(stage))
-    set((st) => ({ note, gateLetters, waveId: st.waveId + 1 }))
+    // 'mix' levels flip between name/find each wave so students work both ways.
+    const base = s.mode ?? 'name'
+    const noteMode: 'name' | 'find' = base === 'mix' ? (Math.random() < 0.5 ? 'find' : 'name') : base
+    set((st) => ({ note, gateLetters, waveId: st.waveId + 1, noteMode }))
   }
 
   return {
@@ -458,7 +471,8 @@ export const useGame = create<GameState>()((set, get) => {
         waveId: 0,
         note: null,
         gateLetters: [],
-        noteMode: currentSet(get().settings.levelId, get().customLevels).mode ?? 'name',
+        // concrete starting mode; nextWave sets the real per-wave mode for 'mix'
+        noteMode: currentSet(get().settings.levelId, get().customLevels).mode === 'find' ? 'find' : 'name',
       })
     },
 
@@ -498,8 +512,8 @@ export const useGame = create<GameState>()((set, get) => {
           total >= MASTERY_MIN_NOTES &&
           accuracy >= MASTERY_ACCURACY
         ) {
-          const idx = NOTE_SETS.findIndex((s) => s.id === levelId)
-          const next = NOTE_SETS[idx + 1]
+          // unlock the NEXT TIER IN THE SAME CLEF TRACK (per-clef progression)
+          const next = nextLevel(currentSet(levelId, st.customLevels))
           masteredThisRun = currentSet(levelId, st.customLevels).name
           if (next && !prof.unlocked.includes(next.id)) unlockedThisRun = next.name
           const profiles = st.profiles.map((p) => {

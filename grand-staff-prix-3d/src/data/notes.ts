@@ -63,48 +63,28 @@ export function staffStep(note: GameNote): number {
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// Curriculum: five progressive note sets, matching the original game's levels.
+// Curriculum types. The NOTE_SETS array is built near the bottom of this file —
+// it depends on the grand-staff helpers defined further down.
 // ──────────────────────────────────────────────────────────────────────────
 
-/** 'name' = staff shown, pick the letter block (default). 'find' = letter shown,
- *  pick the block whose staff-note matches. */
-export type NoteMode = 'name' | 'find'
+/** 'name' = staff shown, pick the letter. 'find' = letter shown, pick the staff
+ *  note. 'mix' = each wave is randomly one or the other (the curriculum default). */
+export type NoteMode = 'name' | 'find' | 'mix'
+
+/** Which clef "track" a level belongs to (drives the grouped level menu). */
+export type ClefGroup = 'treble' | 'bass' | 'grand' | 'alto' | 'tenor'
 
 export interface NoteSet {
   id: string
   name: string
-  /** Short hint shown beside the level, e.g. "C D E · A B C". */
+  /** Short hint shown beside the level. */
   blurb: string
   notes: GameNote[]
   mode?: NoteMode
+  /** Clef track + difficulty tier (1 = first), for the curriculum. */
+  group?: ClefGroup
+  tier?: number
 }
-
-function set(id: string, name: string, blurb: string, specs: [string, Clef][]): NoteSet {
-  return { id, name, blurb, notes: specs.map(([n, c]) => makeNote(n, c)) }
-}
-
-export const NOTE_SETS: NoteSet[] = [
-  set('mid-c', 'Middle C & Friends', 'C D E · A B C', [
-    ['C4', 'treble'], ['D4', 'treble'], ['E4', 'treble'],
-    ['A3', 'bass'], ['B3', 'bass'], ['C4', 'bass'],
-  ]),
-  set('c-position', 'C Position', 'C to G', [
-    ['C4', 'treble'], ['D4', 'treble'], ['E4', 'treble'], ['F4', 'treble'], ['G4', 'treble'],
-    ['C3', 'bass'], ['D3', 'bass'], ['E3', 'bass'], ['F3', 'bass'], ['G3', 'bass'],
-  ]),
-  set('treble', 'Treble Staff', 'Lines & spaces', [
-    ['E4', 'treble'], ['F4', 'treble'], ['G4', 'treble'], ['A4', 'treble'], ['B4', 'treble'],
-    ['C5', 'treble'], ['D5', 'treble'], ['E5', 'treble'], ['F5', 'treble'],
-  ]),
-  set('bass', 'Bass Staff', 'Lines & spaces', [
-    ['G2', 'bass'], ['A2', 'bass'], ['B2', 'bass'], ['C3', 'bass'], ['D3', 'bass'],
-    ['E3', 'bass'], ['F3', 'bass'], ['G3', 'bass'], ['A3', 'bass'],
-  ]),
-  set('grand', 'Grand Staff', 'Both clefs + ledgers', [
-    ['C4', 'treble'], ['E4', 'treble'], ['G4', 'treble'], ['B4', 'treble'], ['D5', 'treble'], ['F5', 'treble'], ['A5', 'treble'],
-    ['C3', 'bass'], ['E3', 'bass'], ['G3', 'bass'], ['B3', 'bass'], ['D3', 'bass'], ['F2', 'bass'], ['A2', 'bass'],
-  ]),
-]
 
 /** Distinct letters that appear in a note set (used to build gate options). */
 export function lettersOf(set: NoteSet): Letter[] {
@@ -217,4 +197,72 @@ export function customSet(
     notes,
     mode,
   }
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// The curriculum. Each clef track ramps: hand positions → whole staff → + ledgers.
+// Every level uses 'mix' mode (name + find alternate wave to wave).
+// ──────────────────────────────────────────────────────────────────────────
+
+/** Clef tracks in menu order. Optional tracks (alto/tenor) are hidden until enabled. */
+export const CLEF_GROUPS: { id: ClefGroup; label: string; optional?: boolean }[] = [
+  { id: 'treble', label: 'Treble' },
+  { id: 'bass', label: 'Bass' },
+  { id: 'grand', label: 'Grand Staff' },
+  { id: 'alto', label: 'Alto', optional: true },
+  { id: 'tenor', label: 'Tenor', optional: true },
+]
+
+/** Inclusive pitch range → note names (naturals). */
+function spread(low: string, high: string): string[] {
+  const out: string[] = []
+  for (let d = diatonicOfName(low); d <= diatonicOfName(high); d++) out.push(diatonicToName(d))
+  return out
+}
+
+function level(group: ClefGroup, tier: number, name: string, blurb: string, clef: Clef | 'grand', names: string[]): NoteSet {
+  const notes = clef === 'grand' ? names.map((n) => makeNote(n, grandClefFor(n))) : names.map((n) => makeNote(n, clef))
+  return { id: `${group}-${tier}`, name, blurb, notes, mode: 'mix', group, tier }
+}
+
+export const NOTE_SETS: NoteSet[] = [
+  // Treble
+  level('treble', 1, 'Middle C Position', 'C–G (right hand)', 'treble', ['C4', 'D4', 'E4', 'F4', 'G4']),
+  level('treble', 2, 'C Position', 'C–G', 'treble', ['C4', 'D4', 'E4', 'F4', 'G4']),
+  level('treble', 3, 'G Position', 'G–D', 'treble', ['G4', 'A4', 'B4', 'C5', 'D5']),
+  level('treble', 4, 'Treble Staff', 'All lines & spaces', 'treble', spread('E4', 'F5')),
+  level('treble', 5, 'Treble + Ledgers', '3 ledgers each way', 'treble', spread('F3', 'E6')),
+  // Bass
+  level('bass', 1, 'Middle C Position', 'F–C (left hand)', 'bass', ['F3', 'G3', 'A3', 'B3', 'C4']),
+  level('bass', 2, 'C Position', 'C–G', 'bass', ['C3', 'D3', 'E3', 'F3', 'G3']),
+  level('bass', 3, 'G Position', 'G–D', 'bass', ['G2', 'A2', 'B2', 'C3', 'D3']),
+  level('bass', 4, 'Bass Staff', 'All lines & spaces', 'bass', spread('G2', 'A3')),
+  level('bass', 5, 'Bass + Ledgers', '3 ledgers each way', 'bass', spread('A1', 'G4')),
+  // Grand staff
+  level('grand', 1, 'Middle C Position', 'Both hands at middle C', 'grand', spread('F3', 'G4')),
+  level('grand', 2, 'C Position', 'Hands apart', 'grand', ['C3', 'D3', 'E3', 'F3', 'G3', 'C4', 'D4', 'E4', 'F4', 'G4']),
+  level('grand', 3, 'G Position', 'Hands far apart', 'grand', ['G2', 'A2', 'B2', 'C3', 'D3', 'G4', 'A4', 'B4', 'C5', 'D5']),
+  level('grand', 4, 'Grand Staff', 'Both staves', 'grand', [...spread('C3', 'C4'), ...spread('D4', 'C5')]),
+  level('grand', 5, 'Grand + Ledgers', '+ ledger lines', 'grand', [...spread('A2', 'B3'), ...spread('C4', 'A5')]),
+  // Alto (optional)
+  level('alto', 1, 'Alto Basics', 'Around middle C', 'alto', ['A3', 'B3', 'C4', 'D4', 'E4']),
+  level('alto', 2, 'Alto Staff', 'All lines & spaces', 'alto', spread('F3', 'G4')),
+  level('alto', 3, 'Alto + Ledgers', 'With ledgers', 'alto', spread('C3', 'C5')),
+  // Tenor (optional)
+  level('tenor', 1, 'Tenor Basics', 'Around middle C', 'tenor', ['A3', 'B3', 'C4', 'D4', 'E4']),
+  level('tenor', 2, 'Tenor Staff', 'All lines & spaces', 'tenor', spread('D3', 'E4')),
+  level('tenor', 3, 'Tenor + Ledgers', 'With ledgers', 'tenor', spread('A2', 'A4')),
+]
+
+/** The next level in the same clef track (for the mastery unlock). */
+export function nextLevel(set: NoteSet): NoteSet | undefined {
+  if (set.group == null || set.tier == null) return undefined
+  return NOTE_SETS.find((s) => s.group === set.group && s.tier === (set.tier ?? 0) + 1)
+}
+
+/** First (always-unlocked) level id of each clef track. */
+export function starterLevelIds(includeOptional = false): string[] {
+  return CLEF_GROUPS.filter((g) => includeOptional || !g.optional)
+    .map((g) => NOTE_SETS.find((s) => s.group === g.id && s.tier === 1)?.id)
+    .filter((id): id is string => !!id)
 }
