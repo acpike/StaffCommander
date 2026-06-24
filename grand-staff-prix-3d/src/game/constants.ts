@@ -1,6 +1,6 @@
 // Shared world tuning. One place so the car, camera, track and gates agree.
 
-export const TRACK_HALF = 7 // half the drivable width (full width = 14)
+export const TRACK_HALF = 8.25 // half the drivable width (full width = 16.5)
 export const CAR_HALF_W = 0.9 // half car width, used to clamp & size collider
 export const CAR_Y = 0.45 // fixed driving height of the car body centre
 
