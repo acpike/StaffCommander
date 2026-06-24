@@ -16,6 +16,7 @@ export interface Composer {
 
 export const COMPOSERS: Composer[] = [
   { id: 'beethoven', name: 'Beethoven', era: 'Classical → Romantic', model: '/models/composer_beethoven.glb', rotationY: Math.PI / 2, scale: 1 },
+  { id: 'mozart', name: 'Mozart', era: 'Classical', model: '/models/composer_mozart.glb', rotationY: Math.PI / 2, scale: 1 },
   { id: 'clara', name: 'Clara Schumann', era: 'Romantic', model: '/models/composer_clara.glb', rotationY: Math.PI / 2, scale: 1 },
   { id: 'hildegard', name: 'Hildegard von Bingen', era: 'Medieval', model: '/models/composer_hildegard.glb', rotationY: Math.PI / 2, scale: 1 },
 ]
