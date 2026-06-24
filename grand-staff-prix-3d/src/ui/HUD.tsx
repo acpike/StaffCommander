@@ -65,7 +65,7 @@ export function HUD() {
       <div
         style={{
           position: 'absolute',
-          top: 'max(300px, calc(env(safe-area-inset-top) + 290px))',
+          top: 'min(300px, calc(env(safe-area-inset-top) + 82px + 26vh))',
           left: '50%',
           transform: 'translateX(-50%)',
           width: 'min(300px, 80vw)',
