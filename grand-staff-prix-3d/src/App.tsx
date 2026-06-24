@@ -6,8 +6,15 @@ import { GameScene } from './game/GameScene'
 import { Menu } from './ui/Menu'
 import { JourneyPlay } from './ui/JourneyPlay'
 
-// Opt-in beta Play screen: add ?journey=1 to the URL. Leaves the current Menu untouched.
-const USE_JOURNEY = typeof location !== 'undefined' && new URLSearchParams(location.search).get('journey') === '1'
+type PlayView = 'classic' | 'journey'
+function initialView(): PlayView {
+  if (typeof location !== 'undefined' && new URLSearchParams(location.search).get('journey') === '1') return 'journey'
+  try {
+    return (localStorage.getItem('gsp3d.playview') as PlayView) || 'classic'
+  } catch {
+    return 'classic'
+  }
+}
 import { HUD } from './ui/HUD'
 import { Countdown } from './ui/Countdown'
 import { GameOver } from './ui/GameOver'
@@ -17,6 +24,15 @@ import { TouchControls } from './ui/TouchControls'
 export function App() {
   const screen = useGame((s) => s.screen)
   const [started, setStarted] = useState(false)
+  const [playView, setPlayView] = useState<PlayView>(initialView)
+  const flip = (v: PlayView) => {
+    setPlayView(v)
+    try {
+      localStorage.setItem('gsp3d.playview', v)
+    } catch {
+      /* ignore */
+    }
+  }
 
   useEffect(() => {
     input.attach()
@@ -32,7 +48,15 @@ export function App() {
   return (
     <>
       {inGame && <GameScene />}
-      {screen === 'menu' && (USE_JOURNEY ? <JourneyPlay /> : <Menu />)}
+      {screen === 'menu' && (
+        <>
+          {playView === 'journey' ? <JourneyPlay /> : <Menu />}
+          <div className="viewToggle">
+            <button className={playView === 'classic' ? 'on' : ''} onClick={() => flip('classic')}>Classic</button>
+            <button className={playView === 'journey' ? 'on' : ''} onClick={() => flip('journey')}>Journey</button>
+          </div>
+        </>
+      )}
       {screen === 'countdown' && <Countdown />}
       {screen === 'playing' && <HUD />}
       {screen === 'playing' && <TouchControls />}

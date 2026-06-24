@@ -2076,3 +2076,13 @@ body {
 .jpSelStar { margin-left: auto; color: #ffd089; }
 .jpStart { padding: 0 22px; border-radius: 16px; background: var(--acc-grad); color: #fff; font-weight: 800; font-size: 16px; display: flex; align-items: center; gap: 7px; box-shadow: var(--acc-glow); flex: none; }
 .jpStart .ico { width: 18px; height: 18px; }
+
+/* beta Play-screen switcher (Classic ⇄ Journey) */
+.viewToggle {
+  position: fixed; top: max(8px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
+  z-index: 1000; display: flex; gap: 4px; padding: 4px;
+  background: rgba(16,14,24,0.88); backdrop-filter: blur(10px);
+  border: 1px solid var(--line2); border-radius: 999px; box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+}
+.viewToggle button { padding: 6px 16px; border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--dim); }
+.viewToggle button.on { background: var(--acc-grad); color: #fff; }
