@@ -1,30 +1,44 @@
-import { useEffect, useRef } from 'react'
-import { useGame, activeProfile, START_LIVES } from '../state/store'
+import { useEffect, useRef, useState } from 'react'
+import { useGame, activeProfile } from '../state/store'
+import { NOTE_SETS, startCountOf } from '../data/notes'
+import { ladderProgress } from '../data/ladder'
 import { drawNoteCard, ensureMusicFont } from '../util/staffTexture'
 import { Icon } from './icons'
-
-const MASTERY_NOTES = 30
 
 export function HUD() {
   const score = useGame((s) => s.score)
   const stage = useGame((s) => s.stage)
   const streak = useGame((s) => s.streak)
   const lives = useGame((s) => s.lives)
+  const startLives = useGame((s) => s.startLives)
   const note = useGame((s) => s.note)
   const noteMode = useGame((s) => s.noteMode)
   const lastResult = useGame((s) => s.lastResult)
   const flashTick = useGame((s) => s.flashTick)
   const goMenu = useGame((s) => s.goMenu)
-  const correctCount = useGame((s) => s.correctCount)
-  const wrongCount = useGame((s) => s.wrongCount)
   const levelId = useGame((s) => s.settings.levelId)
+  const customLevels = useGame((s) => s.customLevels)
+  const meterM = useGame((s) => s.meterM)
+  const activeCount = useGame((s) => s.activeCount)
+  const unlockTick = useGame((s) => s.unlockTick)
   const profile = useGame(activeProfile)
 
-  const total = correctCount + wrongCount
-  const accuracy = total > 0 ? correctCount / total : 1
+  const set = [...NOTE_SETS, ...customLevels].find((s) => s.id === levelId)
+  const isLadder = !!set?.group // curriculum levels grow a note ladder; custom levels don't
   const alreadyMastered = profile?.mastered.includes(levelId) ?? false
-  const notesPct = Math.min(100, Math.round((total / MASTERY_NOTES) * 100))
-  const onTrack = accuracy >= 0.9
+  const prog = set
+    ? ladderProgress(meterM, activeCount, set.notes.length, startCountOf(set))
+    : { activeCount, total: activeCount, full: false, toNext: 0 }
+  const fillPct = alreadyMastered ? 100 : Math.round(prog.toNext * 100)
+
+  // brief "new note unlocked!" celebration whenever the ladder reveals a note
+  const [celebrate, setCelebrate] = useState(false)
+  useEffect(() => {
+    if (unlockTick <= 0) return
+    setCelebrate(true)
+    const t = setTimeout(() => setCelebrate(false), 1600)
+    return () => clearTimeout(t)
+  }, [unlockTick])
 
   const canvas = useRef<HTMLCanvasElement>(null)
 
@@ -50,7 +64,7 @@ export function HUD() {
           {streak > 1 && <div className="pill streak">🔥 ×{streak}</div>}
           <div className="pill">
             {'❤️'.repeat(lives)}
-            {'🤍'.repeat(Math.max(0, START_LIVES - lives))}
+            {'🤍'.repeat(Math.max(0, startLives - lives))}
           </div>
         </div>
       </div>
@@ -68,7 +82,8 @@ export function HUD() {
           </div>
         ))}
 
-      {/* mastery meter — vertical bar pinned to the right edge (out of the play area) */}
+      {/* note-ladder meter — vertical bar pinned to the right edge (out of the play area).
+          Fills toward the next note to unlock (or toward mastery when the pool is full). */}
       <div
         style={{
           position: 'absolute',
@@ -88,7 +103,9 @@ export function HUD() {
           pointerEvents: 'none',
         }}
       >
-        <span style={{ fontSize: 14, lineHeight: 1 }}>{alreadyMastered ? '✓' : '⭐'}</span>
+        <span style={{ fontSize: 14, lineHeight: 1 }}>
+          {alreadyMastered ? '✓' : prog.full ? '🏁' : '🎵'}
+        </span>
         <div
           style={{
             position: 'relative',
@@ -107,27 +124,51 @@ export function HUD() {
               left: 0,
               bottom: 0,
               width: '100%',
-              height: alreadyMastered ? '100%' : `${notesPct}%`,
+              height: `${fillPct}%`,
               borderRadius: 5,
-              background:
-                alreadyMastered || onTrack
-                  ? 'linear-gradient(0deg,#2fae62,#46d27a)'
-                  : 'linear-gradient(0deg,#ff5a2e,#ff8a3d)',
-              transition: 'height .2s',
+              background: prog.full
+                ? 'linear-gradient(0deg,#f5b94a,#ffd479)' // gold near the finish line
+                : 'linear-gradient(0deg,#2fae62,#46d27a)',
+              boxShadow: celebrate ? '0 0 12px 2px rgba(70,210,122,0.9)' : 'none',
+              transition: 'height .25s, box-shadow .25s',
             }}
           />
         </div>
         <span
           style={{
             font: '700 11px "Space Grotesk", system-ui, sans-serif',
-            color: alreadyMastered || onTrack ? '#46d27a' : '#ff9c6a',
+            color: prog.full ? '#ffd479' : '#46d27a',
             minWidth: 28,
             textAlign: 'center',
           }}
         >
-          {alreadyMastered ? 'MAX' : `${Math.round(accuracy * 100)}%`}
+          {isLadder ? `${prog.activeCount}/${prog.total}` : '🎵'}
         </span>
       </div>
+
+      {/* fleeting celebration when the ladder reveals a new note */}
+      {celebrate && isLadder && (
+        <div
+          key={unlockTick}
+          className="noteUnlockToast"
+          style={{
+            position: 'absolute',
+            top: '20%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            padding: '8px 16px',
+            borderRadius: 999,
+            background: 'linear-gradient(90deg,#2fae62,#46d27a)',
+            color: '#06120b',
+            font: '800 15px "Space Grotesk", system-ui, sans-serif',
+            boxShadow: '0 6px 20px rgba(70,210,122,0.5)',
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          🎵 New note unlocked!
+        </div>
+      )}
 
       {flashTick > 0 && lastResult && <div key={flashTick} className={`flash ${lastResult}`} />}
     </div>

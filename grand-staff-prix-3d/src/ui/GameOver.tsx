@@ -23,7 +23,7 @@ export function GameOver() {
   return (
     <div className="overlay">
       <div className="overCard">
-        <div className="lbl">Race Complete · {levelName}</div>
+        <div className="lbl">{mastered ? `🏁 Track Complete · ${levelName}` : `Race Complete · ${levelName}`}</div>
         <div className="big">{score}</div>
 
         <div className="overStats">

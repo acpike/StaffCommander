@@ -89,10 +89,46 @@ export interface NoteSet {
   blurb: string
   notes: GameNote[]
   mode?: NoteMode
+  /**
+   * Ordered note names (e.g. ['C4','D4','E4']) for the adaptive ladder. The
+   * active pool grows along this list as the mastery meter climbs. Parallel to
+   * `notes` (same order). Absent on custom levels (the whole pool is active).
+   * @see ladder.ts
+   */
+  ladder?: string[]
+  /** How many ladder notes are active at meter 0 (the starting pool size). */
+  startCount?: number
   /** Clef track + difficulty tier (1 = first), for the curriculum. */
   group?: ClefGroup
   tier?: number
   band?: Difficulty
+}
+
+/** The ordered ladder note names for a set; custom levels ladder over their whole pool. */
+export function ladderOf(set: NoteSet): string[] {
+  return set.ladder ?? set.notes.map((n) => `${n.letter}${n.octave}`)
+}
+
+/** Starting active-pool size; custom levels start with every note active. */
+export function startCountOf(set: NoteSet): number {
+  return set.startCount ?? set.notes.length
+}
+
+/** The first `count` notes of a set — the active pool for a given meter state. */
+export function activeNotes(set: NoteSet, count: number): GameNote[] {
+  return set.notes.slice(0, Math.max(1, Math.min(count, set.notes.length)))
+}
+
+/** Pick a random note from an explicit pool (the active ladder subset). */
+export function pickNoteFrom(notes: GameNote[]): GameNote {
+  return notes[rand(notes.length)]
+}
+
+/** Distinct letters present in an explicit note pool (for gate distractors). */
+export function lettersOfNotes(notes: GameNote[]): Letter[] {
+  const seen = new Set<Letter>()
+  for (const n of notes) seen.add(n.letter)
+  return LETTERS.filter((l) => seen.has(l))
 }
 
 /** Distinct letters that appear in a note set (used to build gate options). */
@@ -114,11 +150,13 @@ export function pickNote(set: NoteSet): GameNote {
 }
 
 /**
- * Build the labels for one gate wave: `count` distinct letters that always
- * include the answer, shuffled. Distractors are drawn from the set's letters.
+ * Build the labels for one gate wave from an explicit letter pool: up to `count`
+ * distinct letters that always include the answer, shuffled. Distractors are
+ * drawn from `letterPool`. With a small pool (e.g. the 2-note beginner start) the
+ * wave naturally has fewer gates — which is exactly the easier beginner case.
  */
-export function buildGateLetters(set: NoteSet, answer: Letter, count: number): Letter[] {
-  const pool = lettersOf(set).filter((l) => l !== answer)
+function buildGateLabels(letterPool: Letter[], answer: Letter, count: number): Letter[] {
+  const pool = letterPool.filter((l) => l !== answer)
   // shuffle pool
   for (let i = pool.length - 1; i > 0; i--) {
     const j = rand(i + 1)
@@ -132,6 +170,16 @@ export function buildGateLetters(set: NoteSet, answer: Letter, count: number): L
     ;[chosen[i], chosen[j]] = [chosen[j], chosen[i]]
   }
   return chosen
+}
+
+/** Gate labels drawn from a whole note set's letters. */
+export function buildGateLetters(set: NoteSet, answer: Letter, count: number): Letter[] {
+  return buildGateLabels(lettersOf(set), answer, count)
+}
+
+/** Gate labels drawn from an explicit (active-ladder) note pool. */
+export function buildGateLettersFrom(pool: GameNote[], answer: Letter, count: number): Letter[] {
+  return buildGateLabels(lettersOfNotes(pool), answer, count)
 }
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -209,8 +257,17 @@ export function customSet(
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// The curriculum. Each clef track ramps: hand positions → whole staff → + ledgers.
-// Every level uses 'mix' mode (name + find alternate wave to wave).
+// The curriculum. Each clef track ramps through an adaptive note LADDER:
+//
+//   name (super-beginner, identify a shown note) → name again (next position)
+//   → find (locate a named note, same notes) → whole staff (mix) → + ledgers (mix)
+//
+// Within a level, an ordered `ladder` of notes is revealed one at a time as the
+// student proves accuracy (see ladder.ts). Beginner levels start at 2 notes and
+// add one at a time. Advanced (whole-staff / ledger) levels pre-load the staff
+// the student already knows via a larger `startCount`, then ladder-in only the
+// last few stretch / ledger notes — keeping every level's mastery to a similar
+// ~60–75 correct notes regardless of how many notes it ultimately contains.
 // ──────────────────────────────────────────────────────────────────────────
 
 /** Clef tracks in menu order. Optional tracks (alto/tenor) are hidden until enabled. */
@@ -222,51 +279,71 @@ export const CLEF_GROUPS: { id: ClefGroup; label: string; optional?: boolean }[]
   { id: 'tenor', label: 'Tenor', optional: true },
 ]
 
-/** Inclusive pitch range → note names (naturals). */
-function spread(low: string, high: string): string[] {
-  const out: string[] = []
-  for (let d = diatonicOfName(low); d <= diatonicOfName(high); d++) out.push(diatonicToName(d))
-  return out
-}
-
-function bandOf(group: ClefGroup, tier: number): Difficulty {
-  const optional = group === 'alto' || group === 'tenor'
-  if (optional) return tier === 1 ? 'beginner' : tier === 2 ? 'intermediate' : 'advanced'
-  return tier <= 3 ? 'beginner' : tier === 4 ? 'intermediate' : 'advanced'
-}
-
-function level(group: ClefGroup, tier: number, name: string, blurb: string, clef: Clef | 'grand', names: string[]): NoteSet {
-  const notes = clef === 'grand' ? names.map((n) => makeNote(n, grandClefFor(n))) : names.map((n) => makeNote(n, clef))
-  return { id: `${group}-${tier}`, name, blurb, notes, mode: 'mix', group, tier, band: bandOf(group, tier) }
+function level(
+  group: ClefGroup,
+  tier: number,
+  name: string,
+  blurb: string,
+  clef: Clef | 'grand',
+  mode: NoteMode,
+  ladder: string[],
+  startCount: number,
+  band: Difficulty,
+): NoteSet {
+  const notes = clef === 'grand' ? ladder.map((n) => makeNote(n, grandClefFor(n))) : ladder.map((n) => makeNote(n, clef))
+  return { id: `${group}-${tier}`, name, blurb, notes, ladder, startCount, mode, group, tier, band }
 }
 
 export const NOTE_SETS: NoteSet[] = [
-  // Treble
-  level('treble', 1, 'Middle C Position', 'C–G (right hand)', 'treble', ['C4', 'D4', 'E4', 'F4', 'G4']),
-  level('treble', 2, 'C Position', 'C–G', 'treble', ['C4', 'D4', 'E4', 'F4', 'G4']),
-  level('treble', 3, 'G Position', 'G–D', 'treble', ['G4', 'A4', 'B4', 'C5', 'D5']),
-  level('treble', 4, 'Treble Staff', 'All lines & spaces', 'treble', spread('E4', 'F5')),
-  level('treble', 5, 'Treble + Ledgers', '3 ledgers each way', 'treble', spread('F3', 'E6')),
-  // Bass
-  level('bass', 1, 'Middle C Position', 'F–C (left hand)', 'bass', ['F3', 'G3', 'A3', 'B3', 'C4']),
-  level('bass', 2, 'C Position', 'C–G', 'bass', ['C3', 'D3', 'E3', 'F3', 'G3']),
-  level('bass', 3, 'G Position', 'G–D', 'bass', ['G2', 'A2', 'B2', 'C3', 'D3']),
-  level('bass', 4, 'Bass Staff', 'All lines & spaces', 'bass', spread('G2', 'A3')),
-  level('bass', 5, 'Bass + Ledgers', '3 ledgers each way', 'bass', spread('A1', 'G4')),
-  // Grand staff
-  level('grand', 1, 'Middle C Position', 'Both hands at middle C', 'grand', spread('F3', 'G4')),
-  level('grand', 2, 'C Position', 'Hands apart', 'grand', ['C3', 'D3', 'E3', 'F3', 'G3', 'C4', 'D4', 'E4', 'F4', 'G4']),
-  level('grand', 3, 'G Position', 'Hands far apart', 'grand', ['G2', 'A2', 'B2', 'C3', 'D3', 'G4', 'A4', 'B4', 'C5', 'D5']),
-  level('grand', 4, 'Grand Staff', 'Both staves', 'grand', [...spread('C3', 'C4'), ...spread('D4', 'C5')]),
-  level('grand', 5, 'Grand + Ledgers', '+ ledger lines', 'grand', [...spread('A2', 'B3'), ...spread('C4', 'A5')]),
-  // Alto (optional)
-  level('alto', 1, 'Alto Basics', 'Around middle C', 'alto', ['A3', 'B3', 'C4', 'D4', 'E4']),
-  level('alto', 2, 'Alto Staff', 'All lines & spaces', 'alto', spread('F3', 'G4')),
-  level('alto', 3, 'Alto + Ledgers', 'With ledgers', 'alto', spread('C3', 'C5')),
-  // Tenor (optional)
-  level('tenor', 1, 'Tenor Basics', 'Around middle C', 'tenor', ['A3', 'B3', 'C4', 'D4', 'E4']),
-  level('tenor', 2, 'Tenor Staff', 'All lines & spaces', 'tenor', spread('D3', 'E4')),
-  level('tenor', 3, 'Tenor + Ledgers', 'With ledgers', 'tenor', spread('A2', 'A4')),
+  // ── Treble ──  identify C-position → identify G-position → find → whole staff → ledgers
+  level('treble', 1, 'Middle C Steps', 'Name C–G', 'treble', 'name', ['C4', 'D4', 'E4', 'F4', 'G4'], 2, 'beginner'),
+  level('treble', 2, 'Treble G Position', 'Name G–D', 'treble', 'name', ['G4', 'A4', 'B4', 'C5', 'D5'], 2, 'beginner'),
+  level('treble', 3, 'Find: C Position', 'Find C–G', 'treble', 'find', ['C4', 'D4', 'E4', 'F4', 'G4'], 2, 'intermediate'),
+  // Whole staff: 5 line notes (EGBDF) pre-loaded, ladder adds the 4 space notes (FACE).
+  level('treble', 4, 'Whole Treble Staff', 'All lines & spaces', 'treble', 'mix',
+    ['E4', 'G4', 'B4', 'D5', 'F5', 'F4', 'A4', 'C5', 'E5'], 5, 'intermediate'),
+  // Ledgers: whole staff (9) pre-loaded, ladder adds 4 ledger notes near→far.
+  level('treble', 5, 'Treble + Ledgers', 'Ledger lines', 'treble', 'mix',
+    ['E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5', 'D4', 'G5', 'C4', 'A5'], 9, 'advanced'),
+
+  // ── Bass ──  identify (down from middle C) → identify C-position → find → whole staff → ledgers
+  level('bass', 1, 'Middle C Steps', 'Name C down to F', 'bass', 'name', ['C4', 'B3', 'A3', 'G3', 'F3'], 2, 'beginner'),
+  level('bass', 2, 'Bass C Position', 'Name C–G', 'bass', 'name', ['C3', 'D3', 'E3', 'F3', 'G3'], 2, 'beginner'),
+  level('bass', 3, 'Find: Bass C Position', 'Find C down to F', 'bass', 'find', ['C4', 'B3', 'A3', 'G3', 'F3'], 2, 'intermediate'),
+  // Whole staff: 5 line notes (GBDFA) pre-loaded, ladder adds the 4 space notes (ACEG).
+  level('bass', 4, 'Whole Bass Staff', 'All lines & spaces', 'bass', 'mix',
+    ['G2', 'B2', 'D3', 'F3', 'A3', 'A2', 'C3', 'E3', 'G3'], 5, 'intermediate'),
+  // Ledgers: whole staff (9) pre-loaded, ladder adds 4 ledger notes near→far.
+  level('bass', 5, 'Bass + Ledgers', 'Ledger lines', 'bass', 'mix',
+    ['G2', 'A2', 'B2', 'C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'F2', 'B3', 'E2', 'C4'], 9, 'advanced'),
+
+  // ── Grand staff ──  both hands at middle C → both C-positions → find → whole → ledgers
+  level('grand', 1, 'Grand Middle C', 'Both hands at middle C', 'grand', 'name',
+    ['C4', 'B3', 'D4', 'A3', 'E4'], 2, 'intermediate'),
+  // Treble C-position pre-loaded (5), ladder adds the bass C-position notes.
+  level('grand', 2, 'Grand Positions', 'Both C positions', 'grand', 'name',
+    ['C4', 'D4', 'E4', 'F4', 'G4', 'C3', 'D3', 'E3', 'F3', 'G3'], 6, 'intermediate'),
+  level('grand', 3, 'Find: Grand', 'Find across both staves', 'grand', 'find',
+    ['C4', 'B3', 'D4', 'A3', 'E4', 'G3', 'F4'], 3, 'intermediate'),
+  // Whole grand staff (bass G2–A3, treble E4–F5); most pre-loaded, ladder adds the last stretch notes.
+  level('grand', 4, 'Whole Grand Staff', 'Both full staves', 'grand', 'mix',
+    ['G2', 'A2', 'B2', 'C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5'], 14, 'advanced'),
+  // Grand + ledgers (bass F2–B3, treble C4–F5); staff pre-loaded, ladder adds ledger reaches.
+  level('grand', 5, 'Grand + Ledgers', 'Ledger lines, both hands', 'grand', 'mix',
+    ['F2', 'G2', 'A2', 'B2', 'C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'B3',
+     'C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5'], 18, 'advanced'),
+
+  // ── Alto (optional) ──  identify → find → whole staff
+  level('alto', 1, 'Alto Steps', 'Name around middle C', 'alto', 'name', ['C4', 'B3', 'D4', 'A3', 'E4'], 2, 'beginner'),
+  level('alto', 2, 'Find: Alto', 'Find around middle C', 'alto', 'find', ['C4', 'B3', 'D4', 'A3', 'E4'], 2, 'intermediate'),
+  level('alto', 3, 'Whole Alto Staff', 'All lines & spaces', 'alto', 'mix',
+    ['F3', 'A3', 'C4', 'E4', 'G4', 'G3', 'B3', 'D4', 'F4'], 5, 'advanced'),
+
+  // ── Tenor (optional) ──  identify → find → whole staff
+  level('tenor', 1, 'Tenor Steps', 'Name around middle C', 'tenor', 'name', ['C4', 'B3', 'D4', 'A3', 'E4'], 2, 'beginner'),
+  level('tenor', 2, 'Find: Tenor', 'Find around middle C', 'tenor', 'find', ['C4', 'B3', 'D4', 'A3', 'E4'], 2, 'intermediate'),
+  level('tenor', 3, 'Whole Tenor Staff', 'All lines & spaces', 'tenor', 'mix',
+    ['D3', 'F3', 'A3', 'C4', 'E4', 'E3', 'G3', 'B3', 'D4'], 5, 'advanced'),
 ]
 
 /** The next level in the same clef track (for the mastery unlock). */

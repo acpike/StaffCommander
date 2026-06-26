@@ -35,7 +35,9 @@ export function Car() {
 
     if (playing) {
       carState.x = clamp(carState.x + carState.steer * STEER_RATE * spec.turnMul * dt, -CLAMP_X, CLAMP_X)
-      const speed = (BASE_SPEED + (g.stage - 1) * STAGE_SPEED) * spec.topSpeedMul + (input.boost ? BOOST_SPEED : 0)
+      // beginner/intermediate bands cap the speed stage so the car never outruns a young reader
+      const speedStage = Math.min(g.stage, g.stageCap)
+      const speed = (BASE_SPEED + (speedStage - 1) * STAGE_SPEED) * spec.topSpeedMul + (input.boost ? BOOST_SPEED : 0)
       carState.speed = speed
       carState.z -= speed * dt
     } else {

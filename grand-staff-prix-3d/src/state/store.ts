@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { NOTE_SETS, pickNote, buildGateLetters, customSet, nextLevel, starterLevelIds, type GameNote, type Letter, type NoteSet, type Clef, type NoteMode } from '../data/notes'
+import { NOTE_SETS, pickNoteFrom, buildGateLettersFrom, activeNotes, startCountOf, customSet, nextLevel, starterLevelIds, type GameNote, type Letter, type NoteSet, type Clef, type NoteMode } from '../data/notes'
+import { WRONG_PENALTY, resolveActiveCount, activeCountAt, masterThreshold, meterStart } from '../data/ladder'
 import { CARS } from '../data/cars'
 import { COMPOSERS } from '../data/composers'
 import { cloudEnabled, fetchPlayers, insertPlayer, updatePlayer, deletePlayer } from '../lib/cloud'
@@ -36,6 +37,10 @@ export interface Profile {
   unlocked: string[]
   /** Level ids the player has demonstrated MASTERY of (the unlock gate). */
   mastered: string[]
+  /** Saved adaptive-ladder meter per level id (how far up the note ladder they got). */
+  mastery: Record<string, number>
+  /** Date key (YYYY-MM-DD) each level was last played, for meter decay on return. */
+  lastPlayed: Record<string, string>
   xp: number
   /** Gem currency earned through play. */
   gems: number
@@ -68,6 +73,8 @@ function toCloudData(p: Profile): Record<string, unknown> {
     best: p.best,
     unlocked: p.unlocked,
     mastered: p.mastered,
+    mastery: p.mastery,
+    lastPlayed: p.lastPlayed,
     xp: p.xp,
     gems: p.gems,
     achievements: p.achievements,
@@ -97,6 +104,8 @@ function cloudToProfile(row: { id: string; name: string; data?: Record<string, u
     best: (d.best as Record<string, number>) ?? {},
     unlocked: Array.from(new Set([...starterLevelIds(), ...((d.unlocked as string[]) ?? [])])),
     mastered: (d.mastered as string[]) ?? [],
+    mastery: (d.mastery as Record<string, number>) ?? {},
+    lastPlayed: (d.lastPlayed as Record<string, string>) ?? {},
     xp: (d.xp as number) ?? 0,
     gems: (d.gems as number) ?? 0,
     achievements: (d.achievements as string[]) ?? [],
@@ -134,6 +143,8 @@ function freshProfile(name: string): Profile {
     best: {},
     unlocked: starterLevelIds(),
     mastered: [],
+    mastery: {},
+    lastPlayed: {},
     xp: 0,
     gems: 0,
     achievements: [],
@@ -146,11 +157,8 @@ function freshProfile(name: string): Profile {
 // Number of correct answers needed to advance a stage; reaching STAGE_TO_UNLOCK
 // clears the level and unlocks the next one.
 const CORRECT_PER_STAGE = 8 // longer stages — sustain the skill, don't sprint
-// Mastery gate to unlock the next level: you must DEMONSTRATE the skill, not just survive —
-// reach a deep stage, over a meaningful sample of notes, at high accuracy.
-const MASTERY_STAGE = 4
-const MASTERY_MIN_NOTES = 30
-const MASTERY_ACCURACY = 0.9
+// Mastery is now demonstrated by the adaptive note ladder (see data/ladder.ts):
+// the next level unlocks when the meter reaches its mastery threshold.
 export const START_LIVES = 3
 const GATES_BASE = 3
 
@@ -177,6 +185,16 @@ export interface GameState {
   correctCount: number
   /** Wrong answers this run, for accuracy / mastery. */
   wrongCount: number
+  /** Adaptive note-ladder meter for the level being played this run. */
+  meterM: number
+  /** Active note-pool size derived from `meterM` (the ladder rung in play). */
+  activeCount: number
+  /** Increments whenever the ladder reveals a new note (drives the HUD celebration). */
+  unlockTick: number
+  /** Lives this run started with (varies by band; for the HUD heart row). */
+  startLives: number
+  /** Cap on the stage used for car SPEED + tempo, so beginners aren't outrun by the car. */
+  stageCap: number
   /** Highest streak reached this run (for achievements). */
   bestStreak: number
   /** Index of the active note set (cached from settings.levelId at start). */
@@ -240,6 +258,39 @@ function gatesForStage(stage: number): number {
   return GATES_BASE
 }
 
+/** The ladder dimensions for a level: total notes, starting pool, mastery target. */
+function ladderContext(set: NoteSet): { ladderLen: number; startCount: number; masterM: number } {
+  const ladderLen = set.notes.length
+  const startCount = startCountOf(set)
+  return { ladderLen, startCount, masterM: masterThreshold(ladderLen, startCount) }
+}
+
+/** Whole days between two YYYY-MM-DD keys (0 if same day, first play, or unparseable). */
+function daysBetween(fromKey: string | undefined, toKey: string): number {
+  if (!fromKey) return 0
+  const a = Date.parse(fromKey + 'T00:00:00')
+  const b = Date.parse(toKey + 'T00:00:00')
+  if (Number.isNaN(a) || Number.isNaN(b)) return 0
+  return Math.max(0, Math.round((b - a) / 86400000))
+}
+
+/** Beginner levels are no-fail practice: a wrong answer never costs a life. */
+function isNoFail(set: NoteSet): boolean {
+  return set.band === 'beginner'
+}
+
+/** Per-band starting lives and the stage cap that limits car speed + tempo. */
+function bandCaps(set: NoteSet): { lives: number; stageCap: number } {
+  switch (set.band) {
+    case 'beginner':
+      return { lives: 3, stageCap: 3 } // no-fail anyway; keep the car gentle while reading
+    case 'intermediate':
+      return { lives: 4, stageCap: 5 }
+    default:
+      return { lives: START_LIVES, stageCap: 99 } // advanced: full pressure, uncapped speed
+  }
+}
+
 export const useGame = create<GameState>()((set, get) => {
   const initialProfiles = loadJSON<Profile[]>(LS_PROFILES, []).map((p) => ({
     // Migrate profiles persisted before the avatar builder: older ones have
@@ -252,6 +303,14 @@ export const useGame = create<GameState>()((set, get) => {
       new Set([...starterLevelIds(), ...(Array.isArray((p as { unlocked?: unknown }).unlocked) ? (p as { unlocked: string[] }).unlocked : [])]),
     ),
     mastered: Array.isArray((p as { mastered?: unknown }).mastered) ? p.mastered : [],
+    mastery:
+      typeof (p as { mastery?: unknown }).mastery === 'object' && (p as { mastery?: unknown }).mastery
+        ? (p as { mastery: Record<string, number> }).mastery
+        : {},
+    lastPlayed:
+      typeof (p as { lastPlayed?: unknown }).lastPlayed === 'object' && (p as { lastPlayed?: unknown }).lastPlayed
+        ? (p as { lastPlayed: Record<string, string> }).lastPlayed
+        : {},
     gems: typeof (p as { gems?: unknown }).gems === 'number' ? p.gems : 0,
     achievements: Array.isArray((p as { achievements?: unknown }).achievements) ? p.achievements : [],
     carId: typeof (p as { carId?: unknown }).carId === 'string' ? (p as { carId: string }).carId : CARS[0].id,
@@ -290,12 +349,18 @@ export const useGame = create<GameState>()((set, get) => {
   const persistSettings = () => saveJSON(LS_SETTINGS, get().settings)
 
   const nextWave = (stage: number) => {
-    const s = currentSet(get().settings.levelId, get().customLevels)
-    const note = pickNote(s)
-    const gateLetters = buildGateLetters(s, note.letter, gatesForStage(stage))
-    // 'mix' levels flip between name/find each wave so students work both ways.
+    const st0 = get()
+    const s = currentSet(st0.settings.levelId, st0.customLevels)
+    // Draw the target from the ACTIVE ladder pool (the notes unlocked so far),
+    // not the whole level — this is what makes early levels start at 2 notes.
+    const pool = activeNotes(s, st0.activeCount)
+    const note = pickNoteFrom(pool)
+    const gateLetters = buildGateLettersFrom(pool, note.letter, gatesForStage(stage))
+    // 'mix' levels flip between name/find each wave; beginner levels stay name-only
+    // (recognition before recall) so the very first notes are never "find".
     const base = s.mode ?? 'name'
-    const noteMode: 'name' | 'find' = base === 'mix' ? (Math.random() < 0.5 ? 'find' : 'name') : base
+    let noteMode: 'name' | 'find' = base === 'mix' ? (Math.random() < 0.5 ? 'find' : 'name') : base
+    if (isNoFail(s)) noteMode = 'name'
     set((st) => ({ note, gateLetters, waveId: st.waveId + 1, noteMode }))
   }
 
@@ -317,6 +382,11 @@ export const useGame = create<GameState>()((set, get) => {
     stage: 1,
     correctCount: 0,
     wrongCount: 0,
+    meterM: 0,
+    activeCount: 0,
+    unlockTick: 0,
+    startLives: START_LIVES,
+    stageCap: 99,
     bestStreak: 0,
     note: null,
     gateLetters: [],
@@ -462,14 +532,31 @@ export const useGame = create<GameState>()((set, get) => {
     startGame: () => {
       resetCarState()
       audio.resume()
+      const st = get()
+      const levelId = st.settings.levelId
+      const s = currentSet(levelId, st.customLevels)
+      const { ladderLen, startCount, masterM } = ladderContext(s)
+      // Resume where they left off, minus a warm-up that grows with days away —
+      // so a rusty student's ladder peels back and they re-prove it. (§6)
+      const prof = st.currentId ? st.profiles.find((p) => p.id === st.currentId) : null
+      const savedM = prof?.mastery?.[levelId] ?? 0
+      const daysAway = daysBetween(prof?.lastPlayed?.[levelId], todayKey())
+      const meterM = meterStart(savedM, daysAway, masterM)
+      const activeCount = activeCountAt(meterM, ladderLen, startCount)
+      const caps = bandCaps(s)
       set({
         screen: 'countdown',
         score: 0,
-        lives: START_LIVES,
+        lives: caps.lives,
+        startLives: caps.lives,
+        stageCap: caps.stageCap,
         streak: 0,
         stage: 1,
         correctCount: 0,
         wrongCount: 0,
+        meterM,
+        activeCount,
+        unlockTick: 0,
         bestStreak: 0,
         lastResult: null,
         flashTick: 0,
@@ -481,7 +568,7 @@ export const useGame = create<GameState>()((set, get) => {
         note: null,
         gateLetters: [],
         // concrete starting mode; nextWave sets the real per-wave mode for 'mix'
-        noteMode: currentSet(get().settings.levelId, get().customLevels).mode === 'find' ? 'find' : 'name',
+        noteMode: s.mode === 'find' ? 'find' : 'name',
       })
     },
 
@@ -500,8 +587,6 @@ export const useGame = create<GameState>()((set, get) => {
 
       if (correct) {
         const correctCount = st.correctCount + 1
-        const total = correctCount + st.wrongCount
-        const accuracy = total > 0 ? correctCount / total : 1
         const stage = 1 + Math.floor(correctCount / CORRECT_PER_STAGE)
         const streak = st.streak + 1
         // SCORE = small base × SPEED × COMBO. Accelerating into the correct gate
@@ -512,52 +597,82 @@ export const useGame = create<GameState>()((set, get) => {
         const gained = Math.round(10 * speedMult * comboMult)
         const score = st.score + gained
 
-        // MASTERY GATE: unlock the next level only when the player demonstrates the
-        // skill — reach stage MASTERY_STAGE, over >= MASTERY_MIN_NOTES notes, at >= 90%.
+        // ── adaptive note ladder ── a correct answer raises the meter; crossing a
+        // threshold reveals the next note; reaching the top masters the level.
+        const levelId = st.settings.levelId
+        const s = currentSet(levelId, st.customLevels)
+        const { ladderLen, startCount, masterM } = ladderContext(s)
+        const meterM = st.meterM + 1
+        const activeCount = resolveActiveCount(meterM, st.activeCount, ladderLen, startCount)
+        const noteUnlocked = activeCount > st.activeCount
+        // Only curriculum levels have a finish line; custom practice levels are
+        // endless (they start with every note active and never "master").
+        const justMastered = !!s.group && meterM >= masterM
+
+        // MASTERY = hold the full ladder. The first time, unlock the next tier in
+        // this clef track and award the mastery XP bonus.
         let unlockedThisRun = st.unlockedThisRun
         let masteredThisRun = st.masteredThisRun
-        const levelId = st.settings.levelId
         const prof = st.currentId ? st.profiles.find((p) => p.id === st.currentId) : null
-        if (
-          prof &&
-          !prof.mastered.includes(levelId) &&
-          stage >= MASTERY_STAGE &&
-          total >= MASTERY_MIN_NOTES &&
-          accuracy >= MASTERY_ACCURACY
-        ) {
-          // unlock the NEXT TIER IN THE SAME CLEF TRACK (per-clef progression)
-          const next = nextLevel(currentSet(levelId, st.customLevels))
-          masteredThisRun = currentSet(levelId, st.customLevels).name
-          if (next && !prof.unlocked.includes(next.id)) unlockedThisRun = next.name
-          const profiles = st.profiles.map((p) => {
-            if (p.id !== prof.id) return p
-            const mastered = [...p.mastered, levelId]
-            const unlocked = next && !p.unlocked.includes(next.id) ? [...p.unlocked, next.id] : p.unlocked
-            return { ...p, mastered, unlocked, xp: p.xp + 50 } // mastery XP bonus
-          })
-          set({ profiles })
-          persistProfiles()
+        if (justMastered) {
+          masteredThisRun = s.name
+          if (prof && !prof.mastered.includes(levelId)) {
+            const next = nextLevel(s)
+            if (next && !prof.unlocked.includes(next.id)) unlockedThisRun = next.name
+            const profiles = st.profiles.map((p) => {
+              if (p.id !== prof.id) return p
+              const mastered = [...p.mastered, levelId]
+              const unlocked = next && !p.unlocked.includes(next.id) ? [...p.unlocked, next.id] : p.unlocked
+              return { ...p, mastered, unlocked, xp: p.xp + 50 } // mastery XP bonus
+            })
+            set({ profiles })
+            persistProfiles()
+          }
         }
 
         audio.correct()
         audio.playNotePitch(st.note)
-        audio.setStageTempo(stage)
+        audio.setStageTempo(Math.min(stage, st.stageCap))
         set({
           score,
           streak,
           stage,
           correctCount,
+          meterM,
+          activeCount,
+          unlockTick: st.unlockTick + (noteUnlocked ? 1 : 0),
           bestStreak: Math.max(st.bestStreak, streak),
           lastResult: 'correct',
           flashTick: st.flashTick + 1,
           unlockedThisRun,
           masteredThisRun,
         })
-        nextWave(stage)
+        if (justMastered) {
+          // Finish line: mastering ENDS the race as a win — the exit ramp. (§7)
+          get().endGame()
+        } else {
+          nextWave(stage)
+        }
       } else {
-        const lives = st.lives - 1
+        // WRONG: the meter falls (demotion pressure), which can drop the most
+        // recently-added note back off the pool until it's re-earned.
+        const s = currentSet(st.settings.levelId, st.customLevels)
+        const { ladderLen, startCount } = ladderContext(s)
+        const meterM = Math.max(0, st.meterM - WRONG_PENALTY)
+        const activeCount = resolveActiveCount(meterM, st.activeCount, ladderLen, startCount)
+        // Beginner levels are no-fail practice: a wrong answer never costs a life,
+        // so young students can only exit by succeeding (mastering).
+        const lives = isNoFail(s) ? st.lives : st.lives - 1
         audio.wrong()
-        set({ lives, streak: 0, wrongCount: st.wrongCount + 1, lastResult: 'wrong', flashTick: st.flashTick + 1 })
+        set({
+          lives,
+          streak: 0,
+          wrongCount: st.wrongCount + 1,
+          meterM,
+          activeCount,
+          lastResult: 'wrong',
+          flashTick: st.flashTick + 1,
+        })
         if (lives <= 0) {
           get().endGame()
         } else {
@@ -597,9 +712,13 @@ export const useGame = create<GameState>()((set, get) => {
       const prof = st.currentId ? st.profiles.find((p) => p.id === st.currentId) : null
       let newAchievements: string[] = []
       if (prof) {
-        const prevBest = prof.best[st.settings.levelId] ?? 0
-        const best =
-          st.score > prevBest ? { ...prof.best, [st.settings.levelId]: st.score } : prof.best
+        const levelId = st.settings.levelId
+        const prevBest = prof.best[levelId] ?? 0
+        const best = st.score > prevBest ? { ...prof.best, [levelId]: st.score } : prof.best
+        // Save the ladder PEAK (meter only ratchets up across runs; the warm-up on
+        // return is what decays it) plus when this level was last played. (§6)
+        const mastery = { ...prof.mastery, [levelId]: Math.max(prof.mastery[levelId] ?? 0, st.meterM) }
+        const lastPlayed = { ...prof.lastPlayed, [levelId]: dKey }
         // XP = LEARNING: one point per note read correctly this run (mastery adds a bonus above)
         const newXp = prof.xp + st.correctCount
         const newGems = prof.gems + gems + dailyGems
@@ -620,12 +739,14 @@ export const useGame = create<GameState>()((set, get) => {
         )
         const achievements = [...prof.achievements, ...newAchievements]
         const profiles = st.profiles.map((p) =>
-          p.id === prof.id ? { ...p, best, xp: newXp, gems: newGems, achievements } : p,
+          p.id === prof.id ? { ...p, best, xp: newXp, gems: newGems, achievements, mastery, lastPlayed } : p,
         )
         set({ profiles })
         persistProfiles()
       }
-      audio.crash()
+      // A mastery finish is a WIN (the checkered flag), not a crash — sound it that way.
+      if (st.masteredThisRun) audio.fanfare()
+      else audio.crash()
       audio.setMusic(false)
       audio.stopEngine()
       set({ screen: 'over', gemsEarned: gems + dailyGems, newAchievements, daily })

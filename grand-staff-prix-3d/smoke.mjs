@@ -29,6 +29,9 @@ page.on('console', (m) => {
 const report = {}
 try {
   await page.goto(URL, { waitUntil: 'networkidle', timeout: 30000 })
+  // dismiss the opening splash (tap to enter the menu) if present
+  const splash = page.locator('.splashStart')
+  if (await splash.count()) await splash.click()
   await page.waitForSelector('.overlay', { timeout: 10000 })
   report.menuLoaded = true
   await page.screenshot({ path: shot('1-menu') })

@@ -78,6 +78,13 @@ class AudioEngine {
     this.blip(last ? 880 : 520, last ? 0.3 : 0.12, 'triangle', 0.4)
   }
 
+  /** Victory fanfare — a rising major arpeggio, played when a level is mastered. */
+  fanfare() {
+    const notes = [523.25, 659.25, 783.99, 1046.5] // C5 E5 G5 C6
+    notes.forEach((f, i) => this.blip(f, 0.22, 'triangle', 0.4, i * 0.12))
+    this.blip(1318.51, 0.4, 'triangle', 0.32, notes.length * 0.12) // E6 flourish
+  }
+
   crash() {
     if (!this.ctx || !this.master) return
     const t = this.ctx.currentTime
