@@ -1,0 +1,15 @@
+# Netlify redirect/rewrite rules for staffcommander.netlify.app
+#
+# Grand Staff Prix 3D is served from /gsp-3d/, but its bundle was written to be
+# served from the domain root, so it requests assets at absolute paths
+# (/models/*, /hdri/*, /backdrops/desert.jpg, /fonts/*, etc.). Those 404 under
+# the subfolder. Until each app gets its own asset namespace in the folder
+# reorg, rewrite (200, not redirect) those top-level asset folders into
+# /gsp-3d/. Verified no other game (2D HTML games, /rhythm app) requests these
+# paths, so there is no collision.
+/models/*      /gsp-3d/models/:splat       200
+/hdri/*        /gsp-3d/hdri/:splat         200
+/tex/*         /gsp-3d/tex/:splat          200
+/backdrops/*   /gsp-3d/backdrops/:splat    200
+/thumbs/*      /gsp-3d/thumbs/:splat       200
+/fonts/*       /gsp-3d/fonts/:splat        200
