@@ -1152,6 +1152,30 @@ body {
   font-size: 14px;
 }
 
+/* ── "new note unlocked" banner: thin strip across the very top ──────── */
+.noteUnlockToast {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  padding: calc(env(safe-area-inset-top) + 8px) 16px 9px;
+  text-align: center;
+  background: linear-gradient(90deg, #2fae62, #46d27a);
+  color: #06120b;
+  font: 800 15px 'Space Grotesk', system-ui, sans-serif;
+  letter-spacing: 0.3px;
+  box-shadow: 0 4px 18px rgba(70, 210, 122, 0.45);
+  pointer-events: none;
+  animation: noteUnlockSlide 1.6s ease forwards;
+}
+@keyframes noteUnlockSlide {
+  0% { transform: translateY(-100%); opacity: 0; }
+  12% { transform: translateY(0); opacity: 1; }
+  82% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-100%); opacity: 0; }
+}
+
 /* ── mastery celebration ─────────────────────────────────────────────── */
 .overCard.mastered {
   animation: masterPop 0.5s cubic-bezier(0.2, 1.3, 0.4, 1) both;

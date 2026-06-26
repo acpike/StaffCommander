@@ -146,27 +146,10 @@ export function HUD() {
         </span>
       </div>
 
-      {/* fleeting celebration when the ladder reveals a new note */}
+      {/* fleeting celebration when the ladder reveals a new note — a thin banner
+          pinned across the very top, clear of the note card / gates / car */}
       {celebrate && isLadder && (
-        <div
-          key={unlockTick}
-          className="noteUnlockToast"
-          style={{
-            position: 'absolute',
-            // low-center, clear of the note card pinned to the top of the screen
-            bottom: 'max(18%, calc(env(safe-area-inset-bottom) + 96px))',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            padding: '8px 16px',
-            borderRadius: 999,
-            background: 'linear-gradient(90deg,#2fae62,#46d27a)',
-            color: '#06120b',
-            font: '800 15px "Space Grotesk", system-ui, sans-serif',
-            boxShadow: '0 6px 20px rgba(70,210,122,0.5)',
-            pointerEvents: 'none',
-            whiteSpace: 'nowrap',
-          }}
-        >
+        <div key={unlockTick} className="noteUnlockToast">
           🎵 New note unlocked!
         </div>
       )}
