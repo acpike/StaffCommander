@@ -1,7 +1,11 @@
 import { useGame, activeProfile } from '../state/store'
-import { NOTE_SETS } from '../data/notes'
+import { NOTE_SETS, nextLevel } from '../data/notes'
 import { rankForXp, achievementById } from '../data/progression'
 import { Icon } from './icons'
+
+// A handful of confetti pieces for the mastery celebration (CSS-animated).
+const CONFETTI = Array.from({ length: 28 }, (_, i) => i)
+const CONFETTI_COLORS = ['#ffd479', '#46d27a', '#ff8a3d', '#4aa3ff', '#ff5a8a', '#b07bff']
 
 export function GameOver() {
   const score = useGame((s) => s.score)
@@ -14,16 +18,50 @@ export function GameOver() {
   const customLevels = useGame((s) => s.customLevels)
   const profile = useGame(activeProfile)
   const startGame = useGame((s) => s.startGame)
+  const setLevel = useGame((s) => s.setLevel)
   const goMenu = useGame((s) => s.goMenu)
 
   const best = profile?.best[levelId] ?? score
-  const levelName = [...NOTE_SETS, ...customLevels].find((s) => s.id === levelId)?.name ?? ''
+  const curSet = [...NOTE_SETS, ...customLevels].find((s) => s.id === levelId)
+  const levelName = curSet?.name ?? ''
   const rank = rankForXp(profile?.xp ?? 0)
+
+  // The next tier in this clef track, if it exists and is now unlocked.
+  const next = curSet ? nextLevel(curSet) : undefined
+  const nextUnlocked = !!next && (profile?.unlocked.includes(next.id) ?? false)
+  const playNext = () => {
+    if (!next) return
+    setLevel(next.id)
+    startGame()
+  }
 
   return (
     <div className="overlay">
-      <div className="overCard">
-        <div className="lbl">{mastered ? `🏁 Track Complete · ${levelName}` : `Race Complete · ${levelName}`}</div>
+      {mastered && (
+        <div className="confetti" aria-hidden>
+          {CONFETTI.map((i) => (
+            <span
+              key={i}
+              style={{
+                left: `${(i * 37) % 100}%`,
+                background: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+                animationDelay: `${(i % 10) * 0.15}s`,
+                animationDuration: `${1.8 + (i % 5) * 0.35}s`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      <div className={`overCard${mastered ? ' mastered' : ''}`}>
+        {mastered ? (
+          <>
+            <div className="masterTitle">🏁 Track Complete!</div>
+            <div className="masterSub">You mastered {levelName}</div>
+          </>
+        ) : (
+          <div className="lbl">Race Complete · {levelName}</div>
+        )}
         <div className="big">{score}</div>
 
         <div className="overStats">
@@ -41,7 +79,6 @@ export function GameOver() {
           </div>
         </div>
 
-        {mastered && <div className="unlockBanner">⭐ You mastered {mastered}!</div>}
         {unlocked && <div className="unlockBanner">🔓 New level unlocked: {unlocked}</div>}
         {newAchievements.length > 0 && (
           <div className="achWon">
@@ -55,7 +92,12 @@ export function GameOver() {
         </div>
 
         <div className="startWrap" style={{ width: '100%' }}>
-          <button className="btn" onClick={startGame}>
+          {nextUnlocked && (
+            <button className="btn" onClick={playNext}>
+              {Icon.play} Next Level: {next!.name}
+            </button>
+          )}
+          <button className={`btn${nextUnlocked ? ' ghost' : ''}`} onClick={startGame}>
             {Icon.play} Race Again
           </button>
           <button className="btn ghost" onClick={goMenu}>
