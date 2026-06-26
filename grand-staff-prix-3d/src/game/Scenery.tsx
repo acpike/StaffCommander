@@ -9,6 +9,7 @@ import { isTouchDevice } from '../util/device'
 import { SFScene } from './SFScene'
 import { MountainScene } from './MountainScene'
 import { DesertScene } from './DesertScene'
+import { Backdrop, ImageEnvironment } from './Backdrop'
 
 // Deep Space: a real Milky-Way galaxy sky (public-domain equirect) + textured
 // planets (NASA-derived public-domain maps), so the map matches its name.
@@ -153,8 +154,11 @@ export function Scenery({ theme }: { theme: Theme }) {
       ) : theme.id === 'desert' ? (
         <>
           <DesertScene />
+          {/* flat painted sky (cheap LDR jpg) instead of a 5 MB HDR skybox, plus a
+              small reflection map built from the same image for the car's shine */}
           <Suspense fallback={null}>
-            <Environment files="/hdri/desert.hdr" background backgroundBlurriness={0} environmentIntensity={1} />
+            <Backdrop image="/backdrops/desert.jpg" />
+            <ImageEnvironment image="/backdrops/desert.jpg" intensity={1} />
           </Suspense>
         </>
       ) : (

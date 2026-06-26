@@ -96,6 +96,15 @@ if (report.menuLoaded) {
     report.setupReached = true
     await page.screenshot({ path: shot('2-setup') })
 
+    // optional theme select (0=mountain 1=SF 2=desert 3=candy 4=space)
+    const themeIdx = process.env.THEME_INDEX != null ? parseInt(process.env.THEME_INDEX, 10) : null
+    if (themeIdx != null) {
+      const tiles = page.locator('.themeTile')
+      if ((await tiles.count()) > themeIdx) await tiles.nth(themeIdx).click()
+      report.themeSelected = themeIdx
+      await page.waitForTimeout(300)
+    }
+
     await page.getByRole('button', { name: 'Start Race' }).click()
     await page.waitForSelector('.countdown', { timeout: 8000 }).catch(() => {})
     report.countdownSeen = (await page.locator('.countdown').count()) > 0
