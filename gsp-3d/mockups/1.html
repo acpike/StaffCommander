@@ -1,0 +1,64 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mockup 1 — Garage</title>
+<link rel="stylesheet" href="_base.css">
+<style>
+.hero { position: relative; margin: 8px 16px 0; height: 38vh; min-height: 240px; border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.015));
+  border: 1px solid var(--line); display: grid; place-items: center; overflow: hidden; }
+.heroGlow { position: absolute; width: 70%; height: 55%; bottom: 16%; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255,90,46,0.45), transparent); filter: blur(26px); }
+.hero .car { position: relative; width: 78%; max-height: 70%; object-fit: contain; filter: drop-shadow(0 24px 30px rgba(0,0,0,0.6)); z-index: 1; }
+.driver { position: absolute; right: 16px; bottom: 16px; width: 74px; height: 74px; border-radius: 16px;
+  object-fit: cover; border: 2px solid rgba(255,255,255,0.25); box-shadow: 0 8px 22px rgba(0,0,0,0.5); z-index: 2; }
+.heroNav { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; font-weight: 600; font-size: 14px; z-index: 2; }
+.heroNav span { color: var(--acc2); padding: 0 10px; font-size: 18px; }
+
+.loadout { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 14px 16px; }
+.tile { text-align: left; padding: 14px; border-radius: 18px; background: var(--surf); border: 1px solid var(--line); position: relative; }
+.tile.sel { background: var(--acc-soft); border-color: var(--acc-line); }
+.tileTop { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--dim); display: flex; align-items: center; gap: 7px; }
+.tileTop .brv { font-size: 22px; color: var(--txt); }
+.tileMain { font-size: 19px; font-weight: 700; margin-top: 8px; }
+.tileSub { font-size: 12px; color: var(--faint); margin-top: 1px; }
+.tile .stars { margin-top: 8px; }
+.tile .chev { position: absolute; top: 14px; right: 14px; color: var(--faint); }
+.swatch { margin-top: 10px; height: 28px; border-radius: 8px; background: linear-gradient(120deg, #5b8f6a, #2f5d49 60%, #1c3a33); }
+
+.footer { margin-top: auto; padding: 10px 16px max(18px, env(safe-area-inset-bottom)); }
+.start { width: 100%; padding: 18px; border-radius: 18px; background: var(--acc-grad); color: #fff;
+  font-weight: 800; font-size: 19px; letter-spacing: 0.5px; box-shadow: var(--acc-glow); }
+</style></head>
+<body><div class="screen">
+  <div class="aurora a1"></div><div class="aurora a2"></div>
+  <div class="topbar">
+    <button class="ic">⚙</button>
+    <div class="brand">GRAND <b>STAFF</b> <span class="x">PRIX</span></div>
+    <button class="avatar">A</button>
+  </div>
+
+  <div class="hero">
+    <div class="heroGlow"></div>
+    <img class="car" src="/thumbs/car_vortex.png" alt="">
+    <img class="driver" src="/thumbs/composer_beethoven.png" alt="">
+    <div class="heroNav"><span>‹</span> Vortex · Beethoven <span>›</span></div>
+  </div>
+
+  <div class="loadout">
+    <button class="tile sel">
+      <div class="tileTop"><span class="brv">&#xE050;</span> LEVEL</div>
+      <div class="tileMain">C Position</div>
+      <div class="tileSub">Treble · Beginner</div>
+      <div class="stars">★★☆</div>
+      <span class="chev">›</span>
+    </button>
+    <button class="tile">
+      <div class="tileTop">🏔 SCENERY</div>
+      <div class="tileMain">Mountain</div>
+      <div class="swatch"></div>
+      <span class="chev">›</span>
+    </button>
+  </div>
+
+  <div class="footer"><button class="start">▶  START RACE</button></div>
+</div></body></html>

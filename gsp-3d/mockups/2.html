@@ -1,0 +1,64 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mockup 2 — Tabbed Dashboard</title>
+<link rel="stylesheet" href="_base.css">
+<style>
+.tabs { display: flex; gap: 6px; margin: 8px 16px 0; background: var(--surf); border: 1px solid var(--line); border-radius: 14px; padding: 5px; }
+.tabs button { flex: 1; padding: 11px; border-radius: 10px; font-weight: 700; font-size: 14px; letter-spacing: 0.5px; color: var(--dim); }
+.tabs button.on { background: var(--acc-grad); color: #fff; box-shadow: 0 6px 18px rgba(255,90,46,0.4); }
+
+.body { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+.label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--dim); text-transform: uppercase; margin-bottom: 8px; }
+
+.playing { display: flex; align-items: center; gap: 14px; padding: 18px; border-radius: 20px;
+  background: var(--acc-soft); border: 1px solid var(--acc-line); }
+.playing .clef { font-family: 'Bravura'; font-size: 48px; line-height: 0.7; color: var(--txt); }
+.playing .meta { flex: 1; }
+.playing .nm { font-size: 21px; font-weight: 800; }
+.playing .sub { font-size: 13px; color: var(--dim); margin-top: 2px; }
+.playing .row2 { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+.playing .change { margin-left: auto; color: var(--acc2); font-weight: 600; font-size: 13px; }
+
+.ride { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.chip { border-radius: 16px; overflow: hidden; background: var(--surf); border: 1px solid var(--line); }
+.chip img { width: 100%; height: 78px; object-fit: cover; display: block; background: #15131d; }
+.chip .cap { padding: 8px 6px; font-size: 12px; font-weight: 600; text-align: center; }
+.chip .swatch { height: 78px; background: linear-gradient(120deg, #5b8f6a, #2f5d49 60%, #1c3a33); }
+
+.footer { margin-top: auto; padding: 10px 16px max(18px, env(safe-area-inset-bottom)); }
+.start { width: 100%; padding: 18px; border-radius: 18px; background: var(--acc-grad); color: #fff;
+  font-weight: 800; font-size: 19px; box-shadow: var(--acc-glow); }
+</style></head>
+<body><div class="screen">
+  <div class="aurora a1"></div>
+  <div class="topbar">
+    <div class="brand">GRAND <b>STAFF</b> <span class="x">PRIX</span></div>
+    <button class="avatar">A</button>
+  </div>
+  <div class="tabs"><button class="on">PLAY</button><button>GARAGE</button><button>STATS</button></div>
+
+  <div class="body">
+    <div>
+      <div class="label">Now playing</div>
+      <div class="playing">
+        <span class="clef">&#xE050;</span>
+        <div class="meta">
+          <div class="nm">C Position</div>
+          <div class="sub">Treble · Beginner · Mix mode</div>
+          <div class="row2"><span class="stars">★★☆</span><span class="dim" style="font-size:12px">best 1,240</span><span class="change">change ›</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="label">Your ride</div>
+      <div class="ride">
+        <div class="chip"><img src="/thumbs/car_vortex.png"><div class="cap">Vortex</div></div>
+        <div class="chip"><img src="/thumbs/composer_beethoven.png"><div class="cap">Beethoven</div></div>
+        <div class="chip"><div class="swatch"></div><div class="cap">Mountain</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer"><button class="start">▶  START</button></div>
+</div></body></html>
