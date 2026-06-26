@@ -12,6 +12,7 @@
     "typecheck": "tsc -b",
     "smoke": "node scripts/smoke.mjs",
     "smoke:desert": "THEME_INDEX=2 node scripts/smoke.mjs",
+    "smoke:wide": "THEME_INDEX=2 VIEW_W=1280 VIEW_H=720 node scripts/smoke.mjs",
     "verify": "tsc -b && vitest run && vite build && node scripts/smoke.mjs"
   },
   "dependencies": {

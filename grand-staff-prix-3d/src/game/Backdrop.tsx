@@ -3,45 +3,50 @@ import { useLoader, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 
 // A flat landscape backdrop for the sky. Because the camera only ever looks
-// forward down the track, a single image on a large billboard that follows the
-// camera (and faces it) reads as a distant horizon — no 360° HDR needed. The
-// material ignores fog/depth so it always sits behind the 3D world like a sky.
+// forward down the track, a single image on a screen-filling quad that rides
+// with the camera reads as a distant horizon — no 360° HDR needed. Each frame
+// the quad is sized to exactly cover the camera frustum (so it fills any aspect
+// ratio) and oriented to face the camera; the material ignores fog/depth so it
+// always sits behind the 3D world like a sky.
 //
 // `image` is a normal LDR jpg/png (cheap to load, no PMREM hitch). Pair it with
-// a small <Environment> for the car's reflections.
+// <ImageEnvironment> for the car's reflections.
 
-const DIST = 280 // just inside the camera far plane (320); reads as the horizon
-const HEIGHT = 380 // tall enough to fill the vertical FOV with margin
+const DIST = 300 // just inside the camera far plane (320); size scales with it
 
 const _fwd = new THREE.Vector3()
+const _pos = new THREE.Vector3()
 
 export function Backdrop({ image, intensity = 1 }: { image: string; intensity?: number }) {
   const ref = useRef<THREE.Mesh>(null)
   const tex = useLoader(THREE.TextureLoader, image)
 
-  const { width } = useMemo(() => {
-    const img = tex.image as { width: number; height: number } | undefined
-    const aspect = img && img.height ? img.width / img.height : 1.5
+  const aspect = useMemo(() => {
     tex.colorSpace = THREE.SRGBColorSpace
-    return { width: HEIGHT * aspect }
+    const img = tex.image as { width: number; height: number } | undefined
+    return img && img.height ? img.width / img.height : 1.5
   }, [tex])
 
   useFrame(({ camera }) => {
     const m = ref.current
     if (!m) return
-    // forward direction flattened to the ground plane → place the plane that far
-    // ahead and yaw it to face the camera; keep its horizon at world y≈0.
-    _fwd.set(0, 0, -1).applyQuaternion(camera.quaternion)
-    _fwd.y = 0
-    if (_fwd.lengthSq() < 1e-4) _fwd.set(0, 0, -1)
-    _fwd.normalize()
-    m.position.set(camera.position.x + _fwd.x * DIST, 0, camera.position.z + _fwd.z * DIST)
-    m.rotation.set(0, Math.atan2(_fwd.x, _fwd.z), 0)
+    const cam = camera as THREE.PerspectiveCamera
+    // place a screen-aligned quad DIST in front of the camera, facing it
+    cam.getWorldDirection(_fwd)
+    _pos.copy(cam.position).addScaledVector(_fwd, DIST)
+    m.position.copy(_pos)
+    m.quaternion.copy(cam.quaternion)
+    // size it to COVER the frustum at that distance (fill the screen, no stretch)
+    const vFov = (cam.fov * Math.PI) / 180
+    const viewH = 2 * Math.tan(vFov / 2) * DIST
+    const viewW = viewH * cam.aspect
+    const planeH = Math.max(viewH, viewW / aspect) * 1.08 // 8% margin
+    m.scale.set(planeH * aspect, planeH, 1)
   })
 
   return (
     <mesh ref={ref} renderOrder={-1} frustumCulled={false}>
-      <planeGeometry args={[width, HEIGHT]} />
+      <planeGeometry args={[1, 1]} />
       <meshBasicMaterial
         map={tex}
         side={THREE.DoubleSide}

@@ -63,7 +63,9 @@ const browser = await chromium.launch({
     '--enable-webgl',
   ],
 })
-const page = await browser.newPage({ viewport: { width: 430, height: 760 } })
+const VIEW_W = Number(process.env.VIEW_W || 430)
+const VIEW_H = Number(process.env.VIEW_H || 760)
+const page = await browser.newPage({ viewport: { width: VIEW_W, height: VIEW_H } })
 page.on('pageerror', (e) => pageErrors.push(String(e)))
 page.on('console', (m) => {
   if (m.type() === 'error') consoleErrors.push(m.text())
