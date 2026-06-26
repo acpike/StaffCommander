@@ -11,27 +11,8 @@ import { MountainScene } from './MountainScene'
 import { DesertScene } from './DesertScene'
 import { Backdrop, ImageEnvironment } from './Backdrop'
 
-// Deep Space: a real Milky-Way galaxy sky (public-domain equirect) + textured
-// planets (NASA-derived public-domain maps), so the map matches its name.
-function SpaceSky() {
-  const camera = useThree((s) => s.camera)
-  const ref = useRef<THREE.Mesh>(null)
-  const tex = useMemo(() => {
-    const t = new THREE.TextureLoader().load('/tex/stars_milkyway.jpg')
-    t.colorSpace = THREE.SRGBColorSpace
-    return t
-  }, [])
-  useFrame(() => {
-    if (ref.current) ref.current.position.copy(camera.position)
-  })
-  return (
-    <mesh ref={ref} frustumCulled={false}>
-      <sphereGeometry args={[300, 48, 24]} />
-      <meshBasicMaterial map={tex} side={THREE.BackSide} fog={false} depthWrite={false} />
-    </mesh>
-  )
-}
-
+// Deep Space: a painted galaxy backdrop (flat quad, same as the other themes) +
+// textured planets (NASA-derived public-domain maps) streaming in front for depth.
 function Planet({ tex, size, dir, spin }: { tex: string; size: number; dir: [number, number, number]; spin: number }) {
   const camera = useThree((s) => s.camera)
   const ref = useRef<THREE.Mesh>(null)
@@ -120,13 +101,13 @@ export function Scenery({ theme }: { theme: Theme }) {
 
       {theme.id === 'space' ? (
         <>
-          <SpaceSky />
+          {/* painted galaxy backdrop; planets + stars stream in front for depth */}
           <Planet tex="/tex/planet_jupiter.jpg" size={34} dir={[-0.24, 0.12, -0.96]} spin={0.04} />
           <Planet tex="/tex/planet_mars.jpg" size={12} dir={[0.3, 0.09, -0.95]} spin={0.06} />
           <FollowStars />
-          {/* dim IBL so the car still catches light in space */}
           <Suspense fallback={null}>
-            <Environment files="/hdri/space.hdr" environmentIntensity={0.6} />
+            <Backdrop image="/backdrops/space.jpg" />
+            <ImageEnvironment image="/backdrops/space.jpg" intensity={0.6} />
           </Suspense>
         </>
       ) : theme.id === 'city' ? (
@@ -141,9 +122,10 @@ export function Scenery({ theme }: { theme: Theme }) {
       ) : theme.id === 'candy' ? (
         <>
           <CandyScene />
-          {/* warm IBL only; the pink CandySky is the visible backdrop */}
+          {/* painted candy horizon (LDR jpg) replaces the old gradient CandySky */}
           <Suspense fallback={null}>
-            <Environment files="/hdri/candy.hdr" environmentIntensity={0.8} />
+            <Backdrop image="/backdrops/candy.jpg" />
+            <ImageEnvironment image="/backdrops/candy.jpg" intensity={0.85} />
           </Suspense>
         </>
       ) : theme.id === 'mountain' ? (

@@ -21,13 +21,15 @@ const GROUND_TEX: Record<string, string> = {
 }
 
 // Themes with a painted photographic backdrop (see Scenery.tsx). The ground tint
-// is sampled from the foreground (bottom strip) of this image so the grass/sand
-// reads as the same patch of land the painting shows — not an arbitrary hue.
-// candy (procedural pink sky) and space (starfield) have no painting to match.
+// is sampled from the foreground (bottom strip) of this image so the grass/sand/
+// candy/rock reads as the same patch of land the painting shows — not an
+// arbitrary hue. Every theme now has a painting to match.
 const BACKDROP_TINT_SRC: Record<string, string | undefined> = {
   mountain: '/backdrops/mountain.jpg',
   city: '/backdrops/city.jpg',
   desert: '/backdrops/desert.jpg',
+  candy: '/backdrops/candy.jpg',
+  space: '/backdrops/space.jpg',
 }
 
 function makeRoadTexture(road: string, line: string): THREE.CanvasTexture {

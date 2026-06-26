@@ -5,38 +5,8 @@ import { TRACK_HALF } from './constants'
 import { carState } from './carState'
 
 // Candy Canyon: a deliberately stylized candy world (no real-world equivalent) —
-// pink gradient sky, pastel gumdrop hills, and streaming roadside lollipops.
-
-const SKY_VERT = `
-  varying vec3 vDir;
-  void main() { vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
-`
-const SKY_FRAG = `
-  uniform vec3 top; uniform vec3 bot;
-  varying vec3 vDir;
-  void main() {
-    float t = clamp(vDir.y * 0.5 + 0.5, 0.0, 1.0);
-    gl_FragColor = vec4(mix(bot, top, pow(t, 0.8)), 1.0);
-  }
-`
-
-function CandySky() {
-  const ref = useRef<THREE.Mesh>(null)
-  const camera = useThree((s) => s.camera)
-  const uniforms = useMemo(
-    () => ({ top: { value: new THREE.Color('#ff79c0') }, bot: { value: new THREE.Color('#ffe3f4') } }),
-    [],
-  )
-  useFrame(() => {
-    if (ref.current) ref.current.position.copy(camera.position)
-  })
-  return (
-    <mesh ref={ref} frustumCulled={false}>
-      <sphereGeometry args={[290, 32, 16]} />
-      <shaderMaterial vertexShader={SKY_VERT} fragmentShader={SKY_FRAG} uniforms={uniforms} side={THREE.BackSide} depthWrite={false} fog={false} />
-    </mesh>
-  )
-}
+// the painted candy backdrop (see Scenery.tsx) supplies the sky + far horizon;
+// these are the 3D foreground layers: pastel gumdrop hills + streaming lollipops.
 
 const HILL_COLORS = ['#ff9ed6', '#b39cff', '#9ff0d6', '#ffd58a', '#ff8fb0']
 
@@ -119,7 +89,6 @@ function Lollipops() {
 export function CandyScene() {
   return (
     <>
-      <CandySky />
       <CandyHills />
       <Lollipops />
     </>

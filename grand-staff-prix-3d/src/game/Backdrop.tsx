@@ -23,6 +23,15 @@ const BG_OVERRIDE =
     ? parseFloat(new URLSearchParams(location.search).get('bg') ?? 'NaN')
     : NaN
 
+// Live horizon-feather override: append ?fade=<fraction> (e.g. ?fade=0.4) to set
+// how much of the backdrop's lower edge dissolves into the scene fog colour, so
+// the painting melts into the 3D ground instead of ending on a hard line. NaN
+// when absent → each <Backdrop> uses its own horizonFade prop.
+const FADE_OVERRIDE =
+  typeof location !== 'undefined'
+    ? parseFloat(new URLSearchParams(location.search).get('fade') ?? 'NaN')
+    : NaN
+
 const _fwd = new THREE.Vector3()
 const _pos = new THREE.Vector3()
 const _up = new THREE.Vector3()
@@ -34,10 +43,13 @@ export function Backdrop({
   image,
   intensity = 1,
   offsetY = 0.18,
+  horizonFade = 0.32,
 }: {
   image: string
   intensity?: number
   offsetY?: number
+  /** Fraction of the backdrop's lower edge that feathers into the fog colour. */
+  horizonFade?: number
 }) {
   const ref = useRef<THREE.Mesh>(null)
   const tex = useLoader(THREE.TextureLoader, image)
@@ -64,7 +76,50 @@ export function Backdrop({
     if (sky && scene.background instanceof THREE.Color) scene.background.copy(sky)
   }, [tex, scene])
 
+  // Feather the backdrop's lower edge into the scene fog colour. Done in-shader
+  // (still an OPAQUE material, so it keeps drawing behind the 3D world and never
+  // paints over the car) by mixing each texel toward `uFadeColor` over the lowest
+  // `horizonFade` of the image height. uFadeColor tracks scene.fog each frame, so
+  // the dissolve always matches the colour the 3D ground melts into → no hard line.
+  const fade = Number.isFinite(FADE_OVERRIDE) ? FADE_OVERRIDE : horizonFade
+  const material = useMemo(() => {
+    const m = new THREE.MeshBasicMaterial({
+      map: tex,
+      side: THREE.DoubleSide,
+      fog: false,
+      depthWrite: false,
+      depthTest: false,
+      toneMapped: false,
+      color: new THREE.Color(intensity, intensity, intensity),
+    })
+    const fadeColor = new THREE.Color('#9FC2DE')
+    m.userData.fadeColor = fadeColor
+    m.onBeforeCompile = (shader) => {
+      shader.uniforms.uFadeColor = { value: fadeColor }
+      shader.uniforms.uFadeEnd = { value: Math.max(0.001, fade) }
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying float vBkY;')
+        .replace('#include <uv_vertex>', '#include <uv_vertex>\n\tvBkY = uv.y;')
+      shader.fragmentShader = shader.fragmentShader
+        .replace(
+          '#include <common>',
+          '#include <common>\nvarying float vBkY;\nuniform vec3 uFadeColor;\nuniform float uFadeEnd;',
+        )
+        .replace(
+          '#include <map_fragment>',
+          '#include <map_fragment>\n\tfloat _bf = 1.0 - smoothstep(0.0, uFadeEnd, vBkY);\n\tdiffuseColor.rgb = mix(diffuseColor.rgb, uFadeColor, _bf);',
+        )
+    }
+    return m
+  }, [tex, intensity, fade])
+
+  useEffect(() => () => material.dispose(), [material])
+
   useFrame(({ camera }) => {
+    // keep the feather colour locked to whatever the 3D ground fades into
+    if (scene.fog && 'color' in scene.fog) {
+      (material.userData.fadeColor as THREE.Color).copy((scene.fog as THREE.Fog).color)
+    }
     const m = ref.current
     if (!m) return
     const cam = camera as THREE.PerspectiveCamera
@@ -91,17 +146,8 @@ export function Backdrop({
   })
 
   return (
-    <mesh ref={ref} renderOrder={-1} frustumCulled={false}>
+    <mesh ref={ref} renderOrder={-1} frustumCulled={false} material={material}>
       <planeGeometry args={[1, 1]} />
-      <meshBasicMaterial
-        map={tex}
-        side={THREE.DoubleSide}
-        fog={false}
-        depthWrite={false}
-        depthTest={false}
-        toneMapped={false}
-        color={new THREE.Color(intensity, intensity, intensity)}
-      />
     </mesh>
   )
 }
