@@ -153,7 +153,8 @@ export function HUD() {
           className="noteUnlockToast"
           style={{
             position: 'absolute',
-            top: '20%',
+            // low-center, clear of the note card pinned to the top of the screen
+            bottom: 'max(18%, calc(env(safe-area-inset-bottom) + 96px))',
             left: '50%',
             transform: 'translateX(-50%)',
             padding: '8px 16px',
