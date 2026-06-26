@@ -24,7 +24,7 @@ const GROUND_TEX: Record<string, string> = {
 // is sampled from the foreground (bottom strip) of this image so the grass/sand/
 // candy/rock reads as the same patch of land the painting shows — not an
 // arbitrary hue. Every theme now has a painting to match.
-const BACKDROP_TINT_SRC: Record<string, string | undefined> = {
+export const BACKDROP_TINT_SRC: Record<string, string | undefined> = {
   mountain: '/backdrops/mountain.jpg',
   city: '/backdrops/city.jpg',
   desert: '/backdrops/desert.jpg',

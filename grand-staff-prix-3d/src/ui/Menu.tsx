@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
+import { useLoader } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
+import * as THREE from 'three'
 import { useGame, activeProfile } from '../state/store'
 import { leaderboard, type CloudPlayer } from '../lib/cloud'
 import { NOTE_SETS, CLEF_GROUPS, DIFFICULTIES } from '../data/notes'
@@ -7,6 +9,7 @@ import { CARS, carById } from '../data/cars'
 import { composerById } from '../data/composers'
 import { THEMES } from '../data/themes'
 import { input } from '../game/input'
+import { BACKDROP_TINT_SRC } from '../game/Track'
 import { Icon } from './icons'
 import { MenuBackground } from './MenuBackground'
 import { MenuCar3D } from './MenuCar3D'
@@ -410,13 +413,19 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
       return next
     })
 
-  // preload the chosen car + composer so the race starts smooth (no first-second hitch)
+  // preload the chosen car + composer + the theme's backdrop so the race starts
+  // smooth — no first-second hitch and no "pop" when the painting swaps in (the
+  // backdrop is the heaviest asset: a ~500 KB jpg that, unpreloaded, only starts
+  // downloading the instant the Canvas mounts). Decoding it here warms the same
+  // loader cache the in-game <Backdrop> reads, so it resolves instantly.
   const carModel = carById(profile?.carId ?? settings.carId).model
   const composerModel = composerById(profile?.composerId ?? settings.composerId).model
+  const backdropSrc = BACKDROP_TINT_SRC[settings.themeId]
   useEffect(() => {
     if (carModel) useGLTF.preload(carModel)
     if (composerModel) useGLTF.preload(composerModel)
-  }, [carModel, composerModel])
+    if (backdropSrc) useLoader.preload(THREE.TextureLoader, backdropSrc)
+  }, [carModel, composerModel, backdropSrc])
 
   const unlocked = new Set(profile?.unlocked ?? [NOTE_SETS[0].id])
   const mastered = new Set(profile?.mastered ?? [])

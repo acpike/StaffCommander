@@ -1,46 +1,12 @@
 import { useMemo, useRef } from 'react'
-import { useFrame, useThree } from '@react-three/fiber'
+import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { TRACK_HALF } from './constants'
 import { carState } from './carState'
 
-// Candy Canyon: a deliberately stylized candy world (no real-world equivalent) —
-// the painted candy backdrop (see Scenery.tsx) supplies the sky + far horizon;
-// these are the 3D foreground layers: pastel gumdrop hills + streaming lollipops.
-
-const HILL_COLORS = ['#ff9ed6', '#b39cff', '#9ff0d6', '#ffd58a', '#ff8fb0']
-
-function CandyHills() {
-  const ref = useRef<THREE.Group>(null)
-  const camera = useThree((s) => s.camera)
-  // soft pastel gumdrop domes ringing the far horizon
-  const hills = useMemo(
-    () =>
-      Array.from({ length: 5 }, (_, i) => {
-        const ang = (i / 5) * Math.PI * 2
-        return {
-          x: Math.sin(ang) * 230,
-          z: -Math.cos(ang) * 230,
-          r: 50 + ((i * 13) % 35),
-          color: HILL_COLORS[i % HILL_COLORS.length],
-        }
-      }),
-    [],
-  )
-  useFrame(() => {
-    if (ref.current) ref.current.position.set(camera.position.x, 0, camera.position.z)
-  })
-  return (
-    <group ref={ref}>
-      {hills.map((h, i) => (
-        <mesh key={i} position={[h.x, -h.r * 0.55, h.z]}>
-          <sphereGeometry args={[h.r, 16, 10]} />
-          <meshStandardMaterial color={h.color} roughness={0.85} metalness={0} fog={false} />
-        </mesh>
-      ))}
-    </group>
-  )
-}
+// Candy Canyon: a deliberately stylized candy world (no real-world equivalent).
+// The painted candy backdrop (see Scenery.tsx) IS the canyon — sky, hills and far
+// horizon. This file is just the streaming roadside foreground: the lollipops.
 
 const POPS = 10
 const POP_SPACING = 22
@@ -87,10 +53,5 @@ function Lollipops() {
 }
 
 export function CandyScene() {
-  return (
-    <>
-      <CandyHills />
-      <Lollipops />
-    </>
-  )
+  return <Lollipops />
 }
