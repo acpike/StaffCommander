@@ -1,0 +1,131 @@
+.rg-hud {
+  --hud-accent: var(--brand);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  box-shadow: var(--shadow-sm);
+}
+.rg-hud--compact {
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--r-md);
+}
+
+.rg-hud__rank {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+}
+.rg-hud__rankbadge {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #0a0a12;
+  background: linear-gradient(135deg, var(--hud-accent), color-mix(in srgb, var(--hud-accent) 50%, #22d3ee));
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--hud-accent) 45%, transparent);
+}
+.rg-hud__rankmeta {
+  min-width: 0;
+}
+.rg-hud__rankname {
+  font-weight: 700;
+  font-size: 0.92rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+.rg-hud__name {
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+.rg-hud__bar {
+  width: 150px;
+  max-width: 40vw;
+  height: 6px;
+  margin-top: 4px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.09);
+  overflow: hidden;
+}
+.rg-hud__barfill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--xp), var(--brand-2));
+  transition: width var(--t-slow) var(--ease);
+}
+.rg-hud__xp {
+  margin-top: 3px;
+  font-size: 0.7rem;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rg-hud__stats {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+.rg-hud__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.1;
+}
+.rg-hud__statlabel {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+.rg-hud__statval {
+  font-weight: 800;
+  font-size: 1.02rem;
+  font-variant-numeric: tabular-nums;
+}
+.rg-hud__stat--gems .rg-hud__statval {
+  color: var(--gem);
+}
+.rg-hud__gem {
+  filter: drop-shadow(0 0 6px rgba(94, 234, 212, 0.5));
+}
+.rg-hud__stat--streak .rg-hud__statval {
+  color: var(--good);
+}
+
+.rg-hud__lives {
+  display: flex;
+  gap: 2px;
+  font-size: 1.1rem;
+}
+.rg-hud__life {
+  color: rgba(255, 255, 255, 0.16);
+  transition: color var(--t-med) var(--ease), transform var(--t-fast) var(--ease-bounce);
+}
+.rg-hud__life.is-on {
+  color: var(--miss);
+  filter: drop-shadow(0 0 5px rgba(251, 113, 133, 0.5));
+}
+
+@media (max-width: 560px) {
+  .rg-hud__bar {
+    width: 96px;
+  }
+  .rg-hud__stat--score {
+    display: none;
+  }
+}

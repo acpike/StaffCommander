@@ -1,0 +1,156 @@
+.rg-cs {
+  --accent: var(--brand);
+  --accent2: var(--brand-2);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem clamp(1rem, 4vw, 2.5rem);
+  gap: 1.2rem;
+  min-height: 100vh;
+}
+.rg-cs__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.rg-cs__top > :last-child {
+  flex: 1;
+  max-width: 460px;
+}
+
+.rg-cs__stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.5rem;
+  animation: rg-fade-up var(--t-slow) var(--ease) both;
+}
+.rg-cs__badge {
+  width: 92px;
+  height: 92px;
+  display: grid;
+  place-items: center;
+  font-size: 3rem;
+  border-radius: 28px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  box-shadow: 0 16px 50px color-mix(in srgb, var(--accent) 45%, transparent);
+  animation: rg-pulse 3.4s var(--ease) infinite;
+}
+.rg-cs__title {
+  font-size: clamp(2.2rem, 7vw, 3.4rem);
+  margin-top: 0.4rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.rg-cs__tag {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 1.05rem;
+  max-width: 30ch;
+}
+.rg-cs__soon {
+  margin-top: 0.5rem;
+  padding: 0.3rem 0.9rem;
+  border-radius: var(--r-pill);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.rg-cs__teaser {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+  max-width: 540px;
+}
+.rg-cs__teaser li {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.rg-cs__demo {
+  margin-top: 1.2rem;
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+.rg-cs__demohint {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-faint);
+}
+.rg-cs__demohint kbd {
+  font-family: var(--font);
+  font-weight: 700;
+  color: var(--text-dim);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.05em 0.4em;
+}
+.rg-cs__pad {
+  position: relative;
+  width: 100%;
+  height: 168px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border-strong);
+  background: radial-gradient(120% 120% at 50% 0%, color-mix(in srgb, var(--accent) 16%, transparent), var(--surface));
+  color: var(--text);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: transform var(--t-fast) var(--ease), box-shadow var(--t-med) var(--ease), background var(--t-med);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+  user-select: none;
+}
+.rg-cs__pad.is-live {
+  box-shadow: 0 0 0 1px var(--accent) inset, 0 12px 40px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.rg-cs__pad.is-live:active {
+  transform: scale(0.985);
+}
+.rg-cs__pad:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+.rg-cs__padlabel {
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+.rg-cs__pad.is-live .rg-cs__padlabel {
+  color: var(--accent);
+}
+.rg-cs__controls {
+  display: flex;
+  gap: 0.6rem;
+}
+.rg-cs__counts {
+  display: flex;
+  gap: 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

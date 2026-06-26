@@ -1,0 +1,354 @@
+.rg-app {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── Header ── */
+.rg-app__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem clamp(1rem, 4vw, 2.5rem);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  background: linear-gradient(180deg, rgba(7, 7, 13, 0.85), rgba(7, 7, 13, 0.35));
+  border-bottom: 1px solid var(--border);
+}
+.rg-app__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+.rg-app__logo {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: var(--grad-brand);
+  color: #0a0a12;
+  font-size: 1.3rem;
+  box-shadow: var(--shadow-brand);
+}
+.rg-app__headeractions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.rg-app__player {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.35rem 0.8rem 0.35rem 0.4rem;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: background var(--t-med), border-color var(--t-med);
+}
+.rg-app__player:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+}
+.rg-app__playeravatar {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #0a0a12;
+  background: var(--grad-brand);
+}
+.rg-app__playermeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.15;
+}
+.rg-app__playername {
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+.rg-app__playerrank {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+}
+
+/* ── Main ── */
+.rg-app__main {
+  flex: 1;
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: clamp(1.4rem, 5vw, 3rem) clamp(1rem, 4vw, 2.5rem) 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.2rem;
+}
+.rg-app__hero {
+  text-align: center;
+  animation: rg-fade-up var(--t-slow) var(--ease) both;
+}
+.rg-app__title {
+  font-size: clamp(2rem, 6vw, 3.4rem);
+  line-height: 1.05;
+}
+.rg-app__subtitle {
+  margin: 0.9rem auto 0;
+  max-width: 56ch;
+  color: var(--text-dim);
+  font-size: clamp(0.95rem, 2.4vw, 1.1rem);
+}
+
+/* ── Rank strip ── */
+.rg-app__rankstrip {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1.2rem;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  animation: rg-fade-up var(--t-slow) var(--ease) both;
+}
+.rg-app__rankbadge {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-weight: 900;
+  color: #0a0a12;
+  background: var(--grad-brand);
+  box-shadow: var(--shadow-brand);
+}
+.rg-app__rankinfo {
+  flex: 1;
+  min-width: 0;
+}
+.rg-app__rankname {
+  font-weight: 800;
+}
+.rg-app__rankbar {
+  height: 8px;
+  margin: 5px 0 3px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.rg-app__rankfill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--xp), var(--brand-2));
+  transition: width var(--t-slow) var(--ease);
+}
+.rg-app__rankxp {
+  font-size: 0.74rem;
+  color: var(--text-faint);
+}
+.rg-app__rankgems {
+  flex: none;
+  font-weight: 800;
+  color: var(--gem);
+  font-size: 1.1rem;
+}
+.rg-app__gem,
+.rg-daily__reward {
+  filter: drop-shadow(0 0 6px rgba(94, 234, 212, 0.45));
+}
+
+/* ── Game cards ── */
+.rg-app__cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+@media (max-width: 760px) {
+  .rg-app__cards {
+    grid-template-columns: 1fr;
+  }
+}
+.rg-card {
+  --card-accent: var(--brand);
+  --card-accent2: var(--brand-2);
+  position: relative;
+  overflow: hidden;
+  text-align: left;
+  padding: 1.5rem 1.3rem 1.3rem;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 200px;
+  transition: transform var(--t-med) var(--ease), border-color var(--t-med) var(--ease),
+    box-shadow var(--t-med) var(--ease);
+  animation: rg-pop var(--t-slow) var(--ease-bounce) both;
+}
+.rg-card:hover {
+  transform: translateY(-6px);
+  border-color: color-mix(in srgb, var(--card-accent) 55%, transparent);
+  box-shadow: 0 22px 60px color-mix(in srgb, var(--card-accent) 28%, transparent);
+}
+.rg-card__glow {
+  position: absolute;
+  inset: -40% -20% auto;
+  height: 160px;
+  background: radial-gradient(60% 100% at 50% 0%, color-mix(in srgb, var(--card-accent) 38%, transparent), transparent 70%);
+  opacity: 0.7;
+  pointer-events: none;
+  transition: opacity var(--t-med);
+}
+.rg-card:hover .rg-card__glow {
+  opacity: 1;
+}
+.rg-card__icon {
+  width: 60px;
+  height: 60px;
+  display: grid;
+  place-items: center;
+  font-size: 2rem;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--card-accent), var(--card-accent2));
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--card-accent) 40%, transparent);
+}
+.rg-card__title {
+  font-size: 1.4rem;
+}
+.rg-card__tag {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  flex: 1;
+}
+.rg-card__cta {
+  font-weight: 800;
+  color: var(--card-accent);
+  letter-spacing: 0.01em;
+}
+
+/* ── Daily ── */
+.rg-app__dailytitle {
+  font-size: 1.2rem;
+  margin-bottom: 0.8rem;
+}
+.rg-app__dailylist {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.8rem;
+}
+@media (max-width: 760px) {
+  .rg-app__dailylist {
+    grid-template-columns: 1fr;
+  }
+}
+.rg-daily {
+  padding: 0.9rem 1rem;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.rg-daily.is-done {
+  border-color: color-mix(in srgb, var(--perfect) 55%, transparent);
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.1), transparent);
+}
+.rg-daily__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+.rg-daily__desc {
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+.rg-daily__reward {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--gem);
+  white-space: nowrap;
+}
+.rg-daily__bar {
+  height: 6px;
+  margin: 0.5rem 0 0.35rem;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.rg-daily__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--grad-brand);
+  transition: width var(--t-slow) var(--ease);
+}
+.rg-daily__status {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+}
+.rg-daily.is-done .rg-daily__status {
+  color: var(--perfect);
+  font-weight: 700;
+}
+
+/* ── Footer ── */
+.rg-app__footer {
+  padding: 1.4rem;
+  text-align: center;
+  font-size: 0.74rem;
+  color: var(--text-faint);
+  border-top: 1px solid var(--border);
+}
+
+/* ── Modal ── */
+.rg-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 1.2rem;
+  background: rgba(4, 4, 9, 0.66);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: rg-fade-up var(--t-med) var(--ease);
+}
+.rg-modal__panel {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  padding: 1.6rem;
+  animation: rg-pop var(--t-med) var(--ease-bounce);
+}
+.rg-modal__close {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+.rg-modal__close:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}

@@ -1,0 +1,90 @@
+.rg-btn {
+  --btn-accent: var(--brand);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55em;
+  border: none;
+  border-radius: var(--r-pill);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: transform var(--t-fast) var(--ease), box-shadow var(--t-med) var(--ease),
+    background var(--t-med) var(--ease), border-color var(--t-med) var(--ease), opacity var(--t-fast) var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.rg-btn:active {
+  transform: translateY(1px) scale(0.985);
+}
+.rg-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Sizes */
+.rg-btn--sm {
+  padding: 0.5em 1em;
+  font-size: 0.82rem;
+}
+.rg-btn--md {
+  padding: 0.7em 1.4em;
+  font-size: 0.95rem;
+}
+.rg-btn--lg {
+  padding: 0.95em 2em;
+  font-size: 1.12rem;
+}
+.rg-btn--block {
+  width: 100%;
+}
+
+/* Primary — gradient (or tinted by accent) */
+.rg-btn--primary {
+  color: #0a0a12;
+  background: linear-gradient(135deg, var(--btn-accent), color-mix(in srgb, var(--btn-accent) 55%, #22d3ee));
+  box-shadow: 0 8px 26px color-mix(in srgb, var(--btn-accent) 40%, transparent);
+}
+.rg-btn--primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 34px color-mix(in srgb, var(--btn-accent) 55%, transparent);
+}
+
+/* Ghost — glass */
+.rg-btn--ghost {
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.rg-btn--ghost:hover:not(:disabled) {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+}
+
+/* Outline */
+.rg-btn--outline {
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border-strong);
+}
+.rg-btn--outline:hover:not(:disabled) {
+  background: var(--surface);
+}
+
+/* Danger */
+.rg-btn--danger {
+  color: #fff;
+  background: linear-gradient(135deg, #fb7185, #f43f5e);
+  box-shadow: 0 8px 24px rgba(244, 63, 94, 0.35);
+}
+.rg-btn--danger:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.rg-btn__icon {
+  display: inline-flex;
+  font-size: 1.1em;
+  line-height: 1;
+}
