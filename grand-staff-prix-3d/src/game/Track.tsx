@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { type Theme } from '../data/themes'
 import { carState } from './carState'
 import { TRACK_HALF } from './constants'
+import { sampleImageBand, asTint } from '../util/sampleImageBand'
 
 const ROAD_LEN = 400
 const DASH_PERIOD = 8 // world units per dash cycle
@@ -17,6 +18,16 @@ const GROUND_TEX: Record<string, string> = {
   desert: '/tex/sand.jpg',
   candy: '/tex/grass.jpg',
   space: '/tex/rock.jpg',
+}
+
+// Themes with a painted photographic backdrop (see Scenery.tsx). The ground tint
+// is sampled from the foreground (bottom strip) of this image so the grass/sand
+// reads as the same patch of land the painting shows — not an arbitrary hue.
+// candy (procedural pink sky) and space (starfield) have no painting to match.
+const BACKDROP_TINT_SRC: Record<string, string | undefined> = {
+  mountain: '/backdrops/mountain.jpg',
+  city: '/backdrops/city.jpg',
+  desert: '/backdrops/desert.jpg',
 }
 
 function makeRoadTexture(road: string, line: string): THREE.CanvasTexture {
@@ -58,6 +69,26 @@ export function Track({ theme }: { theme: Theme }) {
     return t
   }, [theme.id])
 
+  // Ground tint sampled from the theme's painted backdrop foreground (bottom
+  // strip), normalised to a pure hue/sat tint so it recolours the grass/sand
+  // texture toward the landscape without darkening it. Falls back to white (no
+  // tint) until the sample resolves, or for themes with no painted backdrop.
+  const [groundTint, setGroundTint] = useState<string | null>(null)
+  useEffect(() => {
+    setGroundTint(null)
+    const src = BACKDROP_TINT_SRC[theme.id]
+    if (!src) return
+    let alive = true
+    // foreground band: the lowest ~18% of the painting (the ground nearest us)
+    sampleImageBand(src, 0.82, 1.0)
+      .then((c) => { if (alive) setGroundTint('#' + asTint(c).getHexString()) })
+      .catch(() => { /* keep the untinted fallback */ })
+    return () => { alive = false }
+  }, [theme.id])
+
+  const groundColor =
+    groundTint ?? (theme.id === 'candy' ? '#ffb3de' : '#ffffff')
+
   const follow = useRef<THREE.Group>(null)
   const leftPosts = useRef<(THREE.Mesh | null)[]>([])
   const rightPosts = useRef<(THREE.Mesh | null)[]>([])
@@ -90,7 +121,7 @@ export function Track({ theme }: { theme: Theme }) {
         {/* ground apron */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.06, 0]} receiveShadow>
           <planeGeometry args={[500, ROAD_LEN]} />
-          <meshStandardMaterial map={groundTex} color={theme.id === 'candy' ? '#ffb3de' : '#ffffff'} roughness={1} metalness={0} />
+          <meshStandardMaterial map={groundTex} color={groundColor} roughness={1} metalness={0} />
         </mesh>
         {/* road surface */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>

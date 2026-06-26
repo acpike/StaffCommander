@@ -132,8 +132,10 @@ export function Scenery({ theme }: { theme: Theme }) {
       ) : theme.id === 'city' ? (
         <>
           <SFScene />
+          {/* flat painted SF skyline (LDR jpg) instead of the HDR skybox */}
           <Suspense fallback={null}>
-            <Environment files="/hdri/city.hdr" environmentIntensity={0.7} />
+            <Backdrop image="/backdrops/city.jpg" />
+            <ImageEnvironment image="/backdrops/city.jpg" intensity={0.9} />
           </Suspense>
         </>
       ) : theme.id === 'candy' ? (
@@ -147,8 +149,10 @@ export function Scenery({ theme }: { theme: Theme }) {
       ) : theme.id === 'mountain' ? (
         <>
           <MountainScene />
+          {/* flat painted alpine horizon (LDR jpg) instead of the HDR skybox */}
           <Suspense fallback={null}>
-            <Environment files="/hdri/mountain.hdr" background backgroundBlurriness={0} environmentIntensity={1} />
+            <Backdrop image="/backdrops/mountain.jpg" />
+            <ImageEnvironment image="/backdrops/mountain.jpg" intensity={1} />
           </Suspense>
         </>
       ) : theme.id === 'desert' ? (
