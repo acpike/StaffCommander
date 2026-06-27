@@ -43,11 +43,11 @@ export function LevelCreator({ onClose }: { onClose: () => void }) {
       else next.delete(n)
       return next
     })
-  const canSave = selected.size >= 2
+  const canSave = name.trim().length > 0 && selected.size >= 2
 
   const save = () => {
     if (!canSave) return
-    addCustomLevel(name, clef, candidates.filter((n) => selected.has(n)), mode)
+    addCustomLevel(name.trim(), clef, candidates.filter((n) => selected.has(n)), mode)
     onClose()
   }
 
@@ -110,7 +110,7 @@ export function LevelCreator({ onClose }: { onClose: () => void }) {
         <div className="createActions">
           <button className="btn ghost" onClick={onClose}>Cancel</button>
           <button className="btn" disabled={!canSave} onClick={save}>
-            {Icon.play} {canSave ? 'Create' : 'Pick 2+ notes'}
+            {Icon.play} {!name.trim() ? 'Name your level' : selected.size < 2 ? 'Pick 2+ notes' : 'Create'}
           </button>
         </div>
       </div>

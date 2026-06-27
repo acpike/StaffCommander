@@ -2901,7 +2901,7 @@ body {
 }
 /* definite box + the SVG's preserveAspectRatio="meet" scales the whole staff to
    fit inside it (no clipping, no collapse) */
-.placePrev .tapStaff {
+.placePrev .rangeStaff {
   display: block;
   width: 100%;
   height: 100%;

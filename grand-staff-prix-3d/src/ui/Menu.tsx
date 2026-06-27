@@ -15,6 +15,7 @@ import { MenuBackground } from './MenuBackground'
 import { MenuCar3D } from './MenuCar3D'
 import { ComposerPicker } from './ComposerPicker'
 import { AssetThumb } from './AssetThumb'
+import { RangePreview } from './RangePreview'
 import { LevelCreator } from './LevelCreator'
 import { rankForXp, ACHIEVEMENTS, dailyChallenges } from '../data/progression'
 
@@ -406,7 +407,7 @@ function ProfileScreen({ onBack }: { onBack: () => void }) {
 }
 
 // ───────────────────────── Play menu (level + scenery + start) ─────────────────────────
-function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onGarage: () => void; onProfile: () => void }) {
+function PlayMenu({ onSwitch, onGarage, onProfile, onLeaderboard }: { onSwitch: () => void; onGarage: () => void; onProfile: () => void; onLeaderboard: () => void }) {
   const profile = useGame(activeProfile)
   const settings = useGame((s) => s.settings)
   const setLevel = useGame((s) => s.setLevel)
@@ -434,32 +435,17 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
   // Resilient: leaderboard() already swallows cloud errors and returns []; an
   // empty class code or empty roster falls back to the local-only friendly state.
   const [classRows, setClassRows] = useState<CloudPlayer[]>([])
-  const [classLoading, setClassLoading] = useState(true)
   useEffect(() => {
     let alive = true
-    setClassLoading(true)
     leaderboard(settings.classCode)
-      .then((r) => {
-        if (alive) {
-          setClassRows(r)
-          setClassLoading(false)
-        }
-      })
-      .catch(() => {
-        if (alive) {
-          setClassRows([])
-          setClassLoading(false)
-        }
-      })
+      .then((r) => { if (alive) setClassRows(r) })
+      .catch(() => { if (alive) setClassRows([]) })
     return () => {
       alive = false
     }
   }, [settings.classCode])
-  const classActive = !!settings.classCode && classRows.length > 0
-  const myXp = profile?.xp ?? 0
-  const myRank = classRows.filter((p) => Number(p.data?.xp ?? 0) > myXp).length + 1
-  const top3 = classRows.slice(0, 3)
-  // best score per level across the whole class, with the holder's name.
+  // best score per level across the whole class, with the holder's name (for the
+  // per-stage track records on the journey + side quests).
   const classRecords = useMemo(() => {
     const rec: Record<string, { score: number; name: string }> = {}
     for (const p of classRows) {
@@ -505,8 +491,6 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
   const xpPct = r ? (r.xpForNext === Infinity ? 100 : Math.round((r.xpInto / r.xpForNext) * 100)) : 0
   const tealArc = Math.round((xpPct / 100) * 235) // teal fill over the 235-unit gauge arc
   const gems = profile?.gems ?? 0
-  const achCount = profile?.achievements.length ?? 0
-  const achTotal = ACHIEVEMENTS.length
 
   // ── Learning Journey state (the 21-stage chain, 7 regions × Name/Find/Mix) ──
   // A stage is mastered / current (the live frontier) / unlocked-ready / locked.
@@ -596,48 +580,8 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
             </div>
           </section>
 
-            {/* Garage / Stats fill the space under the telemetry window */}
-            <div className="duo">
-              <button className="nav garage" onClick={onGarage}>
-                <div className="ic">🔧</div>
-                <div className="tx"><div className="t">Garage</div><div className="s">Car &amp; Driver</div></div>
-              </button>
-              <button className="nav stats" onClick={onProfile}>
-                <div className="ic">📊</div>
-                <div className="tx"><div className="t">Stats</div><div className="s">Rank · Challenges</div></div>
-              </button>
-            </div>
-
-            {/* CLASS STANDINGS — top 3 by XP + the player's own rank */}
-            <section className="panel standings">
-              <div className="ph">
-                <h3>Class Standings</h3>
-                <span className="hint">{classActive ? 'Top 3 · Total XP' : 'Compete'}</span>
-              </div>
-              <div className="standbody">
-                {classLoading ? (
-                  <div className="standjoin">Loading standings…</div>
-                ) : !classActive ? (
-                  <div className="standjoin">Join a class to compete on the leaderboard and chase your classmates' track records.</div>
-                ) : (
-                  <>
-                    {top3.map((p, i) => (
-                      <div key={p.id} className="standrow">
-                        <span className={`srank r${i + 1}`}>{i + 1}</span>
-                        <span className="sname">{p.name}</span>
-                        <span className="sxp">{Number(p.data?.xp ?? 0).toLocaleString()} XP</span>
-                      </div>
-                    ))}
-                    <div className="standdiv" />
-                    <div className="standrow you">
-                      <span className="srank">#{myRank}</span>
-                      <span className="sname">YOU · {profile?.name ?? 'Player'}</span>
-                      <span className="sxp">{myXp.toLocaleString()} XP</span>
-                    </div>
-                  </>
-                )}
-              </div>
-            </section>
+            {/* (Class Standings widget removed — the Leaderboard link now lives on the
+                profile card; per-stage class records still show on each journey/side-quest row) */}
           </div>
 
           {/* RIGHT: profile card + level calendar */}
@@ -656,14 +600,9 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
                   {r && r.xpForNext !== Infinity ? `${r.xpInto} / ${r.xpForNext} XP → ${r.nextName ?? ''}` : `${(profile?.xp ?? 0).toLocaleString()} XP · MAX RANK`}
                 </div>
               </div>
-              <div className="ptstats">
-                <div className="ptstat amber"><span className="psv">{gems.toLocaleString()}</span><span className="psk">Gems</span></div>
-                <div className="ptstat livery"><span className="psv">{masteredCount}/{totalTracks}</span><span className="psk">Mastered</span></div>
-                <div className="ptstat purple"><span className="psv">{achCount}/{achTotal}</span><span className="psk">Badges</span></div>
-                <div className="ptstat papaya"><span className="psv">{pctMastered}%</span><span className="psk">Complete</span></div>
-              </div>
               <div className="ptfoot">
-                <span className="sw" role="button" onClick={(e) => { e.stopPropagation(); onSwitch() }}>Switch profile</span>
+                <span className="sw" role="button" onClick={(e) => { e.stopPropagation(); onSwitch() }}>Switch</span>
+                <span className="sw" role="button" onClick={(e) => { e.stopPropagation(); onLeaderboard() }}>{Icon.trophy} Leaderboard</span>
                 <span className="ptview">Full Stats ›</span>
               </div>
             </button>
@@ -688,9 +627,8 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
                         <span className="rnode">{region.n}</span>
                         <div className="rmeta">
                           <div className="rname">{region.name}</div>
-                          <div className="rrange">{region.range}</div>
                         </div>
-                        <span className="rclef" aria-hidden>{CLEF_BADGE.journey}</span>
+                        <div className="rprev"><RangePreview ladder={region.ladder} /></div>
                         <span className="rprog" aria-label={`${masteredHere} of ${stages.length} modes mastered`}>
                           {stages.map((s) => (
                             <i key={s.id} className={mastered.has(s.id) ? 'on' : ''} />
@@ -757,7 +695,7 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
             {NOTE_SETS.filter(
               (s) => s.kind === 'sidequest' && (settings.showCClefs || (s.group !== 'alto' && s.group !== 'tenor')),
             ).map((s) => {
-              const isUnlocked = s.tier === 1 || unlocked.has(s.id)
+              const isUnlocked = true // side quests are optional — never locked
               const isMastered = mastered.has(s.id)
               const on = settings.levelId === s.id
               const best = profile?.best[s.id]
@@ -814,11 +752,12 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
                 </button>
               )
             })}
-
-            <button className="sqcard sqcreate" onClick={() => setCreating(true)}>
-              <span>＋</span> Create a Level
-            </button>
           </div>
+            <div className="sqfoot">
+              <button className="sqcard sqcreate" onClick={() => setCreating(true)}>
+                <span>＋</span> Create a Level
+              </button>
+            </div>
             </section>
           </div>
         </div>
@@ -927,6 +866,7 @@ export function Menu() {
           onSwitch={() => setView('select')}
           onGarage={() => setView('garage')}
           onProfile={() => setView('profile')}
+          onLeaderboard={() => setView('leaderboard')}
         />
       )
   }
