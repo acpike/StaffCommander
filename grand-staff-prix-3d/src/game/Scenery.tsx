@@ -135,7 +135,7 @@ export function Scenery({ theme }: { theme: Theme }) {
           {/* painted candy horizon (LDR jpg) replaces the old gradient CandySky.
               Uses the same default framing as mountain/desert. */}
           <Suspense fallback={null}>
-            <Backdrop image="/backdrops/candy.jpg" />
+            <Backdrop image="/backdrops/candy.jpg" offsetY={0.24} />
             <ImageEnvironment image="/backdrops/candy.jpg" intensity={0.85} />
           </Suspense>
         </>
