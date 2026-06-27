@@ -1,5 +1,5 @@
 import { useMemo, useRef } from 'react'
-import { useFrame, useThree } from '@react-three/fiber'
+import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { TRACK_HALF } from './constants'
 import { carState } from './carState'
@@ -15,28 +15,6 @@ const SPAN = 120 // distance between towers
 const TOWER_X = TRACK_HALF + 1.3
 const TOWER_H = 26
 const DECK_Y = 0.4
-
-// foggy blue-grey overcast sky
-const SKY_VERT = `varying vec3 vDir; void main(){ vDir=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`
-const SKY_FRAG = `uniform vec3 top; uniform vec3 bot; varying vec3 vDir; void main(){ float t=clamp(vDir.y*0.5+0.5,0.0,1.0); gl_FragColor=vec4(mix(bot,top,pow(t,0.9)),1.0); }`
-
-function FogSky() {
-  const ref = useRef<THREE.Mesh>(null)
-  const camera = useThree((s) => s.camera)
-  const uniforms = useMemo(
-    () => ({ top: { value: new THREE.Color('#8aa2bd') }, bot: { value: new THREE.Color('#d6dde4') } }),
-    [],
-  )
-  useFrame(() => {
-    if (ref.current) ref.current.position.copy(camera.position)
-  })
-  return (
-    <mesh ref={ref} frustumCulled={false}>
-      <sphereGeometry args={[290, 32, 16]} />
-      <shaderMaterial vertexShader={SKY_VERT} fragmentShader={SKY_FRAG} uniforms={uniforms} side={THREE.BackSide} depthWrite={false} fog={false} />
-    </mesh>
-  )
-}
 
 function useOrange() {
   return useMemo(() => new THREE.MeshStandardMaterial({ color: ORANGE, metalness: 0.2, roughness: 0.6 }), [])
@@ -124,7 +102,9 @@ export function SFScene() {
 
   return (
     <>
-      <FogSky />
+      {/* No sky dome here — the painted SF backdrop (Scenery.tsx) is the sky.
+          The old FogSky sphere sat at r=290, inside the r=300 backdrop quad, and
+          painted over the whole horizon, hiding the city.jpg. */}
       {Array.from({ length: TOWERS }).map((_, j) => (
         <group key={j} ref={(g) => { pairs.current[j] = g }}>
           <TowerPair mat={mat} cableGeoL={cableGeoL} cableGeoR={cableGeoR} suspenderGeo={suspenderGeo} />

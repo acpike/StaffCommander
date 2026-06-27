@@ -437,155 +437,282 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
     startGame()
   }
 
+  // ── derived display values (real data, HUD framing) ─────────────────
+  const initial = (profile?.name ?? 'P').slice(0, 1).toUpperCase()
+  const heroImg = BACKDROP_TINT_SRC[settings.themeId] ?? ''
+  const [heroNameA, ...heroRest] = activeTheme.name.split(' ')
+  const heroNameB = heroRest.join(' ')
+  const selectedLevel =
+    NOTE_SETS.find((s) => s.id === settings.levelId) ?? customLevels.find((s) => s.id === settings.levelId)
+  const pctMastered = NOTE_SETS.length ? Math.round((mastered.size / NOTE_SETS.length) * 100) : 0
+  // 3 sector-delta micro-bars per level, tied to real progress
+  const deltaBars = (isUnlocked: boolean, isMastered: boolean, hasBest: boolean): string[] =>
+    isMastered ? ['on', 'on', 'on'] : hasBest ? ['on', 'on', 'amber'] : isUnlocked ? ['amber', '', ''] : ['', '', '']
+
   return (
-    <div className="sheet">
-      <Hero />
+    <div className="hud">
+      <div className="hudBg" />
+      <div className="hudApp">
+        {creating && <LevelCreator onClose={() => setCreating(false)} />}
 
-      <div className="topbar">
-        <button className="chip playerChip" onClick={onProfile}>
-          <span className="avatar sm">{(profile?.name ?? 'P').slice(0, 1).toUpperCase()}</span>
-          <span className="pcName">{profile?.name ?? 'Player'}</span>
-          {r && <span className="pcMeta">LV {r.level} · 💎 {profile?.gems ?? 0}</span>}
-        </button>
-        <button className="chip ghost" onClick={onSwitch}>Switch {Icon.chevDown}</button>
-      </div>
+        {/* ===== TOP BAR ===== */}
+        <header className="hudtop">
+          <div className="brand">
+            <div className="marque"><span>G</span></div>
+            <div>
+              <h1>Grand Staff <em>Prix</em></h1>
+              <div className="tag">Note-Reading <b>Racing</b>{r ? ` · ${r.name}` : ''}</div>
+            </div>
+          </div>
+          <button className="hudchip" onClick={onProfile}>
+            <div className="avatar">{initial}<div className="lvtab">LV {r?.level ?? 1}</div></div>
+            <div className="who">
+              <div className="nm">{profile?.name ?? 'Player'}</div>
+              <span
+                className="sw"
+                role="button"
+                onClick={(e) => { e.stopPropagation(); onSwitch() }}
+              >
+                Switch profile
+              </span>
+            </div>
+            <div className="curr">
+              <div className="amt">{(profile?.gems ?? 0).toLocaleString()}</div>
+              <div className="ccap">GEMS</div>
+            </div>
+          </button>
+        </header>
 
-      <div className="navRow">
-        <button className="navBtn" onClick={onGarage}>
-          {Icon.play} <span>Garage</span><small>Car &amp; driver</small>
-        </button>
-        <button className="navBtn" onClick={onProfile}>
-          {Icon.trophy} <span>Stats</span><small>Rank · challenges</small>
-        </button>
-      </div>
+        {/* ===== MAIN GRID ===== */}
+        <div className="grid">
 
-      {creating && <LevelCreator onClose={() => setCreating(false)} />}
+          {/* HERO TELEMETRY PANEL (selected circuit) */}
+          <section className="hudhero">
+            <div className="bg" style={{ backgroundImage: heroImg ? `url(${heroImg})` : undefined }} />
+            <div className="scrim" />
+            <div className="topstrip">
+              <span className="live"><span className="dot" />LIVE TELEMETRY</span>
+              <span>{selectedLevel ? selectedLevel.name.toUpperCase() : 'SELECT EVENT'}</span>
+            </div>
+            <div className="loc">
+              <div className="lbl">Circuit · Now on Grid</div>
+              <h2>{heroNameA}<br />{heroNameB}</h2>
+            </div>
 
-      {/* LEVEL */}
-      <div className="sec">
-        <div className="secLabel">Level</div>
-        <div className="levelList">
-          {DIFFICULTIES.map((band) => {
-            const bandLevels = NOTE_SETS.filter(
-              (s) => s.band === band.id && (settings.showCClefs || (s.group !== 'alto' && s.group !== 'tenor')),
-            )
-            if (!bandLevels.length) return null
-            const total = bandLevels.length
-            const doneCount = bandLevels.filter((s) => mastered.has(s.id)).length
-            const current = bandLevels.find((s) => !mastered.has(s.id) && (s.tier === 1 || unlocked.has(s.id)))
-            const pct = Math.round((doneCount / total) * 100)
-            const isOpen = openBands.has(band.id)
-            const currentText = doneCount === total ? '✓ Complete' : current ? current.name : 'Locked'
-            return (
-              <div key={band.id} className={`bandSec${isOpen ? ' open' : ''}`}>
-                <button className="bandHeader" onClick={() => toggleBand(band.id)}>
-                  <div className="bandHeadTop">
-                    <span className="bandChev">{Icon.chevDown}</span>
-                    <span className="bandTitle">{band.label}</span>
-                    <span className="bandCurrent">{currentText}</span>
-                    <span className="bandCount">{doneCount}/{total}</span>
-                  </div>
-                  <span className="bandBar"><span style={{ width: `${pct}%` }} /></span>
-                </button>
-                {isOpen && (
-                  <div className="bandBody">
-                    {bandLevels.map((s) => {
-                      const isUnlocked = s.tier === 1 || unlocked.has(s.id)
-                      const on = settings.levelId === s.id
-                      const best = profile?.best[s.id]
-                      const clefLabel = CLEF_GROUPS.find((g) => g.id === s.group)?.label ?? ''
-                      return (
-                        <button
-                          key={s.id}
-                          className={`levelRow${on ? ' on' : ''}${isUnlocked ? '' : ' locked'}`}
-                          disabled={!isUnlocked}
-                          onClick={() => isUnlocked && setLevel(s.id)}
-                        >
-                          <span className="bar" />
-                          <span className="clefBadge" aria-hidden>{CLEF_BADGE[s.group ?? 'treble']}</span>
-                          <span className="info">
-                            <div className="nm">{s.name}</div>
-                            <div className="ds">{clefLabel} · {s.blurb}</div>
-                          </span>
-                          {isUnlocked ? (
-                            <>
-                              {mastered.has(s.id) && <span className="masteredTag">✓</span>}
-                              {best ? (
-                                <span className="best"><span className="bestV">{best}</span><span className="bestK">BEST</span></span>
+            <div className="speedlines"><i /><i /><i /></div>
+            <svg className="car" viewBox="0 0 300 90" aria-hidden>
+              <defs>
+                <linearGradient id="hudCarBody" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stopColor="#13e7c7" /><stop offset="1" stopColor="#0a9f88" />
+                </linearGradient>
+              </defs>
+              <ellipse cx="80" cy="74" rx="30" ry="14" fill="#0a0e12" />
+              <ellipse cx="228" cy="74" rx="30" ry="14" fill="#0a0e12" />
+              <circle cx="80" cy="72" r="15" fill="#1a222c" stroke="#00e5c4" strokeWidth="2" />
+              <circle cx="228" cy="72" r="15" fill="#1a222c" stroke="#00e5c4" strokeWidth="2" />
+              <rect x="2" y="46" width="34" height="9" rx="2" fill="#27313d" />
+              <rect x="266" y="20" width="30" height="8" rx="2" fill="#27313d" />
+              <rect x="284" y="20" width="6" height="38" fill="#27313d" />
+              <path d="M30 62 L70 52 Q120 42 150 30 Q175 20 210 24 L268 40 L286 56 L60 64 Z" fill="url(#hudCarBody)" />
+              <path d="M150 30 Q175 20 210 24 L235 30 L150 40 Z" fill="#0a3a33" />
+              <circle cx="158" cy="34" r="11" fill="#0a0e12" />
+              <path d="M138 36 Q158 12 182 32" fill="none" stroke="#0a0e12" strokeWidth="5" />
+              <path d="M60 60 L120 50 L118 56 L60 64 Z" fill="#ff5e2b" />
+              <text x="100" y="60" fontFamily="JetBrains Mono" fontSize="11" fontWeight="700" fill="#04181a">07</text>
+            </svg>
+
+            <div className="dash">
+              <div className="gauge">
+                <svg width="118" height="118" viewBox="0 0 118 118">
+                  <circle cx="59" cy="59" r="50" fill="none" stroke="#0b1014" strokeWidth="9" />
+                  <circle cx="59" cy="59" r="50" fill="none" stroke="#27313d" strokeWidth="9" strokeDasharray="235 314" strokeLinecap="round" />
+                  <circle cx="59" cy="59" r="50" fill="none" stroke="#00e5c4" strokeWidth="9" strokeDasharray="176 314" strokeLinecap="round" />
+                </svg>
+                <div className="read"><div className="v">182</div><div className="u">KM/H</div></div>
+              </div>
+              <div className="sectors">
+                <div className="secrow s1"><span className="sl">S1</span><span className="secbar"><i /></span><span className="st">+0.04</span></div>
+                <div className="secrow s2"><span className="sl">S2</span><span className="secbar"><i /></span><span className="st">−0.21</span></div>
+                <div className="secrow s3"><span className="sl">S3</span><span className="secbar"><i /></span><span className="st">+0.11</span></div>
+              </div>
+              <div className="gforce">
+                <div className="gv">{pctMastered}<em>%</em></div>
+                <div className="gl">Tracks Mastered</div>
+              </div>
+            </div>
+          </section>
+
+          {/* RIGHT COLUMN */}
+          <div className="side">
+            <div className="duo">
+              <button className="nav garage" onClick={onGarage}>
+                <div className="ic">🔧</div>
+                <div className="tx"><div className="t">Garage</div><div className="s">Car &amp; Driver</div></div>
+              </button>
+              <button className="nav stats" onClick={onProfile}>
+                <div className="ic">📊</div>
+                <div className="tx"><div className="t">Stats</div><div className="s">Rank · Challenges</div></div>
+              </button>
+            </div>
+
+            <section className="panel">
+              <div className="ph">
+                <h3>Grand Prix Calendar</h3>
+                <span className="hint">Select Event</span>
+              </div>
+              <div className="diffs">
+                {DIFFICULTIES.map((band) => {
+                  const bandLevels = NOTE_SETS.filter(
+                    (s) => s.band === band.id && (settings.showCClefs || (s.group !== 'alto' && s.group !== 'tenor')),
+                  )
+                  if (!bandLevels.length) return null
+                  const total = bandLevels.length
+                  const doneCount = bandLevels.filter((s) => mastered.has(s.id)).length
+                  const pct = Math.round((doneCount / total) * 100)
+                  const isOpen = openBands.has(band.id)
+                  const bc = band.id.slice(0, 3) // beginner→beg, intermediate→int, advanced→adv
+                  return (
+                    <div key={band.id} className={`group ${bc}${isOpen ? ' open' : ''}`}>
+                      <button className="ghead" onClick={() => toggleBand(band.id)}>
+                        <span className="gx">{band.label}</span>
+                        <span className="pbar"><i style={{ width: `${pct}%` }} /></span>
+                        <span className="pcount">{doneCount}/{total}</span>
+                        <span className="caret">▶</span>
+                      </button>
+                      <div className="tower">
+                        {bandLevels.map((s, i) => {
+                          const isUnlocked = s.tier === 1 || unlocked.has(s.id)
+                          const on = settings.levelId === s.id
+                          const isMastered = mastered.has(s.id)
+                          const best = profile?.best[s.id]
+                          const clefLabel = CLEF_GROUPS.find((g) => g.id === s.group)?.label ?? ''
+                          const clefClass = s.group === 'bass' ? 'bass' : s.group === 'grand' ? 'grand' : 'treble'
+                          const gap = !isUnlocked
+                            ? 'LOCKED'
+                            : isMastered
+                              ? 'MASTERED'
+                              : best
+                                ? `BEST ${best}`
+                                : on
+                                  ? 'ON GRID'
+                                  : 'READY'
+                          return (
+                            <button
+                              key={s.id}
+                              className={`lvl${on && isUnlocked ? ' selected' : ''}${isUnlocked ? '' : ' locked'}`}
+                              disabled={!isUnlocked}
+                              onClick={() => isUnlocked && setLevel(s.id)}
+                            >
+                              <span className="pos">P{i + 1}</span>
+                              {isUnlocked ? (
+                                <span className={`clef ${clefClass}`} aria-hidden>{CLEF_BADGE[s.group ?? 'treble']}</span>
                               ) : (
-                                on && !mastered.has(s.id) && <span className="nowTag">Selected</span>
+                                <span className="clef lockic">🔒</span>
                               )}
-                            </>
-                          ) : (
-                            <span className="lock">{Icon.lock}</span>
-                          )}
-                        </button>
-                      )
-                    })}
+                              <div className="info">
+                                <div className="ln">{s.name}</div>
+                                <div className="ls">{clefLabel} · {s.blurb}</div>
+                              </div>
+                              <div className="delta">
+                                {deltaBars(isUnlocked, isMastered, !!best).map((c, k) => (
+                                  <b key={k} className={c} />
+                                ))}
+                              </div>
+                              <span className="gap">{gap}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+
+                {customLevels.length > 0 && (
+                  <div className="group beg open">
+                    <div className="ghead">
+                      <span className="gx">My Levels</span>
+                      <span className="pbar"><i style={{ width: '100%' }} /></span>
+                      <span className="pcount">{customLevels.length}</span>
+                      <span className="caret">▶</span>
+                    </div>
+                    <div className="tower">
+                      {customLevels.map((s, i) => {
+                        const on = settings.levelId === s.id
+                        return (
+                          <button
+                            key={s.id}
+                            className={`lvl${on ? ' selected' : ''}`}
+                            onClick={() => setLevel(s.id)}
+                          >
+                            <span className="pos">C{i + 1}</span>
+                            <span className="clef" style={{ fontFamily: 'var(--disp)', color: 'var(--amber)' }} aria-hidden>★</span>
+                            <div className="info">
+                              <div className="ln">{s.name}</div>
+                              <div className="ls">CUSTOM · {s.blurb}</div>
+                            </div>
+                            <span
+                              className="gap"
+                              role="button"
+                              aria-label="Delete custom level"
+                              style={{ cursor: 'pointer' }}
+                              onClick={(e) => { e.stopPropagation(); removeCustomLevel(s.id) }}
+                            >
+                              ✕ DEL
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
                 )}
+
+                <button className="createlvl" onClick={() => setCreating(true)}>
+                  <span>＋</span> Create a Level
+                </button>
               </div>
-            )
-          })}
-          {customLevels.map((s) => {
-            const on = settings.levelId === s.id
-            return (
-              <button key={s.id} className={`levelRow${on ? ' on' : ''}`} onClick={() => setLevel(s.id)}>
-                <span className="bar" />
-                <span className="num">★</span>
-                <span className="info">
-                  <div className="nm">{s.name}</div>
-                  <div className="ds">{s.blurb}</div>
-                </span>
-                <span
-                  className="del"
-                  role="button"
-                  aria-label="Delete custom level"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    removeCustomLevel(s.id)
-                  }}
+            </section>
+          </div>
+        </div>
+
+        {/* ===== SCENERY (CIRCUIT PADDOCK) ===== */}
+        <section className="panel" style={{ marginTop: 14 }}>
+          <div className="ph">
+            <h3>Circuit Paddock</h3>
+            <span className="hint">{THEMES.length} Circuits · Tap to Put on Grid</span>
+          </div>
+          <div className="scenes">
+            {THEMES.map((t, i) => {
+              const img = BACKDROP_TINT_SRC[t.id]
+              const sel = settings.themeId === t.id
+              return (
+                <button
+                  key={t.id}
+                  className={`tile${sel ? ' selected' : ''}`}
+                  onClick={() => setTheme(t.id)}
+                  aria-label={t.name}
                 >
-                  {Icon.trash}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-        <button className="btn ghost" onClick={() => setCreating(true)} style={{ marginTop: 4 }}>
-          {Icon.plus} Create a Level
-        </button>
-      </div>
+                  <span className="px">C{i + 1}</span>
+                  {img ? (
+                    <img src={img} alt={t.name} />
+                  ) : (
+                    <span style={{ position: 'absolute', inset: 0, background: `linear-gradient(${t.skyTop}, ${t.skyBottom})` }} />
+                  )}
+                  <div className="nm">{t.name}</div>
+                </button>
+              )
+            })}
+          </div>
+        </section>
 
-      {/* SCENERY */}
-      <div className="sec">
-        <div className="secLabel">Scenery</div>
-        <div className="themeRow">
-          {THEMES.map((t) => (
-            <button
-              key={t.id}
-              className={`themeTile${settings.themeId === t.id ? ' on' : ''}`}
-              onClick={() => setTheme(t.id)}
-              aria-label={t.name}
-            >
-              {/* the actual painted backdrop as the tile; fall back to the sky
-                  gradient if a theme has no backdrop image */}
-              {BACKDROP_TINT_SRC[t.id] ? (
-                <span className="themeImg" style={{ backgroundImage: `url(${BACKDROP_TINT_SRC[t.id]})` }} />
-              ) : (
-                <span className="sky" style={{ background: `linear-gradient(${t.skyTop}, ${t.skyBottom})` }} />
-              )}
-            </button>
-          ))}
-        </div>
-        <div className="themeName">{activeTheme.name}</div>
-      </div>
-
-      <div className="startWrap">
-        <button className="btn" onClick={onStart}>{Icon.play} Start Race</button>
-        <p className="tiny">
-          Steer into the gate whose letter matches the note on the staff. Master a level (Stage 4, 90%+ over 30 notes) to unlock the next.
-        </p>
+        {/* ===== FOOTER / CTA ===== */}
+        <footer className="foot">
+          <div className="gphint">
+            <b>Steer into the gate whose letter matches the note on the staff.</b>
+          </div>
+          <button className="start" onClick={onStart}>
+            <span className="pre">FORMATION<br />LAP</span> Start Race
+          </button>
+        </footer>
       </div>
     </div>
   )
@@ -652,7 +779,8 @@ export function Menu() {
 
   return (
     <div className="overlay">
-      <MenuBackground />
+      {/* the HUD play screen paints its own full-bleed carbon background */}
+      {view !== 'play' && <MenuBackground />}
       {screen}
     </div>
   )

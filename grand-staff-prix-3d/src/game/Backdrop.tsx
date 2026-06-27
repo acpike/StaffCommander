@@ -45,12 +45,24 @@ export function Backdrop({
   intensity = 1,
   offsetY = 0.18,
   horizonFade = 0.32,
+  fogColor,
+  skyColor,
 }: {
   image: string
   intensity?: number
   offsetY?: number
   /** Fraction of the backdrop's lower edge that feathers into the fog colour. */
   horizonFade?: number
+  /**
+   * Override the horizon/fog colour instead of sampling it from the image. Use
+   * when the painting's own horizon tone would fight the scene — e.g. the warm
+   * San-Francisco skyline, where we still want a believable blue bay horizon.
+   * Because the lower-edge feather tracks scene.fog each frame, this also makes
+   * the backdrop dissolve into the same blue where it meets the 3D ground.
+   */
+  fogColor?: string
+  /** Override the sky-gap background colour instead of sampling the top strip. */
+  skyColor?: string
 }) {
   const ref = useRef<THREE.Mesh>(null)
   const tex = useLoader(THREE.TextureLoader, image)
@@ -70,12 +82,13 @@ export function Backdrop({
   useEffect(() => {
     const img = tex.image as HTMLImageElement | undefined
     if (!img || !img.width) return
-    // horizon band → fog colour; top strip → sky-gap background colour.
-    const horizon = sampleBandFromImage(img, 0.52, 0.7)
-    const sky = sampleBandFromImage(img, 0, 0.18)
+    // horizon band → fog colour; top strip → sky-gap background colour. Either
+    // band can be overridden with an explicit colour (e.g. a fixed SF-bay blue).
+    const horizon = fogColor ? new THREE.Color(fogColor) : sampleBandFromImage(img, 0.52, 0.7)
+    const sky = skyColor ? new THREE.Color(skyColor) : sampleBandFromImage(img, 0, 0.18)
     if (horizon && scene.fog && 'color' in scene.fog) (scene.fog as THREE.Fog).color.copy(horizon)
     if (sky && scene.background instanceof THREE.Color) scene.background.copy(sky)
-  }, [tex, scene])
+  }, [tex, scene, fogColor, skyColor])
 
   // Feather the backdrop's lower edge into the scene fog colour. Done in-shader
   // (still an OPAQUE material, so it keeps drawing behind the 3D world and never

@@ -113,9 +113,13 @@ export function Scenery({ theme }: { theme: Theme }) {
       ) : theme.id === 'city' ? (
         <>
           <SFScene />
-          {/* flat painted SF skyline (LDR jpg) instead of the HDR skybox */}
+          {/* flat painted SF skyline (LDR jpg) instead of the HDR skybox. The
+              painting is warm, but the track is the Golden Gate over the bay, so
+              we force a clear-day SF-bay BLUE horizon/sky instead of sampling the
+              warm image — the lower-edge feather follows scene.fog, so the
+              ground melts into the same blue. */}
           <Suspense fallback={null}>
-            <Backdrop image="/backdrops/city.jpg" />
+            <Backdrop image="/backdrops/city.jpg" fogColor="#6E9CC0" skyColor="#9DC4E2" />
             <ImageEnvironment image="/backdrops/city.jpg" intensity={0.9} />
           </Suspense>
         </>

@@ -35,9 +35,11 @@ export const THEMES: Theme[] = [
   },
   {
     id: 'city', name: 'San Francisco',
-    skyTop: '#2A2350', skyBottom: '#E8A06B', fog: '#D89A78', fogNear: 28, fogFar: 200,
+    // Golden Gate over the blue bay: clear-day SF-bay BLUE horizon/sky (the
+    // backdrop is warm, but Scenery forces these blues via Backdrop fog/skyColor).
+    skyTop: '#244E78', skyBottom: '#9DC4E2', fog: '#6E9CC0', fogNear: 28, fogFar: 200,
     ground: '#4A4550', road: '#33343B', line: '#FFE9C7',
-    sun: '#FFD9A0', sunDir: [10, 12, -4], ambient: '#7A6A8C', envPreset: 'sunset',
+    sun: '#FFD9A0', sunDir: [10, 12, -4], ambient: '#7A8CA0', envPreset: 'sunset',
   },
   {
     id: 'desert', name: 'Desert Run',
