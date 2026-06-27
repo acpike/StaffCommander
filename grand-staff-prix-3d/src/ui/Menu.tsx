@@ -593,6 +593,7 @@ function PlayMenu({ onSwitch, onGarage, onProfile, onLeaderboard }: { onSwitch: 
                   <div className="ptname">{profile?.name ?? 'Player'}</div>
                   <div className="ptrank">{r?.name ?? 'Rookie'}</div>
                 </div>
+                <span className="ptswitch" role="button" onClick={(e) => { e.stopPropagation(); onSwitch() }}>⇄ Switch</span>
               </div>
               <div className="ptxpwrap">
                 <div className="ptxpbar"><i style={{ width: `${xpPct}%` }} /></div>
@@ -601,7 +602,6 @@ function PlayMenu({ onSwitch, onGarage, onProfile, onLeaderboard }: { onSwitch: 
                 </div>
               </div>
               <div className="ptfoot">
-                <span className="sw" role="button" onClick={(e) => { e.stopPropagation(); onSwitch() }}>Switch</span>
                 <span className="sw" role="button" onClick={(e) => { e.stopPropagation(); onLeaderboard() }}>{Icon.trophy} Leaderboard</span>
                 <span className="ptview">Full Stats ›</span>
               </div>
@@ -614,7 +614,25 @@ function PlayMenu({ onSwitch, onGarage, onProfile, onLeaderboard }: { onSwitch: 
                 <span className="hint">{journeyMastered}/{JOURNEY_STAGES.length} Stages · {currentStage ? `On ${currentStage.name}` : 'Complete'}</span>
               </div>
               <div className="jbody" ref={jbodyRef}>
-                {REGIONS.map((region) => {
+                {/* progress map — the 7 milestones; the path is guided/linear, so there's no
+                    scrollable list of locked levels, just where you are + how far you've come */}
+                <div className="jmap">
+                  {REGIONS.map((region) => {
+                    const rs = JOURNEY_STAGES.filter((s) => s.id.startsWith(`r${region.n}-`))
+                    const done = rs.every((s) => mastered.has(s.id))
+                    const here = rs.some((s) => s.id === currentStageId)
+                    return (
+                      <span key={region.n} className={`jmapdot${done ? ' done' : here ? ' here' : ''}`} title={region.name}>
+                        {done ? '✓' : region.n}
+                      </span>
+                    )
+                  })}
+                </div>
+                {/* only the CURRENT region's card (or the last region if the whole journey is mastered) */}
+                {REGIONS.filter((region) => {
+                  const rs = JOURNEY_STAGES.filter((s) => s.id.startsWith(`r${region.n}-`))
+                  return currentStageId ? rs.some((s) => s.id === currentStageId) : region.n === REGIONS.length
+                }).map((region) => {
                   const stages = JOURNEY_STAGES.filter((s) => s.id.startsWith(`r${region.n}-`))
                   const masteredHere = stages.filter((s) => mastered.has(s.id)).length
                   const regionUnlocked = stages.some(isJUnlocked)

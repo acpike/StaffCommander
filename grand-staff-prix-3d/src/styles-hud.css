@@ -195,6 +195,9 @@
 .hudmenu .profiletile:hover{ border-color:#3a4a59; transform:translateY(-2px); }
 .hudmenu .profiletile .pthead{ display:flex; align-items:center; gap:14px; }
 .hudmenu .profiletile .ptwho{ display:flex; flex-direction:column; gap:5px; flex:1; min-width:0; }
+/* Switch sits in the upper-right of the card, beside the name/level */
+.hudmenu .profiletile .ptswitch{ align-self:flex-start; flex:none; font-family:var(--data); font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--mute); cursor:pointer; padding:3px 8px; border:1px solid var(--carbon-3); background:#0c1117; white-space:nowrap; transition:.15s; }
+.hudmenu .profiletile .ptswitch:hover{ color:var(--livery); border-color:var(--livery); }
 .hudmenu .profiletile .ptname{ font-family:var(--disp); font-weight:800; font-size:24px; text-transform:uppercase; letter-spacing:.5px; line-height:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .hudmenu .profiletile .ptrank{ font-family:var(--data); font-size:11px; letter-spacing:1.5px; color:var(--purple); text-transform:uppercase; }
 .hudmenu .profiletile .ptgems{ display:flex; flex-direction:column; align-items:flex-end; gap:3px; flex:none; }
@@ -379,15 +382,13 @@
    ready / locked; the live frontier is highlighted in amber, front-and-centre. */
 .hudmenu .journey .jbody{
   padding:12px 13px 14px; display:flex; flex-direction:column; gap:11px;
-  /* contained, scrollable list (auto-scrolls to "you are here") — saves the page
-     from a wall of 21 stages */
-  /* show ~the active region only, then scroll (auto-scrolls to the current milestone) */
-  max-height:150px; overflow-y:auto; overscroll-behavior:contain;
-  scrollbar-width:thin; scrollbar-color:#2b3744 transparent;
 }
-.hudmenu .journey .jbody::-webkit-scrollbar{ width:8px; }
-.hudmenu .journey .jbody::-webkit-scrollbar-thumb{ background:#26323e; border-radius:4px; }
-.hudmenu .journey .jbody::-webkit-scrollbar-track{ background:transparent; }
+/* progress map: the 7 region milestones as a row of pips (the path is guided, so no
+   scrollable list of locked levels — just where you are and how far you've come) */
+.hudmenu .jmap{ display:flex; gap:5px; }
+.hudmenu .jmapdot{ flex:1; height:22px; display:grid; place-items:center; font-family:var(--data); font-weight:700; font-size:11px; color:var(--mute); background:#0c1117; border:1px solid var(--carbon-3); clip-path:polygon(7px 0,100% 0,calc(100% - 7px) 100%,0 100%); }
+.hudmenu .jmapdot.done{ background:var(--livery-dk); color:#04181a; border-color:var(--livery-dk); }
+.hudmenu .jmapdot.here{ background:var(--amber); color:#221700; border-color:var(--amber); box-shadow:0 0 9px rgba(255,194,61,.4); }
 .hudmenu .region{
   position:relative; border:1px solid var(--carbon-3); background:#0d1218; padding:8px 11px 9px;
   clip-path:polygon(0 0,100% 0,100% 100%,12px 100%,0 calc(100% - 12px)); transition:.15s;
