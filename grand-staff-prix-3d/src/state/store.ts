@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { NOTE_SETS, pickNoteFrom, buildGateLettersFrom, activeNotes, startCountOf, customSet, nextLevel, starterLevelIds, type GameNote, type Letter, type NoteSet, type Clef, type NoteMode } from '../data/notes'
+import { migrateProfileIds, migrateLevelId } from '../data/migrate'
 import { WRONG_PENALTY, resolveActiveCount, activeCountAt, masterThreshold, meterStart } from '../data/ladder'
 import { CARS } from '../data/cars'
 import { COMPOSERS } from '../data/composers'
@@ -98,14 +99,22 @@ const DEFAULT_SETTINGS: Settings = {
 /** Build a local Profile from a cloud row. */
 function cloudToProfile(row: { id: string; name: string; data?: Record<string, unknown> }): Profile {
   const d = row.data ?? {}
-  return {
-    id: row.id,
-    name: row.name,
+  // Re-key any pre-rework level ids onto the new journey stages before use.
+  const m = migrateProfileIds({
     best: (d.best as Record<string, number>) ?? {},
-    unlocked: Array.from(new Set([...starterLevelIds(), ...((d.unlocked as string[]) ?? [])])),
+    unlocked: (d.unlocked as string[]) ?? [],
     mastered: (d.mastered as string[]) ?? [],
     mastery: (d.mastery as Record<string, number>) ?? {},
     lastPlayed: (d.lastPlayed as Record<string, string>) ?? {},
+  })
+  return {
+    id: row.id,
+    name: row.name,
+    best: m.best,
+    unlocked: Array.from(new Set([...starterLevelIds(), ...m.unlocked])),
+    mastered: m.mastered,
+    mastery: m.mastery,
+    lastPlayed: m.lastPlayed,
     xp: (d.xp as number) ?? 0,
     gems: (d.gems as number) ?? 0,
     achievements: (d.achievements as string[]) ?? [],
@@ -292,36 +301,38 @@ function bandCaps(set: NoteSet): { lives: number; stageCap: number } {
 }
 
 export const useGame = create<GameState>()((set, get) => {
-  const initialProfiles = loadJSON<Profile[]>(LS_PROFILES, []).map((p) => ({
-    // Migrate profiles persisted before the avatar builder: older ones have
-    // `avatar` as a string id (or missing). normalizeAvatar maps anything to a
-    // complete AvatarConfig so nothing crashes on load.
-    ...p,
-    // ensure every clef track's first level is unlocked (also migrates profiles
-    // saved before the curriculum reshuffle, whose old level ids no longer exist)
-    unlocked: Array.from(
-      new Set([...starterLevelIds(), ...(Array.isArray((p as { unlocked?: unknown }).unlocked) ? (p as { unlocked: string[] }).unlocked : [])]),
-    ),
-    mastered: Array.isArray((p as { mastered?: unknown }).mastered) ? p.mastered : [],
-    mastery:
-      typeof (p as { mastery?: unknown }).mastery === 'object' && (p as { mastery?: unknown }).mastery
-        ? (p as { mastery: Record<string, number> }).mastery
-        : {},
-    lastPlayed:
-      typeof (p as { lastPlayed?: unknown }).lastPlayed === 'object' && (p as { lastPlayed?: unknown }).lastPlayed
-        ? (p as { lastPlayed: Record<string, string> }).lastPlayed
-        : {},
-    gems: typeof (p as { gems?: unknown }).gems === 'number' ? p.gems : 0,
-    achievements: Array.isArray((p as { achievements?: unknown }).achievements) ? p.achievements : [],
-    carId: typeof (p as { carId?: unknown }).carId === 'string' ? (p as { carId: string }).carId : CARS[0].id,
-    composerId: typeof (p as { composerId?: unknown }).composerId === 'string' ? (p as { composerId: string }).composerId : COMPOSERS[0].id,
-    avatar: normalizeAvatar((p as { avatar?: unknown }).avatar),
-  }))
+  const initialProfiles = loadJSON<Profile[]>(LS_PROFILES, []).map((p) => {
+    // Coerce legacy/missing fields (older saves used `avatar` as a string id, etc.;
+    // normalizeAvatar maps anything to a complete AvatarConfig so nothing crashes).
+    const coerced = {
+      ...p,
+      best: typeof (p as { best?: unknown }).best === 'object' && (p as { best?: unknown }).best ? (p as { best: Record<string, number> }).best : {},
+      unlocked: Array.isArray((p as { unlocked?: unknown }).unlocked) ? (p as { unlocked: string[] }).unlocked : [],
+      mastered: Array.isArray((p as { mastered?: unknown }).mastered) ? p.mastered : [],
+      mastery:
+        typeof (p as { mastery?: unknown }).mastery === 'object' && (p as { mastery?: unknown }).mastery
+          ? (p as { mastery: Record<string, number> }).mastery
+          : {},
+      lastPlayed:
+        typeof (p as { lastPlayed?: unknown }).lastPlayed === 'object' && (p as { lastPlayed?: unknown }).lastPlayed
+          ? (p as { lastPlayed: Record<string, string> }).lastPlayed
+          : {},
+      gems: typeof (p as { gems?: unknown }).gems === 'number' ? p.gems : 0,
+      achievements: Array.isArray((p as { achievements?: unknown }).achievements) ? p.achievements : [],
+      carId: typeof (p as { carId?: unknown }).carId === 'string' ? (p as { carId: string }).carId : CARS[0].id,
+      composerId: typeof (p as { composerId?: unknown }).composerId === 'string' ? (p as { composerId: string }).composerId : COMPOSERS[0].id,
+      avatar: normalizeAvatar((p as { avatar?: unknown }).avatar),
+    }
+    // Re-key pre-rework level ids onto the new journey stages, then ensure every
+    // track's first level is unlocked.
+    const m = migrateProfileIds(coerced)
+    return { ...m, unlocked: Array.from(new Set([...starterLevelIds(), ...m.unlocked])) }
+  })
   const initialCurrent = loadJSON<string | null>(LS_CURRENT, null)
   const initialSettings = { ...DEFAULT_SETTINGS, ...loadJSON<Partial<Settings>>(LS_SETTINGS, {}) }
-  // reset a stale selected level (old curriculum ids) to the first level
+  // re-key a stale selected level (old curriculum ids) onto its nearest new stage
   if (!NOTE_SETS.some((s) => s.id === initialSettings.levelId) && !initialSettings.levelId.startsWith('cl-')) {
-    initialSettings.levelId = NOTE_SETS[0].id
+    initialSettings.levelId = migrateLevelId(initialSettings.levelId)
   }
   // dev/test override: ?car=<id> &theme=<id> &level=<id> to preview a specific combo
   if (typeof location !== 'undefined') {

@@ -71,8 +71,13 @@ export function staffStep(note: GameNote): number {
  *  note. 'mix' = each wave is randomly one or the other (the curriculum default). */
 export type NoteMode = 'name' | 'find' | 'mix'
 
-/** Which clef "track" a level belongs to (drives the grouped level menu). */
-export type ClefGroup = 'treble' | 'bass' | 'grand' | 'alto' | 'tenor'
+/** Which clef "track" a level belongs to (drives the grouped level menu). The
+ *  'journey' group is the new primary Learning-Mode chain (grand staff, 21
+ *  region×mode stages); the clef groups now back the Side Quests (§10). */
+export type ClefGroup = 'treble' | 'bass' | 'grand' | 'alto' | 'tenor' | 'journey'
+
+/** Learning-Mode journey stages vs. optional Side Quests (position/custom drills). */
+export type LevelKind = 'learning' | 'sidequest'
 
 /** Difficulty band within a clef track. */
 export type Difficulty = 'beginner' | 'intermediate' | 'advanced'
@@ -102,6 +107,9 @@ export interface NoteSet {
   group?: ClefGroup
   tier?: number
   band?: Difficulty
+  /** 'learning' = part of the main journey chain, 'sidequest' = optional drill
+   *  (position levels + custom levels). Lets Phase D split the menu (§10/§13). */
+  kind?: LevelKind
 }
 
 /** The ordered ladder note names for a set; custom levels ladder over their whole pool. */
@@ -253,6 +261,7 @@ export function customSet(
     blurb: `Custom · ${clef}${mode === 'find' ? ' · find' : ''}`,
     notes,
     mode,
+    kind: 'sidequest', // custom levels feed the Side Quests section (§10)
   }
 }
 
@@ -270,8 +279,11 @@ export function customSet(
 // ~60–75 correct notes regardless of how many notes it ultimately contains.
 // ──────────────────────────────────────────────────────────────────────────
 
-/** Clef tracks in menu order. Optional tracks (alto/tenor) are hidden until enabled. */
+/** Clef tracks in menu order. Optional tracks (alto/tenor) are hidden until enabled.
+ *  'journey' leads — it is the primary Learning-Mode chain; the clef tracks below
+ *  it are the Side Quests. */
 export const CLEF_GROUPS: { id: ClefGroup; label: string; optional?: boolean }[] = [
+  { id: 'journey', label: 'Journey' },
   { id: 'treble', label: 'Treble' },
   { id: 'bass', label: 'Bass' },
   { id: 'grand', label: 'Grand Staff' },
@@ -279,6 +291,10 @@ export const CLEF_GROUPS: { id: ClefGroup; label: string; optional?: boolean }[]
   { id: 'tenor', label: 'Tenor', optional: true },
 ]
 
+// A Side Quest level (the old "position levels": C/G position, whole-staff, ledgers).
+// These moved OFF the main spine into the optional Side Quests section (§10); their
+// ids are namespaced `sq-<clef>-<tier>` so old saved ids migrate onto the journey
+// instead of colliding with these.
 function level(
   group: ClefGroup,
   tier: number,
@@ -291,10 +307,130 @@ function level(
   band: Difficulty,
 ): NoteSet {
   const notes = clef === 'grand' ? ladder.map((n) => makeNote(n, grandClefFor(n))) : ladder.map((n) => makeNote(n, clef))
-  return { id: `${group}-${tier}`, name, blurb, notes, ladder, startCount, mode, group, tier, band }
+  return { id: `sq-${group}-${tier}`, name, blurb, notes, ladder, startCount, mode, group, tier, band, kind: 'sidequest' }
 }
 
+// ──────────────────────────────────────────────────────────────────────────
+// LEARNING MODE — the primary journey (Levels Rework Phase A).
+//
+// Seven CUMULATIVE regions on the grand staff. Notes are only ever ADDED — each
+// region = all previous notes + a few new ones (some higher, some lower), middle
+// C outward to ~3 ledger lines each way (F1–G6 by Region 7). Each region is then
+// played in three modes — Name → Find → Mix — for 7 × 3 = 21 stages in one linear
+// chain (group 'journey', tiers 1…21): r1-name → r1-find → r1-mix → r2-name → …
+//
+// Per stage the ordered `ladder` keeps the FRONTIER notes last so they ladder in,
+// while everything the student already knows is pre-loaded via `startCount`. To
+// hold every stage to a consistent mastery effort (curriculum.test.ts keeps the
+// mastery threshold in ~45–90 correct notes ⇒ 2–5 notes laddered in per stage),
+// regions that add a big block of notes (Region 2 = the whole treble staff;
+// Region 5 = both first ledgers) pre-load the inner new notes and ladder in only
+// the outer frontier. Frontier weighting + per-note mastery (spec §4.2) is Phase B.
+//
+// ── Phase A — final per-region note breakdown ──────────────────────────────
+//  R  Region        Range    New this region                     Pool  Pre-load  Ladders in
+//  1  Middle C      A3–E4    A3 B3 C4 D4 E4 (start)                 5      2       E4 B3 A3
+//  2  Treble        F3–G5    F3 G3 F4 G4 A4 B4 C5 D5 E5 F5 G5      16     11       C5 D5 E5 F5 G5
+//  3  Bass Reach    C3–C5    C3 D3 E3                              19     16       E3 D3 C3
+//  4  Wider Range   G2–F5    G2 A2 B2                              22     19       B2 A2 G2
+//  5  ±1 Ledger     C2–C6    C2 D2 E2 F2 · A5 B5 C6                29     24       E2 D2 C2 B5 C6
+//  6  ±2 Ledger     A1–E6    A1 B1 · D6 E6                         33     29       B1 A1 D6 E6
+//  7  Full Staff    F1–G6    F1 G1 · F6 G6                         37     33       G1 F1 F6 G6
+// (Pool = total cumulative notes; Pre-load = startCount; mastery threshold = 15·(pool−startCount+1).)
+// ──────────────────────────────────────────────────────────────────────────
+
+export interface Region {
+  /** 1…7 */
+  n: number
+  /** Display name (the journey node label). */
+  name: string
+  /** Aaron's nominal range label for the region. */
+  range: string
+  /** Full cumulative note pool in ladder order: pre-loaded first, frontier last. */
+  ladder: string[]
+  /** Active pool size at meter 0 — everything except this region's frontier. */
+  startCount: number
+  /** Notes first introduced in this region (pre-loaded-new first, then frontier). */
+  added: string[]
+}
+
+// Per region: the notes NEWLY added, split into the ones pre-loaded into the
+// active pool (`preload`) and the FRONTIER ones that ladder in (`frontier`,
+// always 2–5 of them). Region N's full ladder = Region (N-1)'s ladder + preload +
+// frontier, and its startCount = (prev pool size) + preload count.
+const REGION_DEFS: { n: number; name: string; range: string; preload: string[]; frontier: string[] }[] = [
+  { n: 1, name: 'Middle C', range: 'A3–E4', preload: ['C4', 'D4'], frontier: ['E4', 'B3', 'A3'] },
+  { n: 2, name: 'Treble', range: 'F3–G5', preload: ['F3', 'G3', 'F4', 'G4', 'A4', 'B4'], frontier: ['C5', 'D5', 'E5', 'F5', 'G5'] },
+  { n: 3, name: 'Bass Reach', range: 'C3–C5', preload: [], frontier: ['E3', 'D3', 'C3'] },
+  { n: 4, name: 'Wider Range', range: 'G2–F5', preload: [], frontier: ['B2', 'A2', 'G2'] },
+  { n: 5, name: '±1 Ledger', range: 'C2–C6', preload: ['F2', 'A5'], frontier: ['E2', 'D2', 'C2', 'B5', 'C6'] },
+  { n: 6, name: '±2 Ledger', range: 'A1–E6', preload: [], frontier: ['B1', 'A1', 'D6', 'E6'] },
+  { n: 7, name: 'Full Staff', range: 'F1–G6', preload: [], frontier: ['G1', 'F1', 'F6', 'G6'] },
+]
+
+/** The seven cumulative regions, built by accumulating each region's new notes. */
+export const REGIONS: Region[] = (() => {
+  const out: Region[] = []
+  let prev: string[] = []
+  for (const d of REGION_DEFS) {
+    const ladder = [...prev, ...d.preload, ...d.frontier]
+    out.push({
+      n: d.n,
+      name: d.name,
+      range: d.range,
+      ladder,
+      startCount: prev.length + d.preload.length,
+      added: [...d.preload, ...d.frontier],
+    })
+    prev = ladder
+  }
+  return out
+})()
+
+// The three passes each region is played in, in chain order. Name is the Beginner
+// pass (no-fail, gentle tempo), Find the Intermediate, Mix the Advanced — the band
+// already drives lives + the per-band speed cap, so base speed steps up each mode
+// (spec §5) with no engine change.
+const JOURNEY_MODES: { suffix: string; label: string; mode: NoteMode; band: Difficulty }[] = [
+  { suffix: 'name', label: 'Name', mode: 'name', band: 'beginner' },
+  { suffix: 'find', label: 'Find', mode: 'find', band: 'intermediate' },
+  { suffix: 'mix', label: 'Mix', mode: 'mix', band: 'advanced' },
+]
+const MODE_BLURB: Record<NoteMode, string> = {
+  name: 'See the note, grab its letter',
+  find: 'See the letter, find the note',
+  mix: 'Name & Find, mixed',
+}
+
+function journeyStage(region: Region, m: (typeof JOURNEY_MODES)[number], tier: number): NoteSet {
+  return {
+    id: `r${region.n}-${m.suffix}`,
+    name: `${region.name} · ${m.label}`,
+    blurb: `${region.range} · ${MODE_BLURB[m.mode]}`,
+    notes: region.ladder.map((n) => makeNote(n, grandClefFor(n))),
+    ladder: region.ladder,
+    startCount: region.startCount,
+    mode: m.mode,
+    group: 'journey',
+    tier,
+    band: m.band,
+    kind: 'learning',
+  }
+}
+
+/** The 21-stage Learning-Mode chain (7 regions × 3 modes), tiers 1…21. */
+export const JOURNEY_STAGES: NoteSet[] = REGIONS.flatMap((region) =>
+  JOURNEY_MODES.map((m, i) => journeyStage(region, m, (region.n - 1) * 3 + i + 1)),
+)
+
 export const NOTE_SETS: NoteSet[] = [
+  // ── Learning Mode — the primary journey (group 'journey', tiers 1…21) ──
+  ...JOURNEY_STAGES,
+
+  // ── SIDE QUESTS (§10) ── the old position levels, now optional drills. Kept
+  // intact (kind: 'sidequest', ids namespaced sq-*) so nothing is deleted; Phase D
+  // pulls these into a dedicated Side Quests section.
+
   // ── Treble ──  identify C-position → identify G-position → find → whole staff → ledgers
   level('treble', 1, 'Middle C Steps', 'Name C–G', 'treble', 'name', ['C4', 'D4', 'E4', 'F4', 'G4'], 2, 'beginner'),
   level('treble', 2, 'Treble G Position', 'Name G–D', 'treble', 'name', ['G4', 'A4', 'B4', 'C5', 'D5'], 2, 'beginner'),

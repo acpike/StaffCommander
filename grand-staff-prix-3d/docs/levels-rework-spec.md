@@ -291,3 +291,68 @@ Each phase = one agent brief; B depends on A, C/D depend on A+B, E last.
 ---
 
 *End of v0.1. Red-line away — strike/replace anything, and we'll lock v1 before assigning agents.*
+
+---
+
+## Phase A — final note breakdown (DATA shipped)
+
+Curriculum authored in `src/data/notes.ts` (`REGIONS`, `JOURNEY_STAGES`) + migration in
+`src/data/migrate.ts`. Cumulative grand-staff, middle C outward to F1–G6 by Region 7.
+
+### Per-region notes
+
+| # | Region | Range | New this region | Pool | Pre-load (`startCount`) | Ladders in (frontier) | Mastery¹ |
+|---|---|---|---|---|---|---|---|
+| 1 | Middle C | A3–E4 | A3 B3 C4 D4 E4 *(start)* | 5 | 2 | E4 B3 A3 | 60 |
+| 2 | Treble | F3–G5 | F3 G3 F4 G4 A4 B4 C5 D5 E5 F5 G5 | 16 | 11 | C5 D5 E5 F5 G5 | 90 |
+| 3 | Bass Reach | C3–C5 | C3 D3 E3 | 19 | 16 | E3 D3 C3 | 60 |
+| 4 | Wider Range | G2–F5 | G2 A2 B2 | 22 | 19 | B2 A2 G2 | 60 |
+| 5 | ±1 Ledger | C2–C6 | C2 D2 E2 F2 · A5 B5 C6 | 29 | 24 | E2 D2 C2 B5 C6 | 90 |
+| 6 | ±2 Ledger | A1–E6 | A1 B1 · D6 E6 | 33 | 29 | B1 A1 D6 E6 | 75 |
+| 7 | Full Staff | F1–G6 | F1 G1 · F6 G6 | 37 | 33 | G1 F1 F6 G6 | 75 |
+
+¹ Mastery threshold = `15·(pool − startCount + 1)` correct notes; the `curriculum.test.ts`
+invariant keeps it in 45–90, i.e. **2–5 notes laddered per stage**.
+
+> **Judgment call:** the spec's literal "ladder in *all* new notes, `startCount` = carried
+> count" would make Region 2 ladder 11 notes (threshold 180) and Region 5 ladder 7 — far past
+> the 45–90 consistency bound the engine + tests rely on. So the two big-block regions
+> **pre-load their inner new notes and ladder in only the outer ~5 frontier notes** (Region 2
+> pre-loads F3 G3 F4 G4 A4 B4, Region 5 pre-loads F2 A5). The pre-loaded new notes are still
+> live in the active pool from note one; Phase B's frontier weighting (§4.2) is what makes them
+> get *emphasized*. All other regions follow the spec literally (carried = `startCount`).
+
+### Stage chain (21 = 7 × 3)
+
+`group: 'journey'`, `kind: 'learning'`, ids `r{n}-name|find|mix`, **tiers 1…21** in a single
+linear chain (each unlocks the next via the existing `nextLevel` group+tier walk):
+
+```
+r1-name → r1-find → r1-mix → r2-name → … → r7-mix
+ tier 1     2          3        4              21
+```
+
+Modes map onto the existing band machinery so base speed/lives step up each pass with **no
+engine change**: Name → `beginner` (no-fail, slow), Find → `intermediate`, Mix → `advanced`.
+
+### Side Quests (§10)
+
+The old position levels are kept (not deleted), tagged `kind: 'sidequest'`, ids namespaced
+`sq-<clef>-<tier>` (treble/bass/grand/alto/tenor tracks). Custom levels (`customSet`) are also
+tagged `kind: 'sidequest'`. Phase D filters the menu on `kind`.
+
+### Migration (`src/data/migrate.ts`, wired in `store.ts` at load)
+
+Old profile ids re-key onto the nearest journey stage (non-destructive, idempotent):
+
+| Old | → New | Old | → New | Old | → New |
+|---|---|---|---|---|---|
+| treble-1 | r1-name | bass-1 | r1-name | grand-1 | r1-name |
+| treble-2 | r2-name | bass-2 | r3-name | grand-2 | r3-name |
+| treble-3 | r2-find | bass-3 | r3-find | grand-3 | r3-find |
+| treble-4 | r2-mix | bass-4 | r4-mix | grand-4 | r4-mix |
+| treble-5 | r5-mix | bass-5 | r5-mix | grand-5 | r5-mix |
+| alto-1/2/3 | r1-name/find/mix | tenor-1/2/3 | r1-name/find/mix | *(unmapped)* | r1-name |
+
+Custom (`cl-*`) ids pass through unchanged. Applied to `best`/`unlocked`/`mastered`/`mastery`/
+`lastPlayed` and the saved `settings.levelId`.

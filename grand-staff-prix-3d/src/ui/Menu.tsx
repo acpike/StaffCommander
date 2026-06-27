@@ -23,6 +23,7 @@ const CLEF_BADGE: Record<string, string> = {
   treble: String.fromCharCode(0xe050),
   bass: String.fromCharCode(0xe062),
   grand: String.fromCharCode(0xe050, 0xe062),
+  journey: String.fromCharCode(0xe050, 0xe062), // grand staff — the Learning-Mode chain
   alto: String.fromCharCode(0xe05c),
   tenor: String.fromCharCode(0xe05c),
 }
