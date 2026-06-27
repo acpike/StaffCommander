@@ -109,7 +109,7 @@ export function Scenery({ theme }: { theme: Theme }) {
           <Planet tex="/tex/planet_mars.jpg" size={12} dir={[0.3, 0.09, -0.95]} spin={0.06} />
           <FollowStars />
           <Suspense fallback={null}>
-            <Backdrop image="/backdrops/space.jpg" />
+            <Backdrop image="/backdrops/space.jpg" offsetY={0.32} />
             <ImageEnvironment image="/backdrops/space.jpg" intensity={0.6} />
           </Suspense>
         </>
@@ -122,7 +122,7 @@ export function Scenery({ theme }: { theme: Theme }) {
               warm image — the lower-edge feather follows scene.fog, so the
               ground melts into the same blue. */}
           <Suspense fallback={null}>
-            <Backdrop image="/backdrops/city.jpg" fogColor="#6E9CC0" skyColor="#9DC4E2" />
+            <Backdrop image="/backdrops/city.jpg" fogColor="#6E9CC0" skyColor="#9DC4E2" offsetY={0.32} />
             <ImageEnvironment image="/backdrops/city.jpg" intensity={0.9} />
           </Suspense>
         </>
