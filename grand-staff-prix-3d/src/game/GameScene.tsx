@@ -9,6 +9,8 @@ import { ChaseCamera } from './ChaseCamera'
 import { Track } from './Track'
 import { SkidMarks } from './SkidMarks'
 import { Exhaust } from './Exhaust'
+import { HyperStreaks } from './HyperStreaks'
+import { RocketExhaust } from './RocketExhaust'
 import { Car } from './Car'
 import { Gates } from './Gates'
 import { Explosions } from './Explosions'
@@ -47,6 +49,9 @@ export function GameScene() {
       <Track theme={theme} />
       <SkidMarks />
       <Exhaust />
+      {/* Space-only accents: hyperspace streaks + twin rocket plumes */}
+      {theme.id === 'space' && <HyperStreaks />}
+      {theme.id === 'space' && <RocketExhaust />}
       <Physics gravity={[0, 0, 0]}>
         <Car />
         <Gates />

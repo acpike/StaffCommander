@@ -5,18 +5,18 @@ import { TRACK_HALF } from './constants'
 import { carState } from './carState'
 
 // Deep Space foreground. The painted galaxy backdrop, planets and follow-stars
-// (see Scenery.tsx) give the deep field; this layer flanks the road with a
-// scattered alien field — glowing crystal spires of varied size and colour,
-// asteroids / space rocks, and small floating shards — spread from the road edge
-// out toward the horizon (dense near, thinning into the distance), fading into the
-// dark fog.
+// (see Scenery.tsx) give the deep field; this layer flanks the light-bridge with a
+// free-floating debris field — compact glowing crystal clusters and tumbling
+// asteroid chunks — drifting in true 3D: spread sideways from the lane edge AND
+// vertically above and below it, each at a random 3D orientation, dense near the
+// lane and thinning into the dark fog. Nothing stands on the ground (there is no
+// ground in space — see Track.tsx); everything floats.
 //
 // Everything is instanced (a handful of draw calls for hundreds of objects) and
 // world-fixed: each instance keeps a static world position and only teleports
 // forward by one PERIOD once the car drives PERIOD/2 past it. PERIOD is large
 // enough that the teleport always happens deep in the fog, so the recycle is
-// never visible — no popping, no jerky seam. (The ground reaches past the fog, so
-// distant props sit on the ground rather than floating — see Track.tsx.)
+// never visible — no popping, no jerky seam.
 
 const PERIOD = 1000 // streaming repeat length along Z (seam hides in fog at ±PERIOD/2)
 
@@ -37,9 +37,12 @@ const N_ROCK = 110
 
 interface Item {
   x: number
+  y: number // floating height above/below the lane
   zL: number // local Z within [0, PERIOD)
   s: number
-  rot: number
+  rx: number // static random 3D orientation
+  ry: number
+  rz: number
   tint?: THREE.Color
 }
 
@@ -53,9 +56,14 @@ export function SpaceScene() {
   const { crystals, rocks } = useMemo(() => {
     const rng = mulberry32(0x5face)
     const side = () => (rng() < 0.5 ? -1 : 1)
-    // X grows away from the road, biased dense near the shoulder (pow > 1).
+    // X grows away from the lane, biased dense near the shoulder (pow > 1). The
+    // gap keeps everything clear of the lane path so it never blocks gameplay.
     const scatterX = (reach: number, gap = 3) =>
       side() * (TRACK_HALF + gap + Math.pow(rng(), 1.7) * reach)
+    // Y floats above AND below the lane — a true 3D field, not a horizon line.
+    const scatterY = () => -28 + rng() * 56
+    // A full random 3D orientation (static): reads as a drifting tumble field.
+    const spin3 = () => rng() * Math.PI * 2
 
     // Cool indigo → violet → cyan glow for the crystals and shards.
     const crystalTone = () =>
@@ -66,16 +74,18 @@ export function SpaceScene() {
 
     const crystals: Item[] = Array.from({ length: N_CRYSTAL }, () => ({
       x: scatterX(92),
+      y: scatterY(),
       zL: rng() * PERIOD,
       s: 0.7 + rng() * 1.6,
-      rot: rng() * Math.PI * 2,
+      rx: spin3(), ry: spin3(), rz: spin3(),
       tint: crystalTone(),
     }))
     const rocks: Item[] = Array.from({ length: N_ROCK }, () => ({
       x: scatterX(100, 2),
+      y: scatterY(),
       zL: rng() * PERIOD,
       s: 0.3 + rng() * 2.4, // pebbles → boulders
-      rot: rng() * Math.PI * 2,
+      rx: spin3(), ry: spin3(), rz: spin3(),
       tint: rockTone(),
     }))
     return { crystals, rocks }
@@ -84,10 +94,12 @@ export function SpaceScene() {
   // ---- geometry + materials (crystal part offsets baked into the geometry so
   //      one per-instance matrix places the whole cluster) -------------------
   const assets = useMemo(() => {
-    // crystal cluster: a tall central spire + a shorter offset spire
-    const spire = new THREE.OctahedronGeometry(0.8, 0).scale(0.55, 1.7, 0.55).translate(0, 1.35, 0)
-    const spire2 = new THREE.OctahedronGeometry(0.55, 0).scale(0.5, 1.4, 0.5).translate(0.55, 0.85, 0.2)
-    const rock = new THREE.DodecahedronGeometry(1.0, 0).translate(0, 0.6, 0)
+    // compact floating crystal cluster: two stubby shards around the origin (no
+    // tall spire, no ground offset — these free-float and tumble in 3D).
+    const spire = new THREE.OctahedronGeometry(0.8, 0).scale(0.7, 1.05, 0.7)
+    const spire2 = new THREE.OctahedronGeometry(0.5, 0).translate(0.5, 0.2, 0.18)
+    // asteroid chunk: a dodecahedron centred on the origin (free-floating).
+    const rock = new THREE.DodecahedronGeometry(1.0, 0)
 
     const crystalMat = new THREE.MeshStandardMaterial({
       color: '#ffffff', // tinted per-instance
@@ -137,8 +149,8 @@ export function SpaceScene() {
       const wz = lattice(items[i].zL, carZ)
       if (wz === mem[i]) continue
       mem[i] = wz
-      dummy.position.set(items[i].x, 0, wz)
-      dummy.rotation.set(0, items[i].rot, 0)
+      dummy.position.set(items[i].x, items[i].y, wz)
+      dummy.rotation.set(items[i].rx, items[i].ry, items[i].rz)
       dummy.scale.setScalar(items[i].s)
       dummy.updateMatrix()
       for (const r of refs) r.current?.setMatrixAt(i, dummy.matrix)

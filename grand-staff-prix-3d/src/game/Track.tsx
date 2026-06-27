@@ -64,8 +64,66 @@ function makeRoadTexture(road: string, line: string): THREE.CanvasTexture {
   return tex
 }
 
+// '#RRGGBB' → 'rgba(r,g,b,a)' so the canvas can paint translucent neon.
+function hexA(hex: string, a: number): string {
+  const h = hex.replace('#', '')
+  const r = parseInt(h.slice(0, 2), 16)
+  const g = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  return `rgba(${r},${g},${b},${a})`
+}
+
+// DEEP SPACE lane: a holographic light-bridge instead of asphalt. The base is
+// (almost) transparent — only a faint violet energy field with a soft trough in
+// the middle and a few lengthwise streaks — with BRIGHT neon edges and a glowing
+// dashed centre line painted on top. The texture's alpha drives the plane's
+// transparency, and its RGB also feeds the emissive map so the markings glow.
+// Same size/repeat as makeRoadTexture, so the dashed centre still scrolls with
+// speed and the gates/car line up exactly.
+function makeSpaceLaneTexture(line: string): THREE.CanvasTexture {
+  const c = document.createElement('canvas')
+  c.width = 256
+  c.height = 256
+  const ctx = c.getContext('2d')!
+  ctx.clearRect(0, 0, 256, 256) // transparent base — open space shows through
+  // faint energy field: brighter toward the edges, near-clear down the middle
+  const grad = ctx.createLinearGradient(0, 0, 256, 0)
+  grad.addColorStop(0.0, hexA(line, 0.34))
+  grad.addColorStop(0.12, hexA(line, 0.1))
+  grad.addColorStop(0.5, hexA(line, 0.05))
+  grad.addColorStop(0.88, hexA(line, 0.1))
+  grad.addColorStop(1.0, hexA(line, 0.34))
+  ctx.fillStyle = grad
+  ctx.fillRect(0, 0, 256, 256)
+  // faint lengthwise energy streaks
+  for (let i = 0; i < 18; i++) {
+    ctx.fillStyle = hexA(line, 0.04 + Math.random() * 0.05)
+    ctx.fillRect(Math.random() * 256, 0, 1, 256)
+  }
+  // bright neon edges + a soft inner glow alongside them
+  ctx.fillStyle = hexA(line, 0.95)
+  ctx.fillRect(8, 0, 9, 256)
+  ctx.fillRect(239, 0, 9, 256)
+  ctx.fillStyle = hexA(line, 0.35)
+  ctx.fillRect(17, 0, 6, 256)
+  ctx.fillRect(233, 0, 6, 256)
+  // glowing dashed centre line (one dash per tile), near-white core
+  ctx.fillStyle = 'rgba(236,230,255,0.95)'
+  ctx.fillRect(122, 40, 12, 120)
+  const tex = new THREE.CanvasTexture(c)
+  tex.wrapS = THREE.RepeatWrapping
+  tex.wrapT = THREE.RepeatWrapping
+  tex.repeat.set(1, ROAD_LEN / DASH_PERIOD)
+  tex.anisotropy = 8
+  return tex
+}
+
 export function Track({ theme }: { theme: Theme }) {
-  const roadTex = useMemo(() => makeRoadTexture(theme.road, theme.line), [theme.road, theme.line])
+  const isSpace = theme.id === 'space'
+  const roadTex = useMemo(
+    () => (isSpace ? makeSpaceLaneTexture(theme.line) : makeRoadTexture(theme.road, theme.line)),
+    [isSpace, theme.road, theme.line],
+  )
   const groundTex = useMemo(() => {
     const t = new THREE.TextureLoader().load(GROUND_TEX[theme.id] ?? '/tex/grass.jpg')
     t.wrapS = t.wrapT = THREE.RepeatWrapping
@@ -138,15 +196,34 @@ export function Track({ theme }: { theme: Theme }) {
   return (
     <>
       <group ref={follow}>
-        {/* ground apron (shortened ahead for the city/headland bluff — see above) */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.06, apronZ]} receiveShadow>
-          <planeGeometry args={[500, apronLen]} />
-          <meshStandardMaterial map={groundTex} color={groundColor} roughness={1} metalness={0} />
-        </mesh>
-        {/* road surface */}
+        {/* ground apron (shortened ahead for the city/headland bluff — see above).
+            Skipped for space: open void below, no flat ground plane. */}
+        {!isSpace && (
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.06, apronZ]} receiveShadow>
+            <planeGeometry args={[500, apronLen]} />
+            <meshStandardMaterial map={groundTex} color={groundColor} roughness={1} metalness={0} />
+          </mesh>
+        )}
+        {/* lane surface: asphalt for most themes; a translucent glowing
+            light-bridge through space for the 'space' theme (same size/y so the
+            gates + car still line up). receiveShadow keeps the car's shadow on it. */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
           <planeGeometry args={[TRACK_HALF * 2, ROAD_LEN]} />
-          <meshStandardMaterial map={roadTex} roughness={0.7} metalness={0.05} />
+          {isSpace ? (
+            <meshStandardMaterial
+              map={roadTex}
+              emissive={theme.line}
+              emissiveMap={roadTex}
+              emissiveIntensity={1.4}
+              transparent
+              depthWrite={false}
+              roughness={1}
+              metalness={0}
+              toneMapped={false}
+            />
+          ) : (
+            <meshStandardMaterial map={roadTex} roughness={0.7} metalness={0.05} />
+          )}
         </mesh>
         {/* glowing edge rails */}
         <mesh position={[TRACK_HALF, 0.18, 0]}>
@@ -159,17 +236,29 @@ export function Track({ theme }: { theme: Theme }) {
         </mesh>
       </group>
 
-      {/* recycling roadside posts (world space) */}
+      {/* recycling roadside markers (world space): ground fence-posts for most
+          themes; small floating glowing light-orbs flanking the light-bridge for
+          space (no posts standing on a ground that isn't there). */}
       {Array.from({ length: POSTS_PER_SIDE }).map((_, j) => (
-        <mesh key={`lp${j}`} ref={(m) => { leftPosts.current[j] = m }} position={[TRACK_HALF + 1.1, 0.8, 0]} castShadow>
-          <boxGeometry args={[0.16, 1.6, 0.16]} />
-          <meshStandardMaterial color={theme.sun} emissive={theme.sun} emissiveIntensity={0.5} toneMapped={false} />
+        <mesh
+          key={`lp${j}`}
+          ref={(m) => { leftPosts.current[j] = m }}
+          position={[TRACK_HALF + 1.1, isSpace ? 1.3 : 0.8, 0]}
+          castShadow={!isSpace}
+        >
+          {isSpace ? <sphereGeometry args={[0.22, 16, 16]} /> : <boxGeometry args={[0.16, 1.6, 0.16]} />}
+          <meshStandardMaterial color={theme.sun} emissive={theme.sun} emissiveIntensity={isSpace ? 1.5 : 0.5} toneMapped={false} />
         </mesh>
       ))}
       {Array.from({ length: POSTS_PER_SIDE }).map((_, j) => (
-        <mesh key={`rp${j}`} ref={(m) => { rightPosts.current[j] = m }} position={[-TRACK_HALF - 1.1, 0.8, 0]} castShadow>
-          <boxGeometry args={[0.16, 1.6, 0.16]} />
-          <meshStandardMaterial color={theme.sun} emissive={theme.sun} emissiveIntensity={0.5} toneMapped={false} />
+        <mesh
+          key={`rp${j}`}
+          ref={(m) => { rightPosts.current[j] = m }}
+          position={[-TRACK_HALF - 1.1, isSpace ? 1.3 : 0.8, 0]}
+          castShadow={!isSpace}
+        >
+          {isSpace ? <sphereGeometry args={[0.22, 16, 16]} /> : <boxGeometry args={[0.16, 1.6, 0.16]} />}
+          <meshStandardMaterial color={theme.sun} emissive={theme.sun} emissiveIntensity={isSpace ? 1.5 : 0.5} toneMapped={false} />
         </mesh>
       ))}
     </>
