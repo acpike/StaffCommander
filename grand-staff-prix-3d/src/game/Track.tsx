@@ -6,7 +6,11 @@ import { carState } from './carState'
 import { TRACK_HALF } from './constants'
 import { sampleImageBand, asTint } from '../util/sampleImageBand'
 
-const ROAD_LEN = 400
+// Road/ground length. Centered on the car, so it reaches ROAD_LEN/2 ahead — kept
+// past where the fog goes fully opaque (~380) so the streaming roadside scenery
+// (trees etc., which fade in out at distance) always has ground under it instead
+// of floating against the backdrop.
+const ROAD_LEN = 800
 const DASH_PERIOD = 8 // world units per dash cycle
 const POSTS_PER_SIDE = 24
 const POST_SPACING = 14
@@ -65,7 +69,7 @@ export function Track({ theme }: { theme: Theme }) {
   const groundTex = useMemo(() => {
     const t = new THREE.TextureLoader().load(GROUND_TEX[theme.id] ?? '/tex/grass.jpg')
     t.wrapS = t.wrapT = THREE.RepeatWrapping
-    t.repeat.set(120, 100)
+    t.repeat.set(120, ROAD_LEN / 4) // keep tile density when ROAD_LEN changes
     t.anisotropy = 8
     t.colorSpace = THREE.SRGBColorSpace
     return t
