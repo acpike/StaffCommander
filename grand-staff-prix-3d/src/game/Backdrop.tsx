@@ -34,7 +34,8 @@ const FADE_OVERRIDE =
 
 const _fwd = new THREE.Vector3()
 const _pos = new THREE.Vector3()
-const _up = new THREE.Vector3()
+const _n = new THREE.Vector3()
+const Z_AXIS = new THREE.Vector3(0, 0, 1)
 
 // `offsetY` lifts the image up (fraction of the on-screen view height) so its
 // painted horizon/mountains rise ABOVE the 3D ground line instead of hiding
@@ -123,25 +124,31 @@ export function Backdrop({
     const m = ref.current
     if (!m) return
     const cam = camera as THREE.PerspectiveCamera
-    // place a screen-aligned quad DIST in front of the camera, facing it
-    cam.getWorldDirection(_fwd)
-    _pos.copy(cam.position).addScaledVector(_fwd, DIST)
     const vFov = (cam.fov * Math.PI) / 180
     const viewH = 2 * Math.tan(vFov / 2) * DIST
     const viewW = viewH * cam.aspect
     // FIT the image to the full frustum WIDTH (whole width always shown, no side
-    // crop) and keep its true aspect — so the painting isn't over-zoomed into a
-    // small centre band. A wide image then sits as an upper "sky strip" with the
-    // 3D ground filling in below it.
-    const planeW = viewW * 1.02
+    // crop) and keep its true aspect. Slightly oversized so the (yaw-locked) quad
+    // still covers the frustum when the camera yaws a touch while steering.
+    const planeW = viewW * 1.05
     const planeH = planeW / aspect
     // slide vertically so the painted horizon meets the 3D ground line; tune per
     // image with the offsetY prop, or live for any image with ?bg=<n>.
     const oy = Number.isFinite(BG_OVERRIDE) ? BG_OVERRIDE : offsetY
-    _up.set(0, 1, 0).applyQuaternion(cam.quaternion)
-    _pos.addScaledVector(_up, oy * viewH)
+
+    // Forward with YAW removed (keep the camera's pitch). Pinning the backdrop to
+    // this yaw-free axis stops the painted horizon from swinging sideways when the
+    // car steers — it reads as a fixed, distant sky instead of a layer that slides
+    // around. Follows the camera position so there's still no parallax pop.
+    cam.getWorldDirection(_fwd)
+    _fwd.x = 0
+    if (_fwd.lengthSq() < 1e-6) _fwd.set(0, 0, -1)
+    _fwd.normalize()
+    _pos.copy(cam.position).addScaledVector(_fwd, DIST)
+    _pos.y += oy * viewH // world-up vertical slide (no roll/yaw)
     m.position.copy(_pos)
-    m.quaternion.copy(cam.quaternion)
+    _n.copy(_fwd).multiplyScalar(-1) // face back toward the camera
+    m.quaternion.setFromUnitVectors(Z_AXIS, _n) // pure pitch — no yaw, no roll
     m.scale.set(planeW, planeH, 1)
   })
 

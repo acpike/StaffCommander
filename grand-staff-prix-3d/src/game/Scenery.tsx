@@ -123,11 +123,9 @@ export function Scenery({ theme }: { theme: Theme }) {
         <>
           <CandyScene />
           {/* painted candy horizon (LDR jpg) replaces the old gradient CandySky.
-              Its candy hills sit LOW in the frame, so lift it more than the
-              default (mountain-tuned) offset to clear the 3D ground line, and
-              feather only the very bottom edge so the hills aren't washed pink. */}
+              Uses the same default framing as mountain/desert. */}
           <Suspense fallback={null}>
-            <Backdrop image="/backdrops/candy.jpg" offsetY={0.4} horizonFade={0.12} />
+            <Backdrop image="/backdrops/candy.jpg" />
             <ImageEnvironment image="/backdrops/candy.jpg" intensity={0.85} />
           </Suspense>
         </>
