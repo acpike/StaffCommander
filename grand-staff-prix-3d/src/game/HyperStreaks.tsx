@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useGame } from '../state/store'
+import { input } from './input'
 import { carState } from './carState'
 import { MAX_VISUAL_SPEED } from './constants'
 
@@ -37,8 +38,7 @@ export function HyperStreaks() {
   const camera = useThree((s) => s.camera)
   const inst = useRef<THREE.InstancedMesh>(null)
   const dummy = useMemo(() => new THREE.Object3D(), [])
-  const prevN = useRef(0)
-  const burst = useRef(0)
+  const hold = useRef(0)
 
   const streaks = useMemo<Streak[]>(
     () =>
@@ -70,27 +70,24 @@ export function HyperStreaks() {
     // normalised speed 0..~1 (clamped); near-zero when stopped
     const n = playing ? Math.min(1.15, carState.speed / MAX_VISUAL_SPEED) : 0
 
-    // acceleration burst: spike when speed climbs quickly, decay otherwise
-    const accel = (n - prevN.current) / dt
-    prevN.current = n
-    const target = Math.max(0, Math.min(1, accel * 3.5))
-    burst.current += (target - burst.current) * Math.min(1, dt * 6)
+    // streaks show the WHOLE time the accelerate input is held (up-arrow / throttle
+    // button) and the car is moving — they stay up while you hold it and fade out
+    // smoothly when you let go (not on a timer).
+    const held = playing && input.boost && n > 0.04
+    const target = held ? 1 : 0
+    // quick rise while held, graceful fall on release
+    hold.current += (target - hold.current) * Math.min(1, dt * (target > hold.current ? 10 : 4))
+    const presence = hold.current
 
-    // streaks appear ONLY while ACCELERATING — driven by the acceleration burst,
-    // not by steady speed. They fade a moment after the car reaches constant
-    // speed, and never show when cruising or braking.
-    const presence = Math.min(1, burst.current)
-
-    // hide entirely unless we're accelerating
     m.visible = presence > 0.03
     if (!m.visible) return
 
     // follow the camera so the streaks always frame the view
     m.position.copy(camera.position)
 
-    // they still rush fast (it's hyperspace), but only while the burst is active
-    const travel = (60 + n * 150 + burst.current * 120) * dt
-    const baseLen = 2 + burst.current * 20 + n * 3
+    // rush fast (it's hyperspace); length/speed scale with velocity, gated by presence
+    const travel = (50 + n * 160) * dt
+    const baseLen = (2 + n * 16) * (0.4 + presence * 0.6)
 
     for (let i = 0; i < COUNT; i++) {
       const s = streaks[i]

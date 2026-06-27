@@ -140,10 +140,11 @@ export function Backdrop({
     const vFov = (cam.fov * Math.PI) / 180
     const viewH = 2 * Math.tan(vFov / 2) * DIST
     const viewW = viewH * cam.aspect
-    // FIT the image to the full frustum WIDTH (whole width always shown, no side
-    // crop) and keep its true aspect. Slightly oversized so the (yaw-locked) quad
-    // still covers the frustum when the camera yaws a touch while steering.
-    const planeW = viewW * 1.05
+    // FIT the image to the full frustum WIDTH and keep its true aspect. Generously
+    // oversized so the (yaw-locked) quad still fully covers the frustum even when
+    // the camera yaws/pans hard while steering — otherwise its edge would slip into
+    // view and reveal the flat background colour on the sides.
+    const planeW = viewW * 1.28
     const planeH = planeW / aspect
     // slide vertically so the painted horizon meets the 3D ground line; tune per
     // image with the offsetY prop, or live for any image with ?bg=<n>.
