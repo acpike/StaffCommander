@@ -1,7 +1,10 @@
 import { create } from 'zustand'
-import { NOTE_SETS, pickNoteFrom, buildGateLettersFrom, activeNotes, startCountOf, customSet, nextLevel, starterLevelIds, type GameNote, type Letter, type NoteSet, type Clef, type NoteMode } from '../data/notes'
+import { NOTE_SETS, buildGateLettersFrom, activeNotes, startCountOf, customSet, nextLevel, starterLevelIds, frontierNoteNames, type GameNote, type Letter, type NoteSet, type Clef, type NoteMode } from '../data/notes'
 import { migrateProfileIds, migrateLevelId } from '../data/migrate'
-import { WRONG_PENALTY, resolveActiveCount, activeCountAt, masterThreshold, meterStart } from '../data/ladder'
+import { WRONG_PENALTY, resolveActiveCount, activeCountAt, masterThreshold, meterStart, rampDownPenalty, RAMP_DOWN_WINDOW } from '../data/ladder'
+import { type PerNote, noteKey, recordAnswer, pickWeighted, stageMasteryGate } from '../data/pernote'
+import { correctPoints, wrongPenaltyPoints } from '../data/scoring'
+import { initialTempo, tempoOnCorrect, tempoOnMiss, updateComfort } from '../data/tempo'
 import { CARS } from '../data/cars'
 import { COMPOSERS } from '../data/composers'
 import { cloudEnabled, fetchPlayers, insertPlayer, updatePlayer, deletePlayer } from '../lib/cloud'
@@ -42,6 +45,9 @@ export interface Profile {
   mastery: Record<string, number>
   /** Date key (YYYY-MM-DD) each level was last played, for meter decay on return. */
   lastPlayed: Record<string, string>
+  /** Persisted comfort TEMPO per level id — the warm-up ramp restarts just below
+   *  this on return instead of from scratch (spec §5, data/tempo.ts). */
+  comfortTempo: Record<string, number>
   xp: number
   /** Gem currency earned through play. */
   gems: number
@@ -76,6 +82,7 @@ function toCloudData(p: Profile): Record<string, unknown> {
     mastered: p.mastered,
     mastery: p.mastery,
     lastPlayed: p.lastPlayed,
+    comfortTempo: p.comfortTempo,
     xp: p.xp,
     gems: p.gems,
     achievements: p.achievements,
@@ -115,6 +122,7 @@ function cloudToProfile(row: { id: string; name: string; data?: Record<string, u
     mastered: m.mastered,
     mastery: m.mastery,
     lastPlayed: m.lastPlayed,
+    comfortTempo: (d.comfortTempo as Record<string, number>) ?? {},
     xp: (d.xp as number) ?? 0,
     gems: (d.gems as number) ?? 0,
     achievements: (d.achievements as string[]) ?? [],
@@ -154,6 +162,7 @@ function freshProfile(name: string): Profile {
     mastered: [],
     mastery: {},
     lastPlayed: {},
+    comfortTempo: {},
     xp: 0,
     gems: 0,
     achievements: [],
@@ -198,6 +207,16 @@ export interface GameState {
   meterM: number
   /** Active note-pool size derived from `meterM` (the ladder rung in play). */
   activeCount: number
+  /** Per-note correct/seen stats for this run (frontier weighting + per-note
+   *  mastery gate — spec §4.2, data/pernote.ts). Resets each run. */
+  perNote: PerNote
+  /** Rolling recent results (true=correct) for the two-way ladder ramp-down (§4.1). */
+  recentResults: boolean[]
+  /** Continuous tempo level (≥1) driving car speed + music tempo (spec §5,
+   *  data/tempo.ts). Replaces the raw integer stage for the speed dial. */
+  tempo: number
+  /** Highest tempo sustained this run — persisted as the comfort tempo at game over. */
+  tempoPeak: number
   /** Increments whenever the ladder reveals a new note (drives the HUD celebration). */
   unlockTick: number
   /** Lives this run started with (varies by band; for the HUD heart row). */
@@ -288,6 +307,13 @@ function isNoFail(set: NoteSet): boolean {
   return set.band === 'beginner'
 }
 
+/** Append a result to the rolling recent-results window, capped at RAMP_DOWN_WINDOW. */
+function pushRecent(recent: boolean[], result: boolean): boolean[] {
+  const next = [...recent, result]
+  if (next.length > RAMP_DOWN_WINDOW) next.shift()
+  return next
+}
+
 /** Per-band starting lives and the stage cap that limits car speed + tempo. */
 function bandCaps(set: NoteSet): { lives: number; stageCap: number } {
   switch (set.band) {
@@ -316,6 +342,10 @@ export const useGame = create<GameState>()((set, get) => {
       lastPlayed:
         typeof (p as { lastPlayed?: unknown }).lastPlayed === 'object' && (p as { lastPlayed?: unknown }).lastPlayed
           ? (p as { lastPlayed: Record<string, string> }).lastPlayed
+          : {},
+      comfortTempo:
+        typeof (p as { comfortTempo?: unknown }).comfortTempo === 'object' && (p as { comfortTempo?: unknown }).comfortTempo
+          ? (p as { comfortTempo: Record<string, number> }).comfortTempo
           : {},
       gems: typeof (p as { gems?: unknown }).gems === 'number' ? p.gems : 0,
       achievements: Array.isArray((p as { achievements?: unknown }).achievements) ? p.achievements : [],
@@ -365,7 +395,11 @@ export const useGame = create<GameState>()((set, get) => {
     // Draw the target from the ACTIVE ladder pool (the notes unlocked so far),
     // not the whole level — this is what makes early levels start at 2 notes.
     const pool = activeNotes(s, st0.activeCount)
-    const note = pickNoteFrom(pool)
+    // Weighted draw favouring the unproven FRONTIER notes (~3.5×) so a region's
+    // new notes — including its pre-loaded-new ones — get drilled, not diluted
+    // into the big known pool (spec §4.2).
+    const frontier = new Set(frontierNoteNames(s))
+    const note = pickWeighted(pool, frontier, st0.perNote)
     const gateLetters = buildGateLettersFrom(pool, note.letter, gatesForStage(stage))
     // 'mix' levels flip between name/find each wave; beginner levels stay name-only
     // (recognition before recall) so the very first notes are never "find".
@@ -395,6 +429,10 @@ export const useGame = create<GameState>()((set, get) => {
     wrongCount: 0,
     meterM: 0,
     activeCount: 0,
+    perNote: {},
+    recentResults: [],
+    tempo: 1,
+    tempoPeak: 1,
     unlockTick: 0,
     startLives: START_LIVES,
     stageCap: 99,
@@ -555,6 +593,9 @@ export const useGame = create<GameState>()((set, get) => {
       const meterM = meterStart(savedM, daysAway, masterM)
       const activeCount = activeCountAt(meterM, ladderLen, startCount)
       const caps = bandCaps(s)
+      // Tempo restarts a short warm-up below the persisted comfort tempo (or at
+      // the mode floor on a first visit) — never re-grinding the slow part. (§5)
+      const tempo = initialTempo(s.mode ?? 'name', prof?.comfortTempo?.[levelId])
       set({
         screen: 'countdown',
         score: 0,
@@ -567,6 +608,10 @@ export const useGame = create<GameState>()((set, get) => {
         wrongCount: 0,
         meterM,
         activeCount,
+        perNote: {},
+        recentResults: [],
+        tempo,
+        tempoPeak: tempo,
         unlockTick: 0,
         bestStreak: 0,
         lastResult: null,
@@ -585,7 +630,7 @@ export const useGame = create<GameState>()((set, get) => {
 
     beginPlay: () => {
       set({ screen: 'playing' })
-      audio.setStageTempo(1)
+      audio.setStageTempo(get().tempo)
       audio.setMusic(get().settings.music)
       audio.startEngine()
       nextWave(1)
@@ -596,29 +641,41 @@ export const useGame = create<GameState>()((set, get) => {
       if (st.screen !== 'playing' || !st.note) return
       const correct = letter === st.note.letter
 
+      // Per-note tracking (frontier weighting + per-note mastery gate, §4.2) and
+      // the rolling recent-results window (two-way ladder ramp-down, §4.1).
+      const noteK = noteKey(st.note)
+      const perNote = recordAnswer(st.perNote, noteK, correct)
+
       if (correct) {
         const correctCount = st.correctCount + 1
         const stage = 1 + Math.floor(correctCount / CORRECT_PER_STAGE)
         const streak = st.streak + 1
-        // SCORE = small base × SPEED × COMBO. Accelerating into the correct gate
-        // pays more (but going fast = less reaction time = real risk).
-        const cruise = BASE_SPEED + (stage - 1) * STAGE_SPEED // no-boost speed for this stage
-        const speedMult = Math.max(1, Math.min(2.5, 1 + (carState.speed / cruise - 1) * 2.5))
-        const comboMult = 1 + Math.min(streak, 20) * 0.2 // 1× → 5× at a 20-streak
-        const gained = Math.round(10 * speedMult * comboMult)
-        const score = st.score + gained
-
         // ── adaptive note ladder ── a correct answer raises the meter; crossing a
         // threshold reveals the next note; reaching the top masters the level.
         const levelId = st.settings.levelId
         const s = currentSet(levelId, st.customLevels)
+        const scoreMode: NoteMode = s.mode ?? 'name'
+        // SCORE = per-mode tier (§6) × SPEED × COMBO. Accelerating into the correct
+        // gate pays more (but going fast = less reaction time = real risk).
+        const cruise = BASE_SPEED + (stage - 1) * STAGE_SPEED // no-boost speed for this stage
+        const speedMult = Math.max(1, Math.min(2.5, 1 + (carState.speed / cruise - 1) * 2.5))
+        const comboMult = 1 + Math.min(streak, 20) * 0.2 // 1× → 5× at a 20-streak
+        const gained = correctPoints(scoreMode, speedMult, comboMult)
+        const score = st.score + gained
+
         const { ladderLen, startCount, masterM } = ladderContext(s)
         const meterM = st.meterM + 1
         const activeCount = resolveActiveCount(meterM, st.activeCount, ladderLen, startCount)
         const noteUnlocked = activeCount > st.activeCount
+        // Tempo ramps up (faster while confident), capped by the band's stageCap. (§5)
+        const tempo = tempoOnCorrect(st.tempo, streak, st.stageCap)
+        const tempoPeak = Math.max(st.tempoPeak, tempo)
         // Only curriculum levels have a finish line; custom practice levels are
-        // endless (they start with every note active and never "master").
-        const justMastered = !!s.group && meterM >= masterM
+        // endless (they start with every note active and never "master"). Mastery
+        // is now gated PER-NOTE: every frontier note must clear its own bar, so a
+        // kid can't coast past the new material on the old (§4.2/§7).
+        const justMastered =
+          !!s.group && meterM >= masterM && stageMasteryGate(frontierNoteNames(s), activeNotes(s, activeCount), perNote)
 
         // MASTERY = hold the full ladder. The first time, unlock the next tier in
         // this clef track and award the mastery XP bonus.
@@ -643,7 +700,7 @@ export const useGame = create<GameState>()((set, get) => {
 
         audio.correct()
         audio.playNotePitch(st.note)
-        audio.setStageTempo(Math.min(stage, st.stageCap))
+        audio.setStageTempo(tempo)
         set({
           score,
           streak,
@@ -651,6 +708,10 @@ export const useGame = create<GameState>()((set, get) => {
           correctCount,
           meterM,
           activeCount,
+          perNote,
+          recentResults: pushRecent(st.recentResults, true),
+          tempo,
+          tempoPeak,
           unlockTick: st.unlockTick + (noteUnlocked ? 1 : 0),
           bestStreak: Math.max(st.bestStreak, streak),
           lastResult: 'correct',
@@ -666,21 +727,38 @@ export const useGame = create<GameState>()((set, get) => {
         }
       } else {
         // WRONG: the meter falls (demotion pressure), which can drop the most
-        // recently-added note back off the pool until it's re-earned.
+        // recently-added note back off the pool until it's re-earned. POINTS-wise
+        // a wrong answer costs a per-mode penalty (§6) but NEVER lowers the saved
+        // mastery floor (the peak only ratchets up at game over) — a bad run can't
+        // cost an earned stage.
         const s = currentSet(st.settings.levelId, st.customLevels)
+        const scoreMode: NoteMode = s.mode ?? 'name'
         const { ladderLen, startCount } = ladderContext(s)
-        const meterM = Math.max(0, st.meterM - WRONG_PENALTY)
+        // Two-way ladder: on a miss-rate spike, shed an extra STEP to shrink the
+        // pool and isolate the troublesome note, then let it recover (§4.1).
+        const recentResults = pushRecent(st.recentResults, false)
+        const rampDown = rampDownPenalty(recentResults)
+        const meterM = Math.max(0, st.meterM - WRONG_PENALTY - rampDown)
         const activeCount = resolveActiveCount(meterM, st.activeCount, ladderLen, startCount)
+        // Ease-on-miss: back the tempo off toward the mode floor — never accelerate
+        // into failure (§5).
+        const tempo = tempoOnMiss(st.tempo, scoreMode)
         // Beginner levels are no-fail practice: a wrong answer never costs a life,
         // so young students can only exit by succeeding (mastering).
         const lives = isNoFail(s) ? st.lives : st.lives - 1
         audio.wrong()
+        audio.setStageTempo(tempo)
         set({
           lives,
           streak: 0,
           wrongCount: st.wrongCount + 1,
+          score: Math.max(0, st.score - wrongPenaltyPoints(scoreMode)),
           meterM,
           activeCount,
+          perNote,
+          // After a ramp-down fires, clear the window so it can't re-fire every miss.
+          recentResults: rampDown > 0 ? [] : recentResults,
+          tempo,
           lastResult: 'wrong',
           flashTick: st.flashTick + 1,
         })
@@ -730,6 +808,9 @@ export const useGame = create<GameState>()((set, get) => {
         // return is what decays it) plus when this level was last played. (§6)
         const mastery = { ...prof.mastery, [levelId]: Math.max(prof.mastery[levelId] ?? 0, st.meterM) }
         const lastPlayed = { ...prof.lastPlayed, [levelId]: dKey }
+        // Persist the comfort TEMPO (highest sustained this run) so the next run's
+        // warm-up starts just below it instead of from scratch (spec §5).
+        const comfortTempo = { ...prof.comfortTempo, [levelId]: updateComfort(prof.comfortTempo[levelId], st.tempoPeak) }
         // XP = LEARNING: one point per note read correctly this run (mastery adds a bonus above)
         const newXp = prof.xp + st.correctCount
         const newGems = prof.gems + gems + dailyGems
@@ -750,7 +831,7 @@ export const useGame = create<GameState>()((set, get) => {
         )
         const achievements = [...prof.achievements, ...newAchievements]
         const profiles = st.profiles.map((p) =>
-          p.id === prof.id ? { ...p, best, xp: newXp, gems: newGems, achievements, mastery, lastPlayed } : p,
+          p.id === prof.id ? { ...p, best, xp: newXp, gems: newGems, achievements, mastery, lastPlayed, comfortTempo } : p,
         )
         set({ profiles })
         persistProfiles()

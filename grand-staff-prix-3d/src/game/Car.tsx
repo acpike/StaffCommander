@@ -35,8 +35,10 @@ export function Car() {
 
     if (playing) {
       carState.x = clamp(carState.x + carState.steer * STEER_RATE * spec.turnMul * dt, -CLAMP_X, CLAMP_X)
-      // beginner/intermediate bands cap the speed stage so the car never outruns a young reader
-      const speedStage = Math.min(g.stage, g.stageCap)
+      // Speed tracks the continuous TEMPO level (warm-up ramp + comfort-tempo start
+      // + ease-on-miss, spec §5), capped by the band's stageCap so the car never
+      // outruns a young reader. tempo 1 == legacy stage 1 (same slow on-ramp).
+      const speedStage = Math.min(g.tempo, g.stageCap)
       const speed = (BASE_SPEED + (speedStage - 1) * STAGE_SPEED) * spec.topSpeedMul + (input.boost ? BOOST_SPEED : 0)
       carState.speed = speed
       carState.z -= speed * dt

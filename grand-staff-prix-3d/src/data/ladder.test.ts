@@ -10,6 +10,9 @@ import {
   ladderProgress,
   BASE_WARMUP,
   DECAY_PER_DAY,
+  rampDownPenalty,
+  RAMP_DOWN_WINDOW,
+  RAMP_DOWN_DROP,
 } from './ladder'
 
 // A canonical 5-note level starting with 2 notes (e.g. treble C,D → +E → +F → +G).
@@ -110,6 +113,34 @@ describe('meterStart (warm-up + decay)', () => {
     // A saved meter at the cap decays normally; an over-cap input is clamped down.
     expect(meterStart(60, 0, 60)).toBe(60 - BASE_WARMUP)
     expect(meterStart(1000, 0, 60)).toBe(60)
+  })
+})
+
+describe('rampDownPenalty (two-way ladder §4.1)', () => {
+  const full = (corrects: number) => {
+    const w: boolean[] = []
+    for (let i = 0; i < RAMP_DOWN_WINDOW; i++) w.push(i < corrects)
+    return w
+  }
+  it('does nothing until the window is full of recent results', () => {
+    expect(rampDownPenalty([false, false, false])).toBe(0)
+  })
+  it('does nothing while the miss-rate is below the threshold', () => {
+    // mostly correct → no ramp-down
+    expect(rampDownPenalty(full(RAMP_DOWN_WINDOW - 1))).toBe(0)
+  })
+  it('sheds a STEP once at least half the recent window is misses', () => {
+    // half correct / half missed → ≥50% miss-rate fires
+    expect(rampDownPenalty(full(RAMP_DOWN_WINDOW / 2))).toBe(RAMP_DOWN_DROP)
+    // all misses certainly fires
+    expect(rampDownPenalty(full(0))).toBe(RAMP_DOWN_DROP)
+  })
+  it('a ramp-down drop shrinks the active pool a rung', () => {
+    // At the top of a 5-note ladder (M just unlocked note 5), a STEP drop falls
+    // below the keep-band and drops back to 4 notes.
+    const M = STEP * (LEN - START) // note 5 just added
+    const after = M - RAMP_DOWN_DROP
+    expect(resolveActiveCount(after, LEN, LEN, START)).toBeLessThan(LEN)
   })
 })
 

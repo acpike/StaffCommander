@@ -28,6 +28,30 @@ export const WRONG_PENALTY = 2
 export const BASE_WARMUP = 8
 export const DECAY_PER_DAY = 4
 
+// ── Two-way ladder: ramp-DOWN on a miss-rate spike (spec §4.1) ───────────────
+// The meter already dips WRONG_PENALTY per wrong answer. On top of that, when the
+// student is missing repeatedly within a short window, shed a whole STEP so the
+// pool shrinks a rung — isolating the troublesome note to drill it at higher
+// frequency, then re-introduce it as accuracy recovers. Invisible + automatic.
+/** How many recent answers the miss-rate is measured over. */
+export const RAMP_DOWN_WINDOW = 6
+/** Miss fraction in that window that triggers a ramp-down (≥ half missed). */
+export const RAMP_DOWN_MISS_RATE = 0.5
+/** Extra meter shed when a ramp-down fires (one STEP ≈ drops the top note). */
+export const RAMP_DOWN_DROP = STEP
+
+/**
+ * Extra meter to subtract because the recent miss-rate has spiked. Returns 0
+ * until the window is full of recent results AND at least RAMP_DOWN_MISS_RATE of
+ * them are misses; the store resets the window after a drop so it can't re-fire
+ * every answer. PURE — `recent` is the last few results (true = correct).
+ */
+export function rampDownPenalty(recent: boolean[]): number {
+  if (recent.length < RAMP_DOWN_WINDOW) return 0
+  const misses = recent.reduce((n, ok) => n + (ok ? 0 : 1), 0)
+  return misses / recent.length >= RAMP_DOWN_MISS_RATE ? RAMP_DOWN_DROP : 0
+}
+
 function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v))
 }

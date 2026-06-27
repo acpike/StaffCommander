@@ -425,6 +425,24 @@ export const JOURNEY_STAGES: NoteSet[] = REGIONS.flatMap((region) =>
   JOURNEY_MODES.map((m, i) => journeyStage(region, m, (region.n - 1) * 3 + i + 1)),
 )
 
+/**
+ * The "frontier" note names for a stage — the notes whose mastery this stage must
+ * actually prove, so Phase B can weight them heavily and gate per-note mastery on
+ * them (spec §4.2). For a journey stage that is the region's NEWLY-added notes
+ * (BOTH the laddered-in frontier AND the pre-loaded-new ones — so R3–R5's
+ * pre-loaded notes get drilled, not diluted). For any other level it's the notes
+ * that ladder in above the pre-loaded pool (positions ≥ startCount). Custom
+ * practice (whole pool active from note one) has no frontier — uniform play.
+ */
+export function frontierNoteNames(set: NoteSet): string[] {
+  if (set.group === 'journey') {
+    const m = /^r(\d+)-/.exec(set.id)
+    const region = m ? REGIONS.find((r) => r.n === parseInt(m[1], 10)) : undefined
+    if (region) return region.added
+  }
+  return ladderOf(set).slice(startCountOf(set))
+}
+
 export const NOTE_SETS: NoteSet[] = [
   // ── Learning Mode — the primary journey (group 'journey', tiers 1…21) ──
   ...JOURNEY_STAGES,

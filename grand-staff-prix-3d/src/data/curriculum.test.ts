@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { NOTE_SETS, CLEF_GROUPS, makeNote, type NoteSet } from './notes'
+import { NOTE_SETS, CLEF_GROUPS, JOURNEY_STAGES, makeNote, frontierNoteNames, type NoteSet } from './notes'
 import { masterThreshold } from './ladder'
 
 const curriculum = NOTE_SETS.filter((s) => s.group && s.tier)
@@ -67,6 +67,24 @@ describe('curriculum data integrity', () => {
     for (const s of curriculum) {
       if (s.band === 'beginner') expect(s.mode, `${s.id}`).toBe('name')
     }
+  })
+
+  it('frontier = a journey region’s NEW notes, including pre-loaded-new (dilution fix §4.2)', () => {
+    const r3name = JOURNEY_STAGES.find((s) => s.id === 'r3-name')!
+    const frontier = frontierNoteNames(r3name)
+    // Region 3 adds A4 (pre-loaded) + E3 D3 C3 B4 C5 (laddered). All must be frontier.
+    expect(frontier.sort()).toEqual(['A4', 'B4', 'C3', 'C5', 'D3', 'E3'].sort())
+    // The pre-loaded-new note (A4) sits BELOW startCount, so a position-only rule
+    // would miss it — this is exactly the note the gate/weighting must not skip.
+    expect(frontier).toContain('A4')
+    // It does NOT include carried-over already-known notes (e.g. C4 from Region 1).
+    expect(frontier).not.toContain('C4')
+  })
+
+  it('frontier for a sidequest = the notes that ladder in above startCount', () => {
+    const sq = NOTE_SETS.find((s) => s.id === 'sq-treble-4')! // whole treble staff
+    // startCount 5 (line notes pre-loaded), ladder adds the 4 space notes.
+    expect(frontierNoteNames(sq).sort()).toEqual(['A4', 'C5', 'E5', 'F4'].sort())
   })
 
   const ids = new Set<string>()
