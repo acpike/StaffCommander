@@ -746,11 +746,9 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
                 })}
               </div>
             </section>
-          </div>
-        </div>
 
-        {/* ===== SIDE QUESTS — optional drills + custom levels (§10) ===== */}
-        <section className="panel sidequests" style={{ marginTop: 14 }}>
+            {/* ===== SIDE QUESTS — under the journey, optional drills + custom levels (§10) ===== */}
+            <section className="panel sidequests" style={{ marginTop: 14 }}>
           <div className="ph">
             <h3>Side Quests</h3>
             <span className="hint">Optional · Targeted Practice</span>
@@ -821,7 +819,9 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
               <span>＋</span> Create a Level
             </button>
           </div>
-        </section>
+            </section>
+          </div>
+        </div>
 
         {/* ===== SCENERY (CIRCUIT PADDOCK) ===== */}
         <section className="panel" style={{ marginTop: 14 }}>

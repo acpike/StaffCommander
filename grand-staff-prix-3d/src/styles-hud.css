@@ -379,7 +379,8 @@
   padding:12px 13px 14px; display:flex; flex-direction:column; gap:11px;
   /* contained, scrollable list (auto-scrolls to "you are here") — saves the page
      from a wall of 21 stages */
-  max-height:min(70vh, 540px); overflow-y:auto; overscroll-behavior:contain;
+  /* show ~the active region + one more, then scroll (auto-scrolls to current) */
+  max-height:296px; overflow-y:auto; overscroll-behavior:contain;
   scrollbar-width:thin; scrollbar-color:#2b3744 transparent;
 }
 .hudmenu .journey .jbody::-webkit-scrollbar{ width:8px; }
@@ -458,7 +459,7 @@
 .hudmenu .sqbody{
   padding:13px 14px; display:grid; grid-template-columns:repeat(auto-fill,minmax(232px,1fr)); gap:9px;
   /* compact: show ~2 rows then scroll, so optional drills don't eat the page */
-  max-height:232px; overflow-y:auto; overscroll-behavior:contain;
+  max-height:206px; overflow-y:auto; overscroll-behavior:contain;
   scrollbar-width:thin; scrollbar-color:#2b3744 transparent;
 }
 .hudmenu .sqbody::-webkit-scrollbar{ width:8px; }
@@ -515,25 +516,24 @@
 .hudmenu .start:active{ transform:translateY(3px); box-shadow:0 6px 0 -2px var(--livery-dk),0 10px 20px rgba(0,229,196,.4); }
 .hudmenu .start .pre{ font-family:var(--data); font-size:11px; letter-spacing:2px; opacity:.7; align-self:flex-start; margin-top:-2px; text-align:left; }
 
-@media (max-width:1180px){
-  /* single column, with the PROFILE stacked ABOVE the telemetry:
-     header → profile → telemetry → garage/stats → level calendar. Columns become
-     display:contents so their children order directly within the grid. */
+@media (max-width:760px){
+  /* PHONES ONLY: single column, profile stacked above telemetry. Columns become
+     display:contents so their children order directly within the grid. Tablets keep
+     the 2-column layout (see the max-width:1180px block below). */
   .hudmenu .grid{ display:flex; flex-direction:column; gap:14px; }
   .hudmenu .colL, .hudmenu .colR{ display:contents; }
   .hudmenu .hudtop{ order:1; flex-direction:column; }
   .hudmenu .profiletile{ order:2; }
-  /* explicit height (not just min-height): iPad/iOS Safari collapses a flex item to
-     0 height when its content is all absolutely-positioned + it only has min-height */
-  .hudmenu .hudhero{ order:3; height:420px; flex:none; }
+  .hudmenu .hudhero{ order:3; flex:none; }
   .hudmenu .duo{ order:4; }
   .hudmenu .colL .standings{ order:5; }
   .hudmenu .colR .panel{ order:6; }
+  .hudmenu .colR .sidequests{ order:7; }
 }
 @media (max-width:680px){
   .hudmenu .scenes{ grid-template-columns:repeat(2,1fr); }
   .hudmenu .foot{ grid-template-columns:1fr; }
-  .hudmenu .duo{ grid-template-columns:1fr; }
+  /* keep Garage + Stats on ONE line even on phones */
   .hudmenu .brand h1{ font-size:30px; }
   /* keep the 3 mode steps side-by-side (the Name→Find→Mix passes) but tighter */
   .hudmenu .rsteps{ gap:6px; }
@@ -541,10 +541,12 @@
   .hudmenu .jstep .jmode{ font-size:14px; }
   .hudmenu .sqbody{ grid-template-columns:1fr; }
 }
-/* The telemetry hero is sized for a wide desktop panel; shrink its overlaid content
-   on narrow screens so the circuit name / driver / car / gauge stop colliding. */
-@media (max-width:760px){
-  .hudmenu .hudhero{ height:362px; }
+/* TABLETS & below (anything narrower than full desktop): keep TWO columns but rebalance
+   so the telemetry isn't too wide and the journey gets room beside it; shrink the hero's
+   overlaid content so the circuit name / driver / car / gauge fit without colliding. */
+@media (max-width:1180px){
+  .hudmenu .grid{ grid-template-columns:1fr 1fr; }
+  .hudmenu .hudhero{ height:370px; }
   .hudmenu .hudhero .topstrip{ font-size:9px; letter-spacing:1px; padding:9px 12px; }
   .hudmenu .hudhero .topstrip span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .hudmenu .hudhero .loc{ top:33px; left:13px; right:120px; }
