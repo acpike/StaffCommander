@@ -401,6 +401,19 @@ describe('placement run-driven flow (§9)', () => {
     expect(st.settings.levelId).toBe('r1-name')
   })
 
+  it('abandoning an unfinished placement (HUD Exit) places at r1-name — never leaves a locked levelId', () => {
+    startPlace(3) // picks region 3 → settings.levelId becomes the LOCKED r3-name
+    expect(useGame.getState().settings.levelId).toBe('r3-name')
+    expect(profile().mastered).not.toContain('r3-name') // not unlocked/placed yet
+    useGame.getState().goMenu() // the HUD "Exit" button mid-assessment
+    const st = useGame.getState()
+    expect(st.placement).toBeNull()
+    expect(st.screen).toBe('menu')
+    expect(st.settings.levelId).toBe('r1-name') // fell back to the safe floor (= Skip)
+    expect(profile().unlocked).toContain('r1-name')
+    expect(journeyMastered(profile())).toHaveLength(0) // floor masters nothing → coherent
+  })
+
   it('the run ends on the note cap (not on mastery): 50% accuracy → miss → step down', () => {
     startPlace(4)
     for (let i = 0; i < PLACEMENT_NOTES; i++) answer('C4', i % 2 === 0) // 8/16 = 50%

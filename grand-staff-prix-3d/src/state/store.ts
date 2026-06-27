@@ -690,8 +690,26 @@ export const useGame = create<GameState>()((set, get) => {
     goMenu: () => {
       audio.stopEngine()
       audio.setMusic(false)
-      // Bailing to the menu (e.g. the HUD quit button mid-placement) also ends any
-      // placement flow, so a half-finished assessment can't bleed into the next run.
+      const st = get()
+      // Bailing to the menu (e.g. the HUD Exit button mid-placement) ends the
+      // placement flow. If the student abandoned an assessment that never placed
+      // them, treat it exactly like the picker's "I'm brand new" Skip: place them
+      // at the floor. Otherwise we'd return to the menu with the profile UNPLACED
+      // and settings.levelId left pointing at the still-LOCKED region they were
+      // testing (r{N}-name) — which the footer Start Race would then launch, and
+      // mastering it would punch a hole in the linear chain.
+      if (st.placement && st.currentId && !st.placement.placedStageId) {
+        const targetId = 'r1-name'
+        set((s2) => ({
+          profiles: s2.profiles.map((p) => (p.id === s2.currentId ? placeProfileForStage(p, targetId) : p)),
+          settings: { ...s2.settings, levelId: targetId },
+          screen: 'menu',
+          placement: null,
+        }))
+        persistProfiles()
+        persistSettings()
+        return
+      }
       set({ screen: 'menu', placement: null })
     },
 
