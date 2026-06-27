@@ -301,26 +301,25 @@ Curriculum authored in `src/data/notes.ts` (`REGIONS`, `JOURNEY_STAGES`) + migra
 
 ### Per-region notes
 
-| # | Region | Range | New this region | Pool | Pre-load (`startCount`) | Ladders in (frontier) | Mastery¹ |
-|---|---|---|---|---|---|---|---|
-| 1 | Middle C | A3–E4 | A3 B3 C4 D4 E4 *(start)* | 5 | 2 | E4 B3 A3 | 60 |
-| 2 | Treble | F3–G5 | F3 G3 F4 G4 A4 B4 C5 D5 E5 F5 G5 | 16 | 11 | C5 D5 E5 F5 G5 | 90 |
-| 3 | Bass Reach | C3–C5 | C3 D3 E3 | 19 | 16 | E3 D3 C3 | 60 |
-| 4 | Wider Range | G2–F5 | G2 A2 B2 | 22 | 19 | B2 A2 G2 | 60 |
-| 5 | ±1 Ledger | C2–C6 | C2 D2 E2 F2 · A5 B5 C6 | 29 | 24 | E2 D2 C2 B5 C6 | 90 |
-| 6 | ±2 Ledger | A1–E6 | A1 B1 · D6 E6 | 33 | 29 | B1 A1 D6 E6 | 75 |
-| 7 | Full Staff | F1–G6 | F1 G1 · F6 G6 | 37 | 33 | G1 F1 F6 G6 | 75 |
+| # | Region | Range | New this region | Pool | `startCount` | Pre-loaded new | Ladders in (frontier) | Mastery¹ |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Middle C | A3–E4 | A3 B3 C4 D4 E4 *(start)* | 5 | 2 | C4 D4 | E4 B3 A3 | 60 |
+| 2 | Treble | F3–G4 | F3 G3 F4 G4 | 9 | 5 | — | F4 G4 F3 G3 | 75 |
+| 3 | Both Hands | C3–C5 | C3 D3 E3 A4 B4 C5 | 15 | 10 | A4 | E3 D3 C3 B4 C5 | 90 |
+| 4 | Wider Range | G2–F5 | G2 A2 B2 D5 E5 F5 | 21 | 16 | D5 | B2 A2 G2 E5 F5 | 90 |
+| 5 | ±1 Ledger | C2–C6 | C2 D2 E2 F2 G5 A5 B5 C6 | 29 | 24 | F2 G5 A5 | E2 D2 C2 B5 C6 | 90 |
+| 6 | ±2 Ledger | A1–E6 | A1 B1 D6 E6 | 33 | 29 | — | B1 A1 D6 E6 | 75 |
+| 7 | Full Staff | F1–G6 | F1 G1 F6 G6 | 37 | 33 | — | G1 F1 F6 G6 | 75 |
 
 ¹ Mastery threshold = `15·(pool − startCount + 1)` correct notes; the `curriculum.test.ts`
 invariant keeps it in 45–90, i.e. **2–5 notes laddered per stage**.
 
-> **Judgment call:** the spec's literal "ladder in *all* new notes, `startCount` = carried
-> count" would make Region 2 ladder 11 notes (threshold 180) and Region 5 ladder 7 — far past
-> the 45–90 consistency bound the engine + tests rely on. So the two big-block regions
-> **pre-load their inner new notes and ladder in only the outer ~5 frontier notes** (Region 2
-> pre-loads F3 G3 F4 G4 A4 B4, Region 5 pre-loads F2 A5). The pre-loaded new notes are still
-> live in the active pool from note one; Phase B's frontier weighting (§4.2) is what makes them
-> get *emphasized*. All other regions follow the spec literally (carried = `startCount`).
+> **Laddering rule:** every stage ladders in **≤5 frontier notes**. Regions adding ≤5 new
+> notes (1, 2, 6, 7) ladder them all, `startCount` = carried-known count. Regions adding more
+> pre-load the **inner overflow** new notes (nearest the already-known pool) and ladder the
+> **outer** frontier: Region 3 (+6) and Region 4 (+6) pre-load 1 each (A4 / D5); Region 5 (+8)
+> pre-loads 3 (F2 G5 A5). The pre-loaded new notes stay live in the active pool from note one;
+> Phase B's frontier weighting (§4.2) is what makes them get *emphasized*, so nothing is skipped.
 
 ### Stage chain (21 = 7 × 3)
 
@@ -356,3 +355,9 @@ Old profile ids re-key onto the nearest journey stage (non-destructive, idempote
 
 Custom (`cl-*`) ids pass through unchanged. Applied to `best`/`unlocked`/`mastered`/`mastery`/
 `lastPlayed` and the saved `settings.levelId`.
+
+The map is re-checked against the revised ranges and stays sensible: `grand-4` ("Whole Grand
+Staff", G2–F5) now maps **exactly** onto `r4` (G2–F5); the ledger levels `treble-5`/`bass-5`/
+`grand-5` land on `r5-mix` (±1 Ledger · Mix). Mapping biases **conservative** (spec §9 —
+under-placing is cheap, over-placing strands), e.g. the treble-only track maps into the early
+grand-staff stages so a treble-only learner still picks up the bass clef the journey introduces.

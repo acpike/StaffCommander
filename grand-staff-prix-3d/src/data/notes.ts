@@ -323,20 +323,22 @@ function level(
 // while everything the student already knows is pre-loaded via `startCount`. To
 // hold every stage to a consistent mastery effort (curriculum.test.ts keeps the
 // mastery threshold in ~45–90 correct notes ⇒ 2–5 notes laddered in per stage),
-// regions that add a big block of notes (Region 2 = the whole treble staff;
-// Region 5 = both first ledgers) pre-load the inner new notes and ladder in only
-// the outer frontier. Frontier weighting + per-note mastery (spec §4.2) is Phase B.
+// every stage ladders in ≤5 frontier notes: regions that add ≤5 new notes (1, 2,
+// 6, 7) ladder them all; regions that add more (3, 4 add 6; 5 adds 8) pre-load the
+// INNER overflow new notes — those nearest the already-known pool, which stay live
+// from note one — and ladder the OUTER frontier. Frontier weighting + per-note
+// mastery (spec §4.2) is Phase B.
 //
 // ── Phase A — final per-region note breakdown ──────────────────────────────
-//  R  Region        Range    New this region                     Pool  Pre-load  Ladders in
-//  1  Middle C      A3–E4    A3 B3 C4 D4 E4 (start)                 5      2       E4 B3 A3
-//  2  Treble        F3–G5    F3 G3 F4 G4 A4 B4 C5 D5 E5 F5 G5      16     11       C5 D5 E5 F5 G5
-//  3  Bass Reach    C3–C5    C3 D3 E3                              19     16       E3 D3 C3
-//  4  Wider Range   G2–F5    G2 A2 B2                              22     19       B2 A2 G2
-//  5  ±1 Ledger     C2–C6    C2 D2 E2 F2 · A5 B5 C6                29     24       E2 D2 C2 B5 C6
-//  6  ±2 Ledger     A1–E6    A1 B1 · D6 E6                         33     29       B1 A1 D6 E6
-//  7  Full Staff    F1–G6    F1 G1 · F6 G6                         37     33       G1 F1 F6 G6
-// (Pool = total cumulative notes; Pre-load = startCount; mastery threshold = 15·(pool−startCount+1).)
+//  R  Region       Range   New this region            Pool  start  Pre-loaded new  Ladders in (frontier)
+//  1  Middle C     A3–E4   A3 B3 C4 D4 E4 (start)       5     2     C4 D4           E4 B3 A3
+//  2  Treble       F3–G4   F3 G3 F4 G4                  9     5     —               F4 G4 F3 G3
+//  3  Both Hands   C3–C5   C3 D3 E3 A4 B4 C5           15    10     A4              E3 D3 C3 B4 C5
+//  4  Wider Range  G2–F5   G2 A2 B2 D5 E5 F5           21    16     D5              B2 A2 G2 E5 F5
+//  5  ±1 Ledger    C2–C6   C2 D2 E2 F2 G5 A5 B5 C6     29    24     F2 G5 A5        E2 D2 C2 B5 C6
+//  6  ±2 Ledger    A1–E6   A1 B1 D6 E6                 33    29     —               B1 A1 D6 E6
+//  7  Full Staff   F1–G6   F1 G1 F6 G6                 37    33     —               G1 F1 F6 G6
+// (Pool = total cumulative notes; start = startCount; mastery threshold = 15·(pool−startCount+1).)
 // ──────────────────────────────────────────────────────────────────────────
 
 export interface Region {
@@ -360,10 +362,10 @@ export interface Region {
 // frontier, and its startCount = (prev pool size) + preload count.
 const REGION_DEFS: { n: number; name: string; range: string; preload: string[]; frontier: string[] }[] = [
   { n: 1, name: 'Middle C', range: 'A3–E4', preload: ['C4', 'D4'], frontier: ['E4', 'B3', 'A3'] },
-  { n: 2, name: 'Treble', range: 'F3–G5', preload: ['F3', 'G3', 'F4', 'G4', 'A4', 'B4'], frontier: ['C5', 'D5', 'E5', 'F5', 'G5'] },
-  { n: 3, name: 'Bass Reach', range: 'C3–C5', preload: [], frontier: ['E3', 'D3', 'C3'] },
-  { n: 4, name: 'Wider Range', range: 'G2–F5', preload: [], frontier: ['B2', 'A2', 'G2'] },
-  { n: 5, name: '±1 Ledger', range: 'C2–C6', preload: ['F2', 'A5'], frontier: ['E2', 'D2', 'C2', 'B5', 'C6'] },
+  { n: 2, name: 'Treble', range: 'F3–G4', preload: [], frontier: ['F4', 'G4', 'F3', 'G3'] },
+  { n: 3, name: 'Both Hands', range: 'C3–C5', preload: ['A4'], frontier: ['E3', 'D3', 'C3', 'B4', 'C5'] },
+  { n: 4, name: 'Wider Range', range: 'G2–F5', preload: ['D5'], frontier: ['B2', 'A2', 'G2', 'E5', 'F5'] },
+  { n: 5, name: '±1 Ledger', range: 'C2–C6', preload: ['F2', 'G5', 'A5'], frontier: ['E2', 'D2', 'C2', 'B5', 'C6'] },
   { n: 6, name: '±2 Ledger', range: 'A1–E6', preload: [], frontier: ['B1', 'A1', 'D6', 'E6'] },
   { n: 7, name: 'Full Staff', range: 'F1–G6', preload: [], frontier: ['G1', 'F1', 'F6', 'G6'] },
 ]
