@@ -4,6 +4,7 @@ import { input } from './game/input'
 import { ensureMusicFont } from './util/staffTexture'
 import { GameScene } from './game/GameScene'
 import { Menu } from './ui/Menu'
+import { Placement } from './ui/Placement'
 import { HUD } from './ui/HUD'
 import { Countdown } from './ui/Countdown'
 import { GameOver } from './ui/GameOver'
@@ -21,7 +22,9 @@ export function App() {
     return () => input.detach()
   }, [])
 
-  const inGame = screen !== 'menu'
+  // The placement picker/result are menu-like (their own backdrop); only the live
+  // placement RUN (countdown/playing) needs the 3D race scene.
+  const inGame = screen !== 'menu' && screen !== 'placement'
 
   if (!started) return <Splash onStart={() => setStarted(true)} />
 
@@ -29,6 +32,7 @@ export function App() {
     <>
       {inGame && <GameScene />}
       {screen === 'menu' && <Menu />}
+      {screen === 'placement' && <Placement />}
       {screen === 'countdown' && <Countdown />}
       {screen === 'playing' && <HUD />}
       {screen === 'playing' && <TouchControls />}

@@ -24,7 +24,8 @@ import {
 import { masterThreshold, WRONG_PENALTY, RAMP_DOWN_DROP, RAMP_DOWN_WINDOW } from '../data/ladder'
 import { correctPoints, wrongPenaltyPoints, MODE_CORRECT_POINTS } from '../data/scoring'
 import { tempoFloor, COMFORT_WARMUP_STAGES } from '../data/tempo'
-import { useGame, type Profile } from './store'
+import { useGame, placeProfileForStage, PLACEMENT_NOTES, type Profile } from './store'
+import { JOURNEY_STAGES } from '../data/notes'
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
@@ -293,5 +294,120 @@ describe('scoring tiers in-loop (§6)', () => {
     expect(after.score).toBe(scoreBefore) // 0-penalty tier: points unchanged
     expect(after.lives).toBe(livesBefore) // no-fail: no life lost either
     expect(wrongPenaltyPoints('name')).toBe(0)
+  })
+})
+
+// ── §9 — placement: place-the-profile logic (pure) ───────────────────────────
+
+function journeyMastered(p: Profile): string[] {
+  return p.mastered.filter((id) => /^r\d+-/.test(id))
+}
+
+describe('placement place-the-profile logic (§9)', () => {
+  it('a pass at region N marks every stage BELOW mastered and lands at N-find (unlocked, not pre-mastered)', () => {
+    const placed = placeProfileForStage(profile(), 'r3-find')
+    // r3-find is tier 8; everything below it (r1-name … r3-name) is earned.
+    const below = JOURNEY_STAGES.filter((s) => (s.tier ?? 0) < 8).map((s) => s.id)
+    expect(below).toContain('r1-name')
+    expect(below).toContain('r3-name')
+    for (const id of below) {
+      expect(placed.mastered).toContain(id)
+      expect(placed.unlocked).toContain(id)
+    }
+    // The Find stage they drop into is unlocked (active) but NOT pre-mastered…
+    expect(placed.unlocked).toContain('r3-find')
+    expect(placed.mastered).not.toContain('r3-find')
+    // …and nothing above it is touched.
+    expect(placed.mastered).not.toContain('r3-mix')
+    expect(placed.unlocked).not.toContain('r3-mix')
+  })
+
+  it('the r1-name floor masters nothing on the journey (brand new)', () => {
+    const placed = placeProfileForStage(profile(), 'r1-name')
+    expect(journeyMastered(placed)).toHaveLength(0)
+    expect(placed.unlocked).toContain('r1-name')
+  })
+
+  it('is idempotent and never demotes more-advanced progress', () => {
+    const base: Profile = { ...profile(), mastered: ['r5-mix'], unlocked: [...profile().unlocked, 'r5-mix'] }
+    const once = placeProfileForStage(base, 'r2-find')
+    const twice = placeProfileForStage(once, 'r2-find')
+    expect(new Set(twice.mastered)).toEqual(new Set(once.mastered))
+    expect(new Set(twice.unlocked)).toEqual(new Set(once.unlocked))
+    expect(once.mastered).toContain('r5-mix') // sticky: a higher earned stage survives
+  })
+})
+
+// ── §9 — placement: run-driven flow ─────────────────────────────────────────
+
+/** startPlacement(region) → beginPlay, leaving a live placement run in `playing`. */
+function startPlace(region: number): void {
+  const g = useGame.getState()
+  g.startPlacement(region)
+  g.beginPlay()
+}
+
+describe('placement run-driven flow (§9)', () => {
+  it('"I\'m brand new" places at r1-name with no test and returns to the menu', () => {
+    useGame.getState().beginPlacement()
+    expect(useGame.getState().screen).toBe('placement')
+    expect(useGame.getState().placement?.phase).toBe('picker')
+    useGame.getState().placeNewStudent()
+    const st = useGame.getState()
+    expect(st.placement).toBeNull()
+    expect(st.screen).toBe('menu')
+    expect(st.settings.levelId).toBe('r1-name')
+    expect(journeyMastered(profile())).toHaveLength(0)
+  })
+
+  it('a passing run (≥ bar) lands at the picked region\'s Find stage and banks the regions below', () => {
+    startPlace(2)
+    expect(useGame.getState().placement?.phase).toBe('testing')
+    for (let i = 0; i < PLACEMENT_NOTES; i++) correctly('C4') // 100% → pass
+    const st = useGame.getState()
+    expect(st.placement?.phase).toBe('result')
+    expect(st.placement?.passed).toBe(true)
+    expect(st.placement?.placedStageId).toBe('r2-find')
+    expect(st.settings.levelId).toBe('r2-find')
+    expect(profile().mastered).toEqual(expect.arrayContaining(['r1-name', 'r1-find', 'r1-mix', 'r2-name']))
+    expect(profile().mastered).not.toContain('r2-find')
+    useGame.getState().endPlacement()
+    expect(useGame.getState().screen).toBe('menu')
+    expect(useGame.getState().placement).toBeNull()
+  })
+
+  it('a missed run steps DOWN one region (nothing banked yet); a pass there then places', () => {
+    startPlace(3)
+    for (let i = 0; i < PLACEMENT_NOTES; i++) wrongly('C4') // 0% → miss
+    let st = useGame.getState()
+    expect(st.placement?.passed).toBe(false)
+    expect(st.placement?.nextRegion).toBe(2) // 3 → 2
+    expect(st.placement?.placedStageId).toBeNull()
+    expect(journeyMastered(profile())).toHaveLength(0) // a miss banks nothing
+
+    startPlace(2) // take the step-down…
+    for (let i = 0; i < PLACEMENT_NOTES; i++) correctly('C4') // …and pass it
+    st = useGame.getState()
+    expect(st.placement?.passed).toBe(true)
+    expect(st.settings.levelId).toBe('r2-find')
+  })
+
+  it('missing all the way to the floor starts the student at r1-name', () => {
+    startPlace(2)
+    for (let i = 0; i < PLACEMENT_NOTES; i++) wrongly('C4')
+    const st = useGame.getState()
+    expect(st.placement?.passed).toBe(false)
+    expect(st.placement?.placedStageId).toBe('r1-name')
+    expect(st.settings.levelId).toBe('r1-name')
+  })
+
+  it('the run ends on the note cap (not on mastery): 50% accuracy → miss → step down', () => {
+    startPlace(4)
+    for (let i = 0; i < PLACEMENT_NOTES; i++) answer('C4', i % 2 === 0) // 8/16 = 50%
+    const st = useGame.getState()
+    expect(st.correctCount + st.wrongCount).toBe(PLACEMENT_NOTES)
+    expect(st.placement?.phase).toBe('result')
+    expect(st.placement?.passed).toBe(false)
+    expect(st.placement?.nextRegion).toBe(3)
   })
 })

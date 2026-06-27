@@ -870,8 +870,12 @@ export function Menu() {
         <Garage
           isSetup={creating}
           onDone={() => {
+            // New profiles route into placement (spec §9) instead of straight to the
+            // play menu; an existing player tweaking the garage just returns to play.
+            const isNewPlayer = creating
             setCreating(false)
-            setView('play')
+            if (isNewPlayer) useGame.getState().beginPlacement()
+            else setView('play')
           }}
         />
       )

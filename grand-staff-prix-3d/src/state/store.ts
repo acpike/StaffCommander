@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { NOTE_SETS, buildGateLettersFrom, activeNotes, startCountOf, customSet, nextLevel, starterLevelIds, frontierNoteNames, type GameNote, type Letter, type NoteSet, type Clef, type NoteMode } from '../data/notes'
+import { NOTE_SETS, JOURNEY_STAGES, buildGateLettersFrom, activeNotes, startCountOf, customSet, nextLevel, starterLevelIds, frontierNoteNames, type GameNote, type Letter, type NoteSet, type Clef, type NoteMode } from '../data/notes'
 import { migrateProfileIds, migrateLevelId } from '../data/migrate'
 import { WRONG_PENALTY, resolveActiveCount, activeCountAt, masterThreshold, meterStart, rampDownPenalty, RAMP_DOWN_WINDOW } from '../data/ladder'
 import { type PerNote, noteKey, recordAnswer, pickWeighted, stageMasteryGate } from '../data/pernote'
@@ -180,8 +180,67 @@ const CORRECT_PER_STAGE = 8 // longer stages — sustain the skill, don't sprint
 export const START_LIVES = 3
 const GATES_BASE = 3
 
-export type Screen = 'menu' | 'countdown' | 'playing' | 'over'
+export type Screen = 'menu' | 'placement' | 'countdown' | 'playing' | 'over'
 export type RoundResult = 'correct' | 'wrong' | null
+
+// ──────────────────────────────────────────────────────────────────────────
+// Placement (spec §9). On a NEW profile the student is shown the milestone
+// ladder (the 7 regions). Picking one runs a short Name-mode assessment of that
+// region — capped at PLACEMENT_NOTES notes — and is placed by the result:
+//   • pass (≥ PLACEMENT_PASS) → regions below earned/mastered + the placement
+//     run counts as that region's Name pass, so they DROP IN at its Find stage;
+//   • miss → step DOWN one region and re-test, until they pass or reach the
+//     floor (Region 1 → start at r1-name, no test).
+// The run reuses the normal countdown→playing machinery; `placement.phase` is
+// what marks a run as a placement run (so normal runs are never hijacked).
+// ──────────────────────────────────────────────────────────────────────────
+
+/** How many notes a placement run lasts before it ends + reports accuracy (§9). */
+export const PLACEMENT_NOTES = 16
+/** Accuracy bar a placement run must clear to place AT the picked region (§9). */
+export const PLACEMENT_PASS = 0.85
+
+export type PlacementPhase = 'picker' | 'testing' | 'result'
+export interface PlacementState {
+  /** 'picker' = choosing a region; 'testing' = the run is live; 'result' = show outcome. */
+  phase: PlacementPhase
+  /** The region just picked / tested (0 while still on the picker). */
+  region: number
+  /** Result of the last run (only meaningful in 'result'). */
+  passed: boolean
+  /** Accuracy of the last run, 0–1 (for the result readout). */
+  accuracy: number
+  /** On a miss with room to step down, the region to re-test next (else null). */
+  nextRegion: number | null
+  /** The stage id the student was finally placed at (set once placed; else null). */
+  placedStageId: string | null
+}
+
+/**
+ * Pure placement of a profile at a journey stage (spec §9.4). Marks EVERY stage
+ * below the target as mastered + unlocked, unlocks the target itself, and leaves
+ * the active level for the caller to set. Idempotent — uses sets and merges onto
+ * existing progress, so it never demotes a more-advanced returning student and
+ * re-applying it is a no-op. Consistent with the linear tier chain the normal
+ * unlock walk uses (`nextLevel` group+tier), so the unlock chain isn't corrupted.
+ */
+export function placeProfileForStage(p: Profile, targetStageId: string): Profile {
+  const target = JOURNEY_STAGES.find((s) => s.id === targetStageId)
+  if (!target || target.tier == null) return p
+  const targetTier = target.tier
+  const mastered = new Set(p.mastered)
+  const unlocked = new Set([...starterLevelIds(), ...p.unlocked, targetStageId])
+  for (const s of JOURNEY_STAGES) {
+    if (s.tier == null) continue
+    if (s.tier < targetTier) {
+      mastered.add(s.id)
+      unlocked.add(s.id)
+    } else if (s.tier === targetTier) {
+      unlocked.add(s.id)
+    }
+  }
+  return { ...p, mastered: Array.from(mastered), unlocked: Array.from(unlocked) }
+}
 
 export interface GameState {
   // ── navigation ──
@@ -195,6 +254,8 @@ export interface GameState {
   customLevels: NoteSet[]
   /** Today's daily-challenge progress. */
   daily: DailyState
+  /** Active placement flow (spec §9), or null when not placing a new student. */
+  placement: PlacementState | null
   // ── live run ──
   score: number
   lives: number
@@ -265,6 +326,16 @@ export interface GameState {
   toggleMusic: () => void
   toggleCClefs: () => void
   setSteering: (s: Settings['steering']) => void
+
+  // ── placement actions (spec §9) ──
+  /** Enter the milestone-ladder picker (called after a new profile is set up). */
+  beginPlacement: () => void
+  /** Pick region N → run a capped Name-mode placement assessment of it. */
+  startPlacement: (regionN: number) => void
+  /** "I'm brand new" / skip → place at r1-name (no test) and go to the menu. */
+  placeNewStudent: () => void
+  /** Continue out of the placement result into the (placed) menu. */
+  endPlacement: () => void
 
   // ── flow actions ──
   goMenu: () => void
@@ -409,6 +480,49 @@ export const useGame = create<GameState>()((set, get) => {
     set((st) => ({ note, gateLetters, waveId: st.waveId + 1, noteMode }))
   }
 
+  // Ends a placement RUN (§9): scores accuracy and either places the student
+  // (pass, or stepped down to the floor) or surfaces a step-down to the next
+  // region. Does NOT run the normal end-of-run persistence — a placement run is
+  // an assessment, not a scored game, so it banks no best/mastery/comfort.
+  const finishPlacement = () => {
+    const st = get()
+    const pl = st.placement
+    if (!pl) return
+    const total = st.correctCount + st.wrongCount
+    const accuracy = total > 0 ? st.correctCount / total : 0
+    const passed = accuracy >= PLACEMENT_PASS
+    audio.setMusic(false)
+    audio.stopEngine()
+
+    const applyPlace = (targetId: string) => {
+      set((st2) => ({
+        profiles: st2.profiles.map((p) => (p.id === st2.currentId ? placeProfileForStage(p, targetId) : p)),
+        settings: { ...st2.settings, levelId: targetId },
+      }))
+      persistProfiles()
+      persistSettings()
+    }
+
+    if (passed) {
+      // The placement WAS their Name pass → drop in at this region's Find stage.
+      const targetId = `r${pl.region}-find`
+      applyPlace(targetId)
+      set({ placement: { phase: 'result', region: pl.region, passed: true, accuracy, nextRegion: null, placedStageId: targetId }, screen: 'placement' })
+      audio.fanfare()
+    } else {
+      const nextRegion = pl.region - 1
+      if (nextRegion >= 2) {
+        // Step DOWN one region and offer the re-test (§9.5).
+        set({ placement: { phase: 'result', region: pl.region, passed: false, accuracy, nextRegion, placedStageId: null }, screen: 'placement' })
+      } else {
+        // Reached the floor — start at the very beginning (no further test).
+        const targetId = 'r1-name'
+        applyPlace(targetId)
+        set({ placement: { phase: 'result', region: 1, passed: false, accuracy, nextRegion: null, placedStageId: targetId }, screen: 'placement' })
+      }
+    }
+  }
+
   return {
     screen: 'menu',
     profiles: initialProfiles,
@@ -420,6 +534,7 @@ export const useGame = create<GameState>()((set, get) => {
       const key = todayKey()
       return stored && stored.date === key ? stored : { date: key, progress: {}, done: [] }
     })(),
+    placement: null,
 
     score: 0,
     lives: START_LIVES,
@@ -575,7 +690,41 @@ export const useGame = create<GameState>()((set, get) => {
     goMenu: () => {
       audio.stopEngine()
       audio.setMusic(false)
-      set({ screen: 'menu' })
+      // Bailing to the menu (e.g. the HUD quit button mid-placement) also ends any
+      // placement flow, so a half-finished assessment can't bleed into the next run.
+      set({ screen: 'menu', placement: null })
+    },
+
+    // ── placement (spec §9) ──────────────────────────────────────────────────
+    beginPlacement: () => {
+      set({ screen: 'placement', placement: { phase: 'picker', region: 0, passed: false, accuracy: 0, nextRegion: null, placedStageId: null } })
+    },
+    startPlacement: (regionN) => {
+      // Run the region's Name stage as the assessment; the placement phase flag is
+      // what caps + reroutes the run (startGame builds the run from settings.levelId).
+      set((st) => ({
+        settings: { ...st.settings, levelId: `r${regionN}-name` },
+        placement: { phase: 'testing', region: regionN, passed: false, accuracy: 0, nextRegion: null, placedStageId: null },
+      }))
+      get().startGame()
+    },
+    placeNewStudent: () => {
+      const targetId = 'r1-name'
+      set((st) => ({
+        profiles: st.profiles.map((p) => (p.id === st.currentId ? placeProfileForStage(p, targetId) : p)),
+        settings: { ...st.settings, levelId: targetId },
+        placement: null,
+        screen: 'menu',
+      }))
+      persistProfiles()
+      persistSettings()
+      audio.stopEngine()
+      audio.setMusic(false)
+    },
+    endPlacement: () => {
+      set({ placement: null, screen: 'menu' })
+      audio.stopEngine()
+      audio.setMusic(false)
     },
 
     startGame: () => {
@@ -719,7 +868,10 @@ export const useGame = create<GameState>()((set, get) => {
           unlockedThisRun,
           masteredThisRun,
         })
-        if (justMastered) {
+        // Placement runs end after a fixed number of notes (§9), regardless of
+        // mastery — endGame routes to finishPlacement when a placement is live.
+        const placementCap = st.placement?.phase === 'testing' && correctCount + st.wrongCount >= PLACEMENT_NOTES
+        if (justMastered || placementCap) {
           // Finish line: mastering ENDS the race as a win — the exit ramp. (§7)
           get().endGame()
         } else {
@@ -762,7 +914,10 @@ export const useGame = create<GameState>()((set, get) => {
           lastResult: 'wrong',
           flashTick: st.flashTick + 1,
         })
-        if (lives <= 0) {
+        // Placement runs end after a fixed number of notes (§9); a no-fail Name
+        // run can't run out of lives, so this cap is what terminates it.
+        const placementCap = st.placement?.phase === 'testing' && st.correctCount + (st.wrongCount + 1) >= PLACEMENT_NOTES
+        if (lives <= 0 || placementCap) {
           get().endGame()
         } else {
           nextWave(st.stage)
@@ -772,6 +927,12 @@ export const useGame = create<GameState>()((set, get) => {
 
     endGame: () => {
       const st = get()
+      // A placement run is an assessment, not a scored game — route it to its own
+      // pass/miss handler instead of the normal end-of-run persistence.
+      if (st.placement?.phase === 'testing') {
+        finishPlacement()
+        return
+      }
       const total = st.correctCount + st.wrongCount
       const accuracy = total > 0 ? st.correctCount / total : 0
       const gems = gemsForRun(st.score, !!st.masteredThisRun, accuracy)

@@ -2828,3 +2828,118 @@ body {
     width: 100%;
   }
 }
+
+/* ── Placement flow (spec §9): milestone-ladder picker + result ───────────── */
+.placeSheet .topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.sheet .placeGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+.sheet .placeCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  text-align: left;
+  cursor: pointer;
+  color: var(--ink);
+  font-family: var(--body);
+  background: linear-gradient(160deg, var(--carbon-2), var(--carbon-1));
+  border: 1px solid var(--carbon-3);
+  border-bottom: 3px solid var(--carbon-3);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  transition: 0.15s;
+}
+.sheet .placeCard:hover {
+  border-color: var(--livery);
+  border-bottom-color: var(--livery);
+  transform: translateY(-1px);
+}
+.sheet .placeHead {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.sheet .placeNum {
+  font-family: var(--disp);
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--carbon-0);
+  background: var(--livery);
+  line-height: 1;
+  padding: 3px 7px;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 4px 100%, 0 calc(100% - 4px));
+}
+.sheet .placeName {
+  font-family: var(--disp);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.sheet .placeRange {
+  margin-left: auto;
+  font-family: var(--data);
+  font-size: 10px;
+  color: var(--mute);
+}
+.placePrev {
+  background: #fbfbfd;
+  border-radius: 8px;
+  padding: 6px 4px;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.placePrev .tapStaff {
+  max-height: 84px;
+  width: auto;
+  max-width: 100%;
+}
+.sheet .placeGo {
+  font-family: var(--data);
+  font-size: 10px;
+  letter-spacing: 0.6px;
+  color: var(--livery);
+  text-transform: uppercase;
+}
+.sheet .placeResult {
+  text-align: center;
+}
+.sheet .placeResult p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink);
+  margin: 8px 0 0;
+}
+.sheet .placeResult b {
+  color: var(--livery);
+}
+.sheet .placeResult .secLabel {
+  justify-content: center;
+}
+.sheet .placeBig {
+  font-family: var(--disp);
+  font-weight: 800;
+  font-size: 56px;
+  line-height: 1;
+  color: var(--ink);
+  margin: 10px 0 2px;
+}
+.sheet .placeResult.win .placeBig {
+  color: var(--livery);
+}
+
+@media (max-width: 420px) {
+  .sheet .placeGrid {
+    grid-template-columns: 1fr;
+  }
+}
