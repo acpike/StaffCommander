@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLoader } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
@@ -441,6 +441,49 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
     if (backdropSrc) useLoader.preload(THREE.TextureLoader, backdropSrc)
   }, [carModel, composerModel, backdropSrc])
 
+  // ── class leaderboard (fetched once on mount / when the class changes) ──
+  // Resilient: leaderboard() already swallows cloud errors and returns []; an
+  // empty class code or empty roster falls back to the local-only friendly state.
+  const [classRows, setClassRows] = useState<CloudPlayer[]>([])
+  const [classLoading, setClassLoading] = useState(true)
+  useEffect(() => {
+    let alive = true
+    setClassLoading(true)
+    leaderboard(settings.classCode)
+      .then((r) => {
+        if (alive) {
+          setClassRows(r)
+          setClassLoading(false)
+        }
+      })
+      .catch(() => {
+        if (alive) {
+          setClassRows([])
+          setClassLoading(false)
+        }
+      })
+    return () => {
+      alive = false
+    }
+  }, [settings.classCode])
+  const classActive = !!settings.classCode && classRows.length > 0
+  const myXp = profile?.xp ?? 0
+  const myRank = classRows.filter((p) => Number(p.data?.xp ?? 0) > myXp).length + 1
+  const top3 = classRows.slice(0, 3)
+  // best score per level across the whole class, with the holder's name.
+  const classRecords = useMemo(() => {
+    const rec: Record<string, { score: number; name: string }> = {}
+    for (const p of classRows) {
+      const best = (p.data?.best ?? {}) as Record<string, number>
+      for (const id in best) {
+        const sc = Number(best[id] ?? 0)
+        if (!sc) continue
+        if (!rec[id] || sc > rec[id].score) rec[id] = { score: sc, name: p.name }
+      }
+    }
+    return rec
+  }, [classRows])
+
   const unlocked = new Set(profile?.unlocked ?? [NOTE_SETS[0].id])
   const mastered = new Set(profile?.mastered ?? [])
   const activeTheme = THEMES.find((t) => t.id === settings.themeId) ?? THEMES[0]
@@ -557,6 +600,37 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
                 <div className="tx"><div className="t">Stats</div><div className="s">Rank · Challenges</div></div>
               </button>
             </div>
+
+            {/* CLASS STANDINGS — top 3 by XP + the player's own rank */}
+            <section className="panel standings">
+              <div className="ph">
+                <h3>Class Standings</h3>
+                <span className="hint">{classActive ? 'Top 3 · Total XP' : 'Compete'}</span>
+              </div>
+              <div className="standbody">
+                {classLoading ? (
+                  <div className="standjoin">Loading standings…</div>
+                ) : !classActive ? (
+                  <div className="standjoin">Join a class to compete on the leaderboard and chase your classmates' track records.</div>
+                ) : (
+                  <>
+                    {top3.map((p, i) => (
+                      <div key={p.id} className="standrow">
+                        <span className={`srank r${i + 1}`}>{i + 1}</span>
+                        <span className="sname">{p.name}</span>
+                        <span className="sxp">{Number(p.data?.xp ?? 0).toLocaleString()} XP</span>
+                      </div>
+                    ))}
+                    <div className="standdiv" />
+                    <div className="standrow you">
+                      <span className="srank">#{myRank}</span>
+                      <span className="sname">YOU · {profile?.name ?? 'Player'}</span>
+                      <span className="sxp">{myXp.toLocaleString()} XP</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </section>
           </div>
 
           {/* RIGHT: profile card + level calendar */}
@@ -617,6 +691,7 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
                           const on = settings.levelId === s.id
                           const isMastered = mastered.has(s.id)
                           const best = profile?.best[s.id]
+                          const rec = classRecords[s.id]
                           const clefLabel = CLEF_GROUPS.find((g) => g.id === s.group)?.label ?? ''
                           const clefClass = s.group === 'bass' ? 'bass' : s.group === 'grand' ? 'grand' : 'treble'
                           const gap = !isUnlocked
@@ -644,6 +719,9 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
                               <div className="info">
                                 <div className="ln">{s.name}</div>
                                 <div className="ls">{clefLabel} · {s.blurb}</div>
+                                {rec && (
+                                  <div className="rec">🏁 REC {rec.score.toLocaleString()} · {rec.name.toUpperCase()}</div>
+                                )}
                               </div>
                               <div className="delta">
                                 {deltaBars(isUnlocked, isMastered, !!best).map((c, k) => (
