@@ -32,9 +32,8 @@ function mulberry32(seed: number): () => number {
   }
 }
 
-const N_CRYSTAL = 100
-const N_ROCK = 120
-const N_SHARD = 70
+const N_CRYSTAL = 70
+const N_ROCK = 110
 
 interface Item {
   x: number
@@ -51,7 +50,7 @@ function lattice(zL: number, carZ: number): number {
 
 export function SpaceScene() {
   // ---- scatter layout (built once) ---------------------------------------
-  const { crystals, rocks, shards } = useMemo(() => {
+  const { crystals, rocks } = useMemo(() => {
     const rng = mulberry32(0x5face)
     const side = () => (rng() < 0.5 ? -1 : 1)
     // X grows away from the road, biased dense near the shoulder (pow > 1).
@@ -61,8 +60,6 @@ export function SpaceScene() {
     // Cool indigo → violet → cyan glow for the crystals and shards.
     const crystalTone = () =>
       new THREE.Color().setHSL(0.70 + (rng() - 0.5) * 0.13, 0.6 + rng() * 0.3, 0.5 + rng() * 0.18)
-    const shardTone = () =>
-      new THREE.Color().setHSL(0.68 + (rng() - 0.5) * 0.12, 0.55 + rng() * 0.3, 0.55 + rng() * 0.18)
     // Asteroids: dark, desaturated purple-grey.
     const rockTone = () =>
       new THREE.Color().setHSL(0.72, 0.08 + rng() * 0.12, 0.16 + rng() * 0.12)
@@ -81,14 +78,7 @@ export function SpaceScene() {
       rot: rng() * Math.PI * 2,
       tint: rockTone(),
     }))
-    const shards: Item[] = Array.from({ length: N_SHARD }, () => ({
-      x: scatterX(88, 1),
-      zL: rng() * PERIOD,
-      s: 0.5 + rng() * 1.3, // scale also lifts the baked float height
-      rot: rng() * Math.PI * 2,
-      tint: shardTone(),
-    }))
-    return { crystals, rocks, shards }
+    return { crystals, rocks }
   }, [])
 
   // ---- geometry + materials (crystal part offsets baked into the geometry so
@@ -98,8 +88,6 @@ export function SpaceScene() {
     const spire = new THREE.OctahedronGeometry(0.8, 0).scale(0.55, 1.7, 0.55).translate(0, 1.35, 0)
     const spire2 = new THREE.OctahedronGeometry(0.55, 0).scale(0.5, 1.4, 0.5).translate(0.55, 0.85, 0.2)
     const rock = new THREE.DodecahedronGeometry(1.0, 0).translate(0, 0.6, 0)
-    // floating shard: small tetra baked high off the ground (scale lifts it more)
-    const shard = new THREE.TetrahedronGeometry(0.5, 0).translate(0, 3.0, 0)
 
     const crystalMat = new THREE.MeshStandardMaterial({
       color: '#ffffff', // tinted per-instance
@@ -109,17 +97,10 @@ export function SpaceScene() {
       metalness: 0.1,
     })
     const rockMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 1 }) // tinted per-instance
-    const shardMat = new THREE.MeshStandardMaterial({
-      color: '#ffffff', // tinted per-instance
-      emissive: '#6f5bff',
-      emissiveIntensity: 0.8,
-      roughness: 0.3,
-      metalness: 0.1,
-    })
 
     return {
-      geo: { spire, spire2, rock, shard },
-      mat: { crystalMat, rockMat, shardMat },
+      geo: { spire, spire2, rock },
+      mat: { crystalMat, rockMat },
     }
   }, [])
 
@@ -134,7 +115,6 @@ export function SpaceScene() {
   const spireRef = useRef<THREE.InstancedMesh>(null)
   const spire2Ref = useRef<THREE.InstancedMesh>(null)
   const rockRef = useRef<THREE.InstancedMesh>(null)
-  const shardRef = useRef<THREE.InstancedMesh>(null)
 
   const crystalRefs = useMemo(() => [spireRef, spire2Ref], [])
 
@@ -143,7 +123,6 @@ export function SpaceScene() {
     () => ({
       crystal: new Float64Array(N_CRYSTAL).fill(NaN),
       rock: new Float64Array(N_ROCK).fill(NaN),
-      shard: new Float64Array(N_SHARD).fill(NaN),
     }),
     [],
   )
@@ -171,17 +150,14 @@ export function SpaceScene() {
   const buildAll = (carZ: number) => {
     stream(crystalRefs, crystals, cur.crystal, carZ)
     stream([rockRef], rocks, cur.rock, carZ)
-    stream([shardRef], shards, cur.shard, carZ)
   }
 
   // per-instance tints (set once)
   useLayoutEffect(() => {
     crystals.forEach((c, i) => c.tint && crystalRefs.forEach((r) => r.current?.setColorAt(i, c.tint!)))
     rocks.forEach((c, i) => c.tint && rockRef.current?.setColorAt(i, c.tint))
-    shards.forEach((c, i) => c.tint && shardRef.current?.setColorAt(i, c.tint))
     for (const r of crystalRefs) if (r.current?.instanceColor) r.current.instanceColor.needsUpdate = true
     if (rockRef.current?.instanceColor) rockRef.current.instanceColor.needsUpdate = true
-    if (shardRef.current?.instanceColor) shardRef.current.instanceColor.needsUpdate = true
     // initial placement so nothing flashes at the origin before the first frame
     buildAll(carState.z)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -195,7 +171,6 @@ export function SpaceScene() {
       <instancedMesh frustumCulled={false} ref={spireRef} args={[geo.spire, mat.crystalMat, N_CRYSTAL]} castShadow />
       <instancedMesh frustumCulled={false} ref={spire2Ref} args={[geo.spire2, mat.crystalMat, N_CRYSTAL]} castShadow />
       <instancedMesh frustumCulled={false} ref={rockRef} args={[geo.rock, mat.rockMat, N_ROCK]} castShadow />
-      <instancedMesh frustumCulled={false} ref={shardRef} args={[geo.shard, mat.shardMat, N_SHARD]} />
     </>
   )
 }

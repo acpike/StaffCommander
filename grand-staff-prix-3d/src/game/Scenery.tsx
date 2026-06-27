@@ -105,8 +105,8 @@ export function Scenery({ theme }: { theme: Theme }) {
           {/* painted galaxy backdrop; planets + stars stream in front for depth,
               plus a scattered crystal/asteroid field flanking the road */}
           <SpaceScene />
-          <Planet tex="/tex/planet_jupiter.jpg" size={34} dir={[-0.24, 0.12, -0.96]} spin={0.04} />
-          <Planet tex="/tex/planet_mars.jpg" size={12} dir={[0.3, 0.09, -0.95]} spin={0.06} />
+          <Planet tex="/tex/planet_jupiter.jpg" size={18} dir={[-0.42, 0.46, -0.78]} spin={0.04} />
+          <Planet tex="/tex/planet_mars.jpg" size={11} dir={[0.42, 0.34, -0.84]} spin={0.06} />
           <FollowStars />
           <Suspense fallback={null}>
             <Backdrop image="/backdrops/space.jpg" offsetY={0.24} />
