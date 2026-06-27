@@ -360,6 +360,116 @@
 .hudmenu .tile.selected .px{ background:var(--livery); color:#04181a; border-color:var(--livery); font-weight:700; }
 .hudmenu .tile.selected::after{ content:"◉ ON GRID"; position:absolute; top:6px; right:6px; z-index:2; font-family:var(--data); font-size:8px; letter-spacing:1px; color:#04181a; background:var(--livery); padding:2px 5px; font-weight:700; }
 
+/* ============ LEARNING JOURNEY ============ */
+/* The 21-stage chain as a path: 7 region milestones, each with its 3 mode steps
+   (Name → Find → Mix). A stage reads as mastered ✓ / current "you are here" /
+   ready / locked; the live frontier is highlighted in amber, front-and-centre. */
+.hudmenu .journey .jbody{ padding:12px 13px 14px; display:flex; flex-direction:column; gap:11px; }
+.hudmenu .region{
+  position:relative; border:1px solid var(--carbon-3); background:#0d1218; padding:10px 12px 12px;
+  clip-path:polygon(0 0,100% 0,100% 100%,12px 100%,0 calc(100% - 12px)); transition:.15s;
+}
+.hudmenu .region.active{
+  border-color:var(--livery); box-shadow:inset 3px 0 0 var(--livery), 0 0 0 1px rgba(0,229,196,.15);
+  background:linear-gradient(100deg, rgba(0,229,196,.06), #0d1218 55%);
+}
+.hudmenu .region.done{ border-color:#1c322d; background:#0c130f; }
+.hudmenu .region.locked{ opacity:.55; }
+/* region milestone header */
+.hudmenu .rhead{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+.hudmenu .rnode{
+  width:32px; height:32px; flex:none; display:grid; place-items:center;
+  font-family:var(--disp); font-weight:900; font-size:16px; color:#04181a; background:var(--carbon-3);
+  clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);
+}
+.hudmenu .region.active .rnode{ background:var(--livery); box-shadow:0 0 14px rgba(0,229,196,.5); }
+.hudmenu .region.done .rnode{ background:var(--livery-dk); }
+.hudmenu .region.locked .rnode{ background:#1c2530; color:var(--mute); }
+.hudmenu .rmeta{ flex:1; min-width:0; }
+.hudmenu .rmeta .rname{ font-family:var(--disp); font-weight:800; font-size:18px; letter-spacing:.5px; text-transform:uppercase; line-height:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hudmenu .rmeta .rrange{ font-family:var(--data); font-size:10px; letter-spacing:1px; color:var(--mute); margin-top:4px; text-transform:uppercase; }
+.hudmenu .rhead .rclef{ font-family:'Bravura'; font-size:23px; color:var(--amber); flex:none; line-height:1; transform:translateY(1px); }
+.hudmenu .rprog{ display:flex; gap:4px; flex:none; }
+.hudmenu .rprog i{ width:9px; height:9px; flex:none; background:#1c2530; transform:skewX(-12deg); display:block; }
+.hudmenu .rprog i.on{ background:var(--livery); }
+/* the 3 mode steps */
+.hudmenu .rsteps{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.hudmenu .jstep{
+  position:relative; display:flex; flex-direction:column; gap:6px; align-items:flex-start;
+  padding:9px 11px; cursor:pointer; text-align:left; color:var(--ink); font:inherit;
+  background:linear-gradient(90deg,#10171f,#0c1116); border:1px solid #1e2731;
+  clip-path:polygon(0 0,100% 0,100% 100%,8px 100%,0 calc(100% - 8px)); transition:.14s;
+}
+.hudmenu .jstep:hover{ transform:translateY(-2px); border-color:#33424f; }
+.hudmenu .jstep .jtop{ display:flex; align-items:center; gap:8px; width:100%; }
+.hudmenu .jstep .jicon{
+  width:22px; height:22px; flex:none; display:grid; place-items:center;
+  font-family:var(--data); font-weight:700; font-size:12px; color:var(--mute);
+  background:#0a0e12; border:1px solid var(--carbon-3);
+  clip-path:polygon(50% 0,100% 28%,100% 72%,50% 100%,0 72%,0 28%);
+}
+.hudmenu .jstep .jmode{ font-family:var(--disp); font-weight:800; font-size:16px; letter-spacing:.6px; text-transform:uppercase; line-height:1; }
+.hudmenu .jstep .jstate{ font-family:var(--data); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--mute); }
+.hudmenu .jstep .rec{ font-family:var(--data); font-size:8px; letter-spacing:.4px; color:var(--amber); text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+/* mastered step */
+.hudmenu .jstep.mastered .jicon{ background:var(--livery); color:#04181a; border-color:var(--livery); }
+.hudmenu .jstep.mastered .jstate{ color:var(--livery); }
+/* current frontier step — the "you are here" amber highlight */
+.hudmenu .jstep.current{ border-color:var(--amber); background:linear-gradient(90deg, rgba(255,194,61,.15), #0c1116 62%); box-shadow:inset 3px 0 0 var(--amber); }
+.hudmenu .jstep.current .jicon{ background:var(--amber); color:#221700; border-color:var(--amber); }
+.hudmenu .jstep.current .jstate{ color:var(--amber); font-weight:700; }
+.hudmenu .jhere{
+  position:absolute; top:-9px; left:7px; z-index:2; font-family:var(--data); font-weight:700; font-size:8px;
+  letter-spacing:1px; text-transform:uppercase; color:#221700; background:var(--amber); padding:2px 7px;
+  clip-path:polygon(0 0,100% 0,100% 100%,4px 100%,0 calc(100% - 4px)); box-shadow:0 0 10px rgba(255,194,61,.45);
+}
+/* selected step (the level Start Race will launch) */
+.hudmenu .jstep.selected{ border-color:var(--livery); box-shadow:inset 3px 0 0 var(--livery), 0 0 0 1px rgba(0,229,196,.3); }
+.hudmenu .jstep.selected.current{ box-shadow:inset 3px 0 0 var(--livery), 0 0 0 1px rgba(255,194,61,.4); }
+.hudmenu .jstep.selected .jmode{ color:#fff; }
+.hudmenu .jstep.selected::after{ content:"▸"; position:absolute; top:6px; right:8px; color:var(--livery); font-size:12px; font-weight:700; }
+/* locked step */
+.hudmenu .jstep.locked{ opacity:.5; cursor:not-allowed; filter:grayscale(.4); }
+.hudmenu .jstep.locked:hover{ transform:none; border-color:#1e2731; }
+.hudmenu .jstep.locked .jicon{ color:var(--magenta); font-size:10px; }
+
+/* ============ SIDE QUESTS ============ */
+/* Visually distinct from the journey (purple accent) so it reads as optional/extra. */
+.hudmenu .sidequests{ border-top:3px solid var(--purple); }
+.hudmenu .sidequests > .ph h3::before{ background:var(--purple); }
+.hudmenu .sqbody{ padding:13px 14px; display:grid; grid-template-columns:repeat(auto-fill,minmax(232px,1fr)); gap:9px; }
+.hudmenu .sqcard{
+  position:relative; display:flex; align-items:center; gap:11px; padding:10px 12px; cursor:pointer;
+  text-align:left; color:var(--ink); font:inherit;
+  background:linear-gradient(90deg,#12131f,#0c1016); border:1px solid #2a2440;
+  clip-path:polygon(0 0,100% 0,100% 100%,9px 100%,0 calc(100% - 9px)); transition:.14s;
+}
+.hudmenu .sqcard:hover{ transform:translateY(-2px); border-color:var(--purple); }
+.hudmenu .sqcard .sqclef{ font-family:'Bravura'; font-size:24px; flex:none; width:26px; text-align:center; line-height:1; transform:translateY(1px); }
+.hudmenu .sqcard .sqclef.cclef{ color:var(--magenta); }
+.hudmenu .sqcard .sqtx{ flex:1; min-width:0; }
+.hudmenu .sqcard .sqn{ font-family:var(--disp); font-weight:700; font-size:17px; letter-spacing:.4px; text-transform:uppercase; line-height:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hudmenu .sqcard .sqs{ font-family:var(--data); font-size:9px; letter-spacing:.5px; color:var(--mute); margin-top:4px; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hudmenu .sqcard .rec{ font-family:var(--data); font-size:8px; letter-spacing:.4px; color:var(--amber); margin-top:4px; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hudmenu .sqcard .sqstate{ font-family:var(--data); font-size:9px; letter-spacing:.5px; color:var(--mute); flex:none; text-align:right; }
+.hudmenu .sqcard.on{ border-color:var(--livery); box-shadow:inset 3px 0 0 var(--livery); }
+.hudmenu .sqcard.on .sqn{ color:#fff; } .hudmenu .sqcard.on .sqstate{ color:var(--livery); }
+.hudmenu .sqcard.mastered .sqstate{ color:var(--livery); }
+.hudmenu .sqcard.locked{ opacity:.5; cursor:not-allowed; filter:grayscale(.4); }
+.hudmenu .sqcard.locked:hover{ transform:none; border-color:#2a2440; }
+.hudmenu .sqcard.custom{ border-color:#3a2f10; }
+.hudmenu .sqcard.custom .sqclef{ font-family:var(--disp); color:var(--amber); font-size:20px; }
+.hudmenu .sqcard .sqdel{ flex:none; color:var(--mute); cursor:pointer; font-size:13px; padding:2px 5px; }
+.hudmenu .sqcard .sqdel:hover{ color:var(--magenta); }
+/* create-a-level card */
+.hudmenu .sqcard.sqcreate{
+  justify-content:center; gap:9px; color:var(--mute); font-family:var(--disp); font-weight:700; font-size:15px;
+  letter-spacing:1.5px; text-transform:uppercase; border:1px dashed #4a3f6a;
+  background:repeating-linear-gradient(-45deg,#0d0f18 0 8px,#101220 8px 16px);
+}
+.hudmenu .sqcard.sqcreate:hover{ color:var(--purple); border-color:var(--purple); transform:translateY(-2px); }
+.hudmenu .sqcard.sqcreate span{ font-size:19px; }
+
 /* ============ FOOTER CTA ============ */
 .hudmenu .foot{ display:grid; grid-template-columns:1fr auto; gap:14px; align-items:center; margin-top:14px; }
 .hudmenu .gphint{ font-family:var(--data); font-size:12px; letter-spacing:.4px; color:var(--mute); display:flex; align-items:center; gap:11px; padding:0 6px; }
@@ -397,4 +507,9 @@
   .hudmenu .foot{ grid-template-columns:1fr; }
   .hudmenu .duo{ grid-template-columns:1fr; }
   .hudmenu .brand h1{ font-size:30px; }
+  /* keep the 3 mode steps side-by-side (the Name→Find→Mix passes) but tighter */
+  .hudmenu .rsteps{ gap:6px; }
+  .hudmenu .jstep{ padding:8px 8px; }
+  .hudmenu .jstep .jmode{ font-size:14px; }
+  .hudmenu .sqbody{ grid-template-columns:1fr; }
 }

@@ -4,7 +4,7 @@ import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { useGame, activeProfile } from '../state/store'
 import { leaderboard, type CloudPlayer } from '../lib/cloud'
-import { NOTE_SETS, CLEF_GROUPS, DIFFICULTIES } from '../data/notes'
+import { NOTE_SETS, CLEF_GROUPS, REGIONS, JOURNEY_STAGES, type NoteSet } from '../data/notes'
 import { CARS, carById } from '../data/cars'
 import { composerById } from '../data/composers'
 import { THEMES } from '../data/themes'
@@ -415,18 +415,6 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
   const customLevels = useGame((s) => s.customLevels)
   const removeCustomLevel = useGame((s) => s.removeCustomLevel)
   const [creating, setCreating] = useState(false)
-  // which difficulty sections are expanded (default: the band of the selected level)
-  const [openBands, setOpenBands] = useState<Set<string>>(() => {
-    const sel = NOTE_SETS.find((s) => s.id === settings.levelId)
-    return new Set([sel?.band ?? 'beginner'])
-  })
-  const toggleBand = (b: string) =>
-    setOpenBands((prev) => {
-      const next = new Set(prev)
-      if (next.has(b)) next.delete(b)
-      else next.add(b)
-      return next
-    })
 
   // preload the chosen car + composer + the theme's backdrop so the race starts
   // smooth — no first-second hitch and no "pop" when the painting swaps in (the
@@ -519,9 +507,16 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
   const gems = profile?.gems ?? 0
   const achCount = profile?.achievements.length ?? 0
   const achTotal = ACHIEVEMENTS.length
-  // 3 sector-delta micro-bars per level, tied to real progress
-  const deltaBars = (isUnlocked: boolean, isMastered: boolean, hasBest: boolean): string[] =>
-    isMastered ? ['on', 'on', 'on'] : hasBest ? ['on', 'on', 'amber'] : isUnlocked ? ['amber', '', ''] : ['', '', '']
+
+  // ── Learning Journey state (the 21-stage chain, 7 regions × Name/Find/Mix) ──
+  // A stage is mastered / current (the live frontier) / unlocked-ready / locked.
+  // The "current" stage is the first unlocked-but-unmastered stage in tier order —
+  // the single place the linear chain has open, shown front-and-centre.
+  const isJUnlocked = (s: NoteSet): boolean => s.tier === 1 || unlocked.has(s.id)
+  const journeyMastered = JOURNEY_STAGES.filter((s) => mastered.has(s.id)).length
+  const currentStage = JOURNEY_STAGES.find((s) => isJUnlocked(s) && !mastered.has(s.id))
+  const currentStageId = currentStage?.id
+  const modeLabelOf = (s: NoteSet): string => (s.mode === 'find' ? 'Find' : s.mode === 'mix' ? 'Mix' : 'Name')
 
   return (
     <div className="hudmenu">
@@ -662,74 +657,76 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
               </div>
             </button>
 
-            <section className="panel">
+            {/* LEARNING JOURNEY — 7 regions × Name/Find/Mix, the 21-stage chain */}
+            <section className="panel journey">
               <div className="ph">
-                <h3>Grand Prix Calendar</h3>
-                <span className="hint">Select Event</span>
+                <h3>Learning Journey</h3>
+                <span className="hint">{journeyMastered}/{JOURNEY_STAGES.length} Stages · {currentStage ? `On ${currentStage.name}` : 'Complete'}</span>
               </div>
-              <div className="diffs">
-                {DIFFICULTIES.map((band) => {
-                  const bandLevels = NOTE_SETS.filter(
-                    (s) => s.band === band.id && (settings.showCClefs || (s.group !== 'alto' && s.group !== 'tenor')),
-                  )
-                  if (!bandLevels.length) return null
-                  const total = bandLevels.length
-                  const doneCount = bandLevels.filter((s) => mastered.has(s.id)).length
-                  const pct = Math.round((doneCount / total) * 100)
-                  const isOpen = openBands.has(band.id)
-                  const bc = band.id.slice(0, 3) // beginner→beg, intermediate→int, advanced→adv
+              <div className="jbody">
+                {REGIONS.map((region) => {
+                  const stages = JOURNEY_STAGES.filter((s) => s.id.startsWith(`r${region.n}-`))
+                  const masteredHere = stages.filter((s) => mastered.has(s.id)).length
+                  const regionUnlocked = stages.some(isJUnlocked)
+                  const hasCurrent = stages.some((s) => s.id === currentStageId)
+                  const allDone = masteredHere === stages.length
+                  const rcls = hasCurrent ? ' active' : allDone ? ' done' : !regionUnlocked ? ' locked' : ''
                   return (
-                    <div key={band.id} className={`group ${bc}${isOpen ? ' open' : ''}`}>
-                      <button className="ghead" onClick={() => toggleBand(band.id)}>
-                        <span className="gx">{band.label}</span>
-                        <span className="pbar"><i style={{ width: `${pct}%` }} /></span>
-                        <span className="pcount">{doneCount}/{total}</span>
-                        <span className="caret">▶</span>
-                      </button>
-                      <div className="tower">
-                        {bandLevels.map((s, i) => {
-                          const isUnlocked = s.tier === 1 || unlocked.has(s.id)
-                          const on = settings.levelId === s.id
+                    <div key={region.n} className={`region${rcls}`}>
+                      <div className="rhead">
+                        <span className="rnode">{region.n}</span>
+                        <div className="rmeta">
+                          <div className="rname">{region.name}</div>
+                          <div className="rrange">{region.range}</div>
+                        </div>
+                        <span className="rclef" aria-hidden>{CLEF_BADGE.journey}</span>
+                        <span className="rprog" aria-label={`${masteredHere} of ${stages.length} modes mastered`}>
+                          {stages.map((s) => (
+                            <i key={s.id} className={mastered.has(s.id) ? 'on' : ''} />
+                          ))}
+                        </span>
+                      </div>
+                      <div className="rsteps">
+                        {stages.map((s) => {
                           const isMastered = mastered.has(s.id)
+                          const isUnlocked = isJUnlocked(s)
+                          const isCurrent = s.id === currentStageId
+                          const on = settings.levelId === s.id
                           const best = profile?.best[s.id]
                           const rec = classRecords[s.id]
-                          const clefLabel = CLEF_GROUPS.find((g) => g.id === s.group)?.label ?? ''
-                          const clefClass = s.group === 'bass' ? 'bass' : s.group === 'grand' ? 'grand' : 'treble'
-                          const gap = !isUnlocked
-                            ? 'LOCKED'
+                          const ml = modeLabelOf(s)
+                          const stateCls = isMastered
+                            ? ' mastered'
+                            : isCurrent
+                              ? ' current'
+                              : isUnlocked
+                                ? ' ready'
+                                : ' locked'
+                          const stateLabel = !isUnlocked
+                            ? 'Locked'
                             : isMastered
-                              ? 'MASTERED'
-                              : best
-                                ? `BEST ${best}`
-                                : on
-                                  ? 'ON GRID'
-                                  : 'READY'
+                              ? 'Mastered'
+                              : isCurrent
+                                ? 'You are here'
+                                : best
+                                  ? `Best ${best}`
+                                  : 'Ready'
                           return (
                             <button
                               key={s.id}
-                              className={`lvl${on && isUnlocked ? ' selected' : ''}${isUnlocked ? '' : ' locked'}`}
+                              className={`jstep${stateCls}${on && isUnlocked ? ' selected' : ''}`}
                               disabled={!isUnlocked}
                               onClick={() => isUnlocked && setLevel(s.id)}
                             >
-                              <span className="pos">P{i + 1}</span>
-                              {isUnlocked ? (
-                                <span className={`clef ${clefClass}`} aria-hidden>{CLEF_BADGE[s.group ?? 'treble']}</span>
-                              ) : (
-                                <span className="clef lockic">🔒</span>
+                              {isCurrent && <span className="jhere">You are here</span>}
+                              <div className="jtop">
+                                <span className="jicon" aria-hidden>{isMastered ? '✓' : !isUnlocked ? '🔒' : ml.slice(0, 1)}</span>
+                                <span className="jmode">{ml}</span>
+                              </div>
+                              <span className="jstate">{stateLabel}</span>
+                              {rec && (
+                                <span className="rec">🏁 {rec.score.toLocaleString()} · {rec.name.toUpperCase()}</span>
                               )}
-                              <div className="info">
-                                <div className="ln">{s.name}</div>
-                                <div className="ls">{clefLabel} · {s.blurb}</div>
-                                {rec && (
-                                  <div className="rec">🏁 REC {rec.score.toLocaleString()} · {rec.name.toUpperCase()}</div>
-                                )}
-                              </div>
-                              <div className="delta">
-                                {deltaBars(isUnlocked, isMastered, !!best).map((c, k) => (
-                                  <b key={k} className={c} />
-                                ))}
-                              </div>
-                              <span className="gap">{gap}</span>
                             </button>
                           )
                         })}
@@ -737,53 +734,84 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
                     </div>
                   )
                 })}
-
-                {customLevels.length > 0 && (
-                  <div className="group beg open">
-                    <div className="ghead">
-                      <span className="gx">My Levels</span>
-                      <span className="pbar"><i style={{ width: '100%' }} /></span>
-                      <span className="pcount">{customLevels.length}</span>
-                      <span className="caret">▶</span>
-                    </div>
-                    <div className="tower">
-                      {customLevels.map((s, i) => {
-                        const on = settings.levelId === s.id
-                        return (
-                          <button
-                            key={s.id}
-                            className={`lvl${on ? ' selected' : ''}`}
-                            onClick={() => setLevel(s.id)}
-                          >
-                            <span className="pos">C{i + 1}</span>
-                            <span className="clef" style={{ fontFamily: 'var(--disp)', color: 'var(--amber)' }} aria-hidden>★</span>
-                            <div className="info">
-                              <div className="ln">{s.name}</div>
-                              <div className="ls">CUSTOM · {s.blurb}</div>
-                            </div>
-                            <span
-                              className="gap"
-                              role="button"
-                              aria-label="Delete custom level"
-                              style={{ cursor: 'pointer' }}
-                              onClick={(e) => { e.stopPropagation(); removeCustomLevel(s.id) }}
-                            >
-                              ✕ DEL
-                            </span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                <button className="createlvl" onClick={() => setCreating(true)}>
-                  <span>＋</span> Create a Level
-                </button>
               </div>
             </section>
           </div>
         </div>
+
+        {/* ===== SIDE QUESTS — optional drills + custom levels (§10) ===== */}
+        <section className="panel sidequests" style={{ marginTop: 14 }}>
+          <div className="ph">
+            <h3>Side Quests</h3>
+            <span className="hint">Optional · Targeted Practice</span>
+          </div>
+          <div className="sqbody">
+            {NOTE_SETS.filter(
+              (s) => s.kind === 'sidequest' && (settings.showCClefs || (s.group !== 'alto' && s.group !== 'tenor')),
+            ).map((s) => {
+              const isUnlocked = s.tier === 1 || unlocked.has(s.id)
+              const isMastered = mastered.has(s.id)
+              const on = settings.levelId === s.id
+              const best = profile?.best[s.id]
+              const rec = classRecords[s.id]
+              const groupLabel = CLEF_GROUPS.find((g) => g.id === s.group)?.label ?? ''
+              const clefClass =
+                s.group === 'bass' ? 'bass' : s.group === 'grand' ? 'grand' : s.group === 'alto' || s.group === 'tenor' ? 'cclef' : 'treble'
+              const state = !isUnlocked
+                ? 'LOCKED'
+                : isMastered
+                  ? 'MASTERED'
+                  : best
+                    ? `BEST ${best}`
+                    : on
+                      ? 'SELECTED'
+                      : 'READY'
+              return (
+                <button
+                  key={s.id}
+                  className={`sqcard${isMastered ? ' mastered' : ''}${isUnlocked ? '' : ' locked'}${on && isUnlocked ? ' on' : ''}`}
+                  disabled={!isUnlocked}
+                  onClick={() => isUnlocked && setLevel(s.id)}
+                >
+                  <span className={`sqclef clef ${clefClass}`} aria-hidden>{isUnlocked ? CLEF_BADGE[s.group ?? 'treble'] : '🔒'}</span>
+                  <div className="sqtx">
+                    <div className="sqn">{s.name}</div>
+                    <div className="sqs">{groupLabel} · {s.blurb}</div>
+                    {rec && (
+                      <div className="rec">🏁 REC {rec.score.toLocaleString()} · {rec.name.toUpperCase()}</div>
+                    )}
+                  </div>
+                  <span className="sqstate">{state}</span>
+                </button>
+              )
+            })}
+
+            {customLevels.map((s) => {
+              const on = settings.levelId === s.id
+              return (
+                <button key={s.id} className={`sqcard custom${on ? ' on' : ''}`} onClick={() => setLevel(s.id)}>
+                  <span className="sqclef" aria-hidden>★</span>
+                  <div className="sqtx">
+                    <div className="sqn">{s.name}</div>
+                    <div className="sqs">Custom · {s.blurb}</div>
+                  </div>
+                  <span
+                    className="sqdel"
+                    role="button"
+                    aria-label="Delete custom level"
+                    onClick={(e) => { e.stopPropagation(); removeCustomLevel(s.id) }}
+                  >
+                    ✕
+                  </span>
+                </button>
+              )
+            })}
+
+            <button className="sqcard sqcreate" onClick={() => setCreating(true)}>
+              <span>＋</span> Create a Level
+            </button>
+          </div>
+        </section>
 
         {/* ===== SCENERY (CIRCUIT PADDOCK) ===== */}
         <section className="panel" style={{ marginTop: 14 }}>
