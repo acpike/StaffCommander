@@ -76,19 +76,21 @@ export function HyperStreaks() {
     const target = Math.max(0, Math.min(1, accel * 3.5))
     burst.current += (target - burst.current) * Math.min(1, dt * 6)
 
-    // overall presence ramps in past a small threshold so slow/idle is calm
-    const drive = Math.max(0, (n - 0.12) / 0.88) // 0 at idle, 1 at top speed
-    const presence = Math.min(1, drive * drive + burst.current * 0.5)
+    // streaks appear ONLY while ACCELERATING — driven by the acceleration burst,
+    // not by steady speed. They fade a moment after the car reaches constant
+    // speed, and never show when cruising or braking.
+    const presence = Math.min(1, burst.current)
 
-    // hide entirely when essentially stopped
-    m.visible = presence > 0.02
+    // hide entirely unless we're accelerating
+    m.visible = presence > 0.03
     if (!m.visible) return
 
     // follow the camera so the streaks always frame the view
     m.position.copy(camera.position)
 
-    const travel = (10 + n * 150 + burst.current * 90) * dt
-    const baseLen = 1.6 + drive * 16 + burst.current * 10
+    // they still rush fast (it's hyperspace), but only while the burst is active
+    const travel = (60 + n * 150 + burst.current * 120) * dt
+    const baseLen = 2 + burst.current * 20 + n * 3
 
     for (let i = 0; i < COUNT; i++) {
       const s = streaks[i]
@@ -106,7 +108,7 @@ export function HyperStreaks() {
     if (m.instanceColor) m.instanceColor.needsUpdate = true
 
     const mat = m.material as THREE.MeshBasicMaterial
-    mat.opacity = Math.min(0.95, 0.18 + presence * 0.7)
+    mat.opacity = Math.min(0.95, presence * 0.95)
   })
 
   return (

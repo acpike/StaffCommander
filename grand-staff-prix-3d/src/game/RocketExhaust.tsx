@@ -83,10 +83,10 @@ export function RocketExhaust() {
     <group ref={group} visible={false}>
       {nozzles.map((x, i) => (
         <group key={i} position={[x, 0, 0]}>
-          {/* soft glow puff at the nozzle mouth */}
+          {/* soft glow puff at the nozzle mouth — warm amber */}
           <mesh ref={(m) => { glows.current[i] = m }} geometry={glowGeo}>
             <meshBasicMaterial
-              color="#7fd8ff"
+              color="#ff8a2e"
               transparent
               opacity={0.4}
               depthWrite={false}
@@ -94,10 +94,10 @@ export function RocketExhaust() {
               toneMapped={false}
             />
           </mesh>
-          {/* outer flame: cyan/violet */}
+          {/* outer flame: orange */}
           <mesh ref={(m) => { flames.current[i] = m }} geometry={flameGeo}>
             <meshBasicMaterial
-              color="#56b6ff"
+              color="#ff7322"
               transparent
               opacity={0.5}
               depthWrite={false}
@@ -106,10 +106,10 @@ export function RocketExhaust() {
               toneMapped={false}
             />
           </mesh>
-          {/* hot white-blue core */}
+          {/* hot white-yellow core */}
           <mesh ref={(m) => { cores.current[i] = m }} geometry={coreGeo}>
             <meshBasicMaterial
-              color="#eaf6ff"
+              color="#fff1cf"
               transparent
               opacity={0.95}
               depthWrite={false}

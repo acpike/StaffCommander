@@ -109,7 +109,9 @@ export function Scenery({ theme }: { theme: Theme }) {
           <Planet tex="/tex/planet_mars.jpg" size={12} dir={[0.3, 0.1, -0.95]} spin={0.06} />
           <FollowStars />
           <Suspense fallback={null}>
-            <Backdrop image="/backdrops/space.jpg" offsetY={0.24} />
+            {/* deep nebula-purple fog + sky so the open void matches the purple
+                galaxy backdrop (no stark-black horizon) — it all reads as one space */}
+            <Backdrop image="/backdrops/space.jpg" offsetY={0.24} fogColor="#332a5c" skyColor="#231b46" />
             <ImageEnvironment image="/backdrops/space.jpg" intensity={0.6} />
           </Suspense>
         </>
