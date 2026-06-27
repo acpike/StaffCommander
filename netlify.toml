@@ -1,0 +1,13 @@
+# Build config for staffcommander.netlify.app (production branch: main).
+#
+# The site is assembled by scripts/build-site.sh, which builds Grand Staff Prix
+# 3D from source (grand-staff-prix-3d/) into _site/gsp-3d/ and copies the static
+# landing pages, 2D games, shared images, _redirects and the rhythm build around
+# it. The compiled 3D bundle is NO LONGER committed — pushing source to main is
+# what deploys it.
+[build]
+  command = "bash scripts/build-site.sh"
+  publish = "_site"
+
+[build.environment]
+  NODE_VERSION = "22"
