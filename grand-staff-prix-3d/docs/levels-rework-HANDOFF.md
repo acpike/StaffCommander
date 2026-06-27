@@ -4,19 +4,29 @@
 > deployed to live `main`**. The live game your students play is untouched. You review here,
 > then decide what/when to ship.
 
-## Status (updated as phases land)
+## Status — ✅ COMPLETE (all on `levels-rework`, **NOT deployed**)
 
 | Phase | What | State | Commit |
 |---|---|---|---|
-| A | Curriculum data (7 regions / 21 stages + migration) | ✅ done | `5b0f8c4` |
-| B | Engine rules (frontier weighting, per-note mastery, tempo, scoring) | ✅ done | `1fc7e4f` |
-| B-verify | Independent adversarial review of B | ✅ done — **no blockers** | — |
-| B-tests | Store run-loop integration tests (closes review finding M1) | 🔄 in progress | — |
-| C | Placement flow + screen | ⏭ next | — |
-| D | Journey + Side-Quest menu UI | ⏭ next (parallel w/ C) | — |
-| E | Adversarial QA / balance / migration | ⏭ last | — |
+| A | Curriculum data (7 regions / 21 stages + migration) | ✅ | `5b0f8c4` |
+| B | Engine rules (frontier weighting, per-note mastery, tempo, scoring) | ✅ | `1fc7e4f` |
+| B-verify | Independent adversarial review of B | ✅ no blockers | — |
+| B-tests | Store run-loop integration tests | ✅ | `4aa01a5` |
+| C | Placement flow + screen | ✅ | `e9f3fcf` |
+| D | Journey + Side-Quest menu UI | ✅ | `ca6f707` |
+| E | Adversarial QA + integration (found & fixed 2 seam bugs) | ✅ | `877f576` |
 
-Baseline: build clean, **52 tests** green at Phase B.
+**Final: build clean · 78 tests green · nothing deployed.**
+
+### What QA caught & fixed (Phase E)
+- **HIGH — migration chain gap:** the legacy id map isn't a contiguous prefix, so returning students would have landed with mastered stages *above* locked ones and "you are here" pointing at a far-future stage. Fixed with `backfillJourneyChain` (repairs the chain; additive, never demotes — no progress lost).
+- **MEDIUM — abandoned placement:** quitting mid-placement left the active level on a *locked* stage. Fixed: `goMenu` now places at `r1-name` like Skip.
+
+### Heads-up about migration (correct behavior — just expect it)
+A student who 100%'d the **old** game resumes at **Region 6** (±2 Ledger), not "complete" — regions 6–7 are genuinely new material that didn't exist before. Intended, but it's a visible "not done after all" moment.
+
+### When you're ready to ship (your call, in daylight)
+Nothing is live. To deploy: review on the branch first (ideally a Netlify branch-preview), then merge `levels-rework` → the deploy branch and push to `main` (same flow we've used). I did **not** do this — it's yours to trigger after your eyeball.
 
 ---
 
@@ -57,12 +67,13 @@ Each region × Name/Find/Mix = 21 stages. Old position levels kept as **Side Que
 
 ---
 
-## Test-this-yourself checklist (fill in after D lands)
-- [ ] New profile → placement flow picks a region, drops you in correctly
-- [ ] Journey screen shows 21 stages, mastered/current/locked, HUD style
-- [ ] Side Quests section shows the old position/custom levels
-- [ ] Play R1·Name: starts slow, new notes appear often, masters only when each note is solid
-- [ ] Existing profile still works (migrated, didn't lose progress)
-- [ ] Speed *feels* right; scoring *feels* right (tune the knobs above)
+## Test-this-yourself checklist (in your browser — visuals/feel weren't headless-verified)
+- [ ] **New profile → placement**: milestone picker + staff previews look right; pick a region, 16-note Name run, pass/miss/step-down, "I'm brand new" → start at Region 1
+- [ ] **Journey screen**: 7 regions × Name/Find/Mix, mastered/current/locked, the amber "you are here" is obvious; fills the viewport on phone/tablet/desktop
+- [ ] **Side Quests** section shows the old position/custom levels + Create-a-Level (purple accent)
+- [ ] **Play R1·Name**: starts slow, new notes appear often (frontier weighting), masters only when each note is solid
+- [ ] **Existing profile** still works — migrated, didn't lose progress, lands at a sensible stage (no locked/gap weirdness)
+- [ ] **Feel-tune** the knobs above: speed ramps, scoring, mastery bar (esp. M3 — decide if no-fail beginner stages need a graceful "come back later" exit)
+- [ ] Judgment call to confirm (D): tapping a stage **selects** it; the footer **Start Race** launches — want tap-to-launch instead?
 
 *(Spec of record: `docs/levels-rework-spec.md`. Per-phase detail in git log on `levels-rework`.)*
