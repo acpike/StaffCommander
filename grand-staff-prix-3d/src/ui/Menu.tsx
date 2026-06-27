@@ -119,7 +119,7 @@ function Leaderboard({ onBack }: { onBack: () => void }) {
         <button className="chip ghost" onClick={onBack}>{Icon.back} Back</button>
         <div className="chip head">Class {classCode}</div>
       </div>
-      <div className="card sec">
+      <div className="card sec lbCard">
         <div className="secLabel">🏆 Leaderboard</div>
         {loading ? (
           <div className="empty">Loading…</div>
@@ -150,7 +150,7 @@ function PlayerSelect({ onPlay, onCreate, onLeaderboard }: { onPlay: () => void;
       <ClassBar onLeaderboard={onLeaderboard} />
       <div className="card sec">
         <div className="secLabel">Who's playing?</div>
-        <div className="playerList">
+        <div className="playerList playerGrid">
           {profiles.length === 0 && <div className="empty">No players yet — add one to start.</div>}
           {profiles.map((p) => {
             const r = rankForXp(p.xp)
@@ -210,7 +210,7 @@ function NewPlayer({ onCreated, onCancel }: { onCreated: () => void; onCancel: (
           {Icon.back} Back
         </button>
       </div>
-      <div className="card sec">
+      <div className="card sec npForm">
         <div className="secLabel">New player — what's your name?</div>
         <div className="addRow">
           <input
@@ -277,13 +277,15 @@ function Garage({ onDone, isSetup }: { onDone: () => void; isSetup?: boolean }) 
       <div className="topbar">
         <div className="chip ghost head">{isSetup ? 'Set up your ride' : 'Garage'}</div>
       </div>
-      <div className="sec garageSec">
-        <div className="secLabel">Your car</div>
-        <CarGarage />
-      </div>
-      <div className="sec">
-        <div className="secLabel">Your composer (driver)</div>
-        <ComposerPicker />
+      <div className="garageGrid">
+        <div className="sec garageSec">
+          <div className="secLabel">Your car</div>
+          <CarGarage />
+        </div>
+        <div className="sec">
+          <div className="secLabel">Your composer (driver)</div>
+          <ComposerPicker />
+        </div>
       </div>
       <div className="startWrap">
         <button className="btn" onClick={onDone}>
@@ -330,6 +332,7 @@ function ProfileScreen({ onBack }: { onBack: () => void }) {
         </div>
       </div>
 
+      <div className="profileGrid">
       <div className="card sec">
         <div className="secLabel">Today's Challenges</div>
         {dailyChallenges(daily.date).map((c) => {
@@ -395,6 +398,7 @@ function ProfileScreen({ onBack }: { onBack: () => void }) {
             />
           </div>
         </div>
+      </div>
       </div>
     </div>
   )

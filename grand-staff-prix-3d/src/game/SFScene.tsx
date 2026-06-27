@@ -31,6 +31,69 @@ import { Terrain } from './Terrain'
 const HILL_COLOR = '#9EA356'
 const HILL_AMPLITUDE = 8
 
+// ---- San Francisco Bay (distant water band) -------------------------------
+// A wide, calm strip of golden-hour bay water sitting just beyond the headland
+// bluff (Track.tsx cuts the city grass apron short ~170 units ahead) and below
+// the painted skyline. It rides with the car in Z so it stays parked on the
+// horizon. Forward is -Z, so the band lives at negative local Z ahead of the car.
+const WATER_Y = -0.5 // a touch BELOW the bluff/road so the bay reads as a drop, not coplanar
+const WATER_W = 1200 // far wider than the frustum at this distance (always fills width)
+const WATER_LEN = 200 // near edge ~-150 (tucks under the bluff), far edge ~-350 (into the haze)
+const WATER_CENTER_Z = -250 // local Z of the band's centre, ahead of the car
+
+// Golden-hour bay: a hazy steel-blue with a warm reflective sheen. Scene fog
+// (the warm #E3C79E haze) dissolves the far edge into the backdrop, so this never
+// reads as a hard blue slab — it melts into the painted city horizon.
+function BayWater() {
+  const ref = useRef<THREE.Mesh>(null)
+  // shared time uniform; mutated each frame for a calm, low-frequency shimmer
+  const time = useMemo(() => ({ value: 0 }), [])
+  const material = useMemo(() => {
+    const m = new THREE.MeshStandardMaterial({
+      color: '#5C7488', // muted steel-blue bay
+      roughness: 0.24, // low-ish so it catches the warm city environment as a sheen
+      metalness: 0.3,
+      envMapIntensity: 1.05,
+    })
+    // force the UV varying so the shimmer can read vUv even without a texture map
+    m.defines = { ...(m.defines ?? {}), USE_UV: '' }
+    m.onBeforeCompile = (shader) => {
+      shader.uniforms.uTime = time
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', '#include <common>\nuniform float uTime;')
+        .replace(
+          '#include <emissivemap_fragment>',
+          `#include <emissivemap_fragment>
+          // two crossed low-frequency waves -> drifting warm glints (calm + cheap)
+          float _g = sin(vUv.y * 130.0 + uTime * 0.7) * sin(vUv.x * 20.0 - uTime * 0.33);
+          float _sheen = 0.5 + 0.5 * sin(vUv.y * 55.0 - uTime * 0.5);
+          totalEmissiveRadiance += vec3(0.85, 0.66, 0.42) * (0.02 + 0.03 * _g * _g * _sheen);`,
+        )
+    }
+    return m
+  }, [time])
+
+  useEffect(() => () => material.dispose(), [material])
+
+  useFrame((_, dt) => {
+    time.value += Math.min(dt, 0.05)
+    if (ref.current) ref.current.position.z = carState.z + WATER_CENTER_Z
+  })
+
+  return (
+    <mesh
+      ref={ref}
+      material={material}
+      rotation={[-Math.PI / 2, 0, 0]}
+      position={[0, WATER_Y, 0]}
+      frustumCulled={false}
+      receiveShadow={false}
+    >
+      <planeGeometry args={[WATER_W, WATER_LEN]} />
+    </mesh>
+  )
+}
+
 const PERIOD = 1000 // streaming repeat length along Z (seam hides in fog at ±PERIOD/2)
 
 // Deterministic PRNG so the scatter is stable across renders (no reshuffle).
@@ -218,6 +281,9 @@ export function SFScene() {
   const { geo, mat } = assets
   return (
     <>
+      {/* distant San Francisco Bay water beyond the headland bluff (under the city) */}
+      <BayWater />
+
       {/* rolling golden-green headland hills flanking the road (streaming strips) */}
       <Terrain themeId="city" color={HILL_COLOR} amplitude={HILL_AMPLITUDE} cap={null} roughness={1} />
 

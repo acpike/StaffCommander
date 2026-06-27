@@ -100,6 +100,15 @@ export function Track({ theme }: { theme: Theme }) {
       ? '#BCC07E'
       : groundTint ?? (theme.id === 'candy' ? '#ffb3de' : '#ffffff')
 
+  // San Francisco is the Marin Headlands: cut the grass apron's FAR (ahead) extent
+  // short so the headland ends on a bluff ~170 units ahead, beyond which the
+  // distant Bay water (SFScene's BayWater) and the painted city are revealed —
+  // instead of flat grass running all the way into the haze. Behind/near the car
+  // is unchanged. Other themes keep the full centred apron.
+  const isCity = theme.id === 'city'
+  const apronLen = isCity ? 570 : ROAD_LEN
+  const apronZ = isCity ? 115 : 0 // shift the (shorter) apron back so it ends ~170 ahead
+
   const follow = useRef<THREE.Group>(null)
   const leftPosts = useRef<(THREE.Mesh | null)[]>([])
   const rightPosts = useRef<(THREE.Mesh | null)[]>([])
@@ -129,9 +138,9 @@ export function Track({ theme }: { theme: Theme }) {
   return (
     <>
       <group ref={follow}>
-        {/* ground apron */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.06, 0]} receiveShadow>
-          <planeGeometry args={[500, ROAD_LEN]} />
+        {/* ground apron (shortened ahead for the city/headland bluff — see above) */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.06, apronZ]} receiveShadow>
+          <planeGeometry args={[500, apronLen]} />
           <meshStandardMaterial map={groundTex} color={groundColor} roughness={1} metalness={0} />
         </mesh>
         {/* road surface */}

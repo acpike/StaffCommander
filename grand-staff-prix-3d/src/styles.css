@@ -1913,28 +1913,6 @@ body {
   transform: scale(0.96);
 }
 
-/* ── tablet / large screens: fill the viewport with a 2-column menu ── */
-@media (min-width: 760px) {
-  .sheet {
-    width: min(1000px, 95vw);
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px 22px;
-    align-items: start;
-  }
-  /* full-width rows */
-  .sheet > .hero,
-  .sheet > .topbar,
-  .sheet > .garageSec,
-  .sheet > .startWrap {
-    grid-column: 1 / -1;
-  }
-  /* a roomier garage showroom on tablets */
-  .carStage {
-    height: 220px;
-  }
-}
-
 /* ── play-menu nav + player chip ── */
 .playerChip { display: inline-flex; align-items: center; gap: 8px; }
 .playerChip .avatar.sm {
@@ -2777,10 +2755,65 @@ body {
   color: var(--amber);
 }
 
-/* tablet: keep the carbon menu sheet readable + centered (single column) */
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE LAYOUT — non-play menu screens FILL the viewport like the play menu.
+   Mobile (< 760px): a single readable carbon column (unchanged).
+   Tablet / desktop (≥ 760px): the sheet widens to fill the available space and
+   the content-rich screens reflow into multi-column carbon dashboards that use
+   the width — so they no longer sit in a skinny ~460px column with huge margins.
+   ═══════════════════════════════════════════════════════════════════════════ */
 @media (min-width: 760px) {
+  /* the carbon sheet fills big screens (was a skinny ~460px column) */
   .sheet {
-    width: min(560px, 95vw);
-    display: flex;
+    width: min(1200px, 94vw);
+  }
+
+  /* ── Garage: a big car showroom on the left, pickers fill the right ── */
+  .garageGrid {
+    display: grid;
+    grid-template-columns: 1.45fr 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+  /* the 3D car gets a large stage on a wide screen */
+  .sheet .garage.card .carStage {
+    aspect-ratio: auto;
+    min-height: 360px;
+  }
+  /* car + composer pickers reflow from a horizontal scroller into a filling grid */
+  .sheet .pickRow {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(102px, 1fr));
+    overflow: visible;
+    margin: 0;
+  }
+
+  /* ── Profile / Stats: rank strip on top, dashboard grid below ── */
+  .profileGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    gap: 14px;
+    align-items: start;
+  }
+
+  /* ── Player Select: player cards reflow into a multi-column grid ── */
+  .sheet .playerList.playerGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 9px;
+  }
+
+  /* ── New Player: keep the form centered on the wide carbon field ── */
+  .npForm {
+    max-width: 520px;
+    margin-inline: auto;
+    width: 100%;
+  }
+
+  /* ── Leaderboard: a wider table, comfortably centered on the wide field ── */
+  .lbCard {
+    max-width: 920px;
+    margin-inline: auto;
+    width: 100%;
   }
 }
