@@ -18,7 +18,7 @@ const POST_SPACING = 14
 // real CC0 ground textures per theme (public/tex)
 const GROUND_TEX: Record<string, string> = {
   mountain: '/tex/grass.jpg',
-  city: '/tex/asphalt.jpg',
+  city: '/tex/grass.jpg', // Marin Headlands grass (was asphalt for the old bridge deck)
   desert: '/tex/sand.jpg',
   candy: '/tex/grass.jpg',
   space: '/tex/rock.jpg',
@@ -92,8 +92,13 @@ export function Track({ theme }: { theme: Theme }) {
     return () => { alive = false }
   }, [theme.id])
 
+  // City is the Marin Headlands: the painted backdrop foreground is warm sunset
+  // city, which would tint the grass pavement-warm — so override the sampled tint
+  // with a fixed sun-dried golden-green so the roadside reads as headland grass.
   const groundColor =
-    groundTint ?? (theme.id === 'candy' ? '#ffb3de' : '#ffffff')
+    theme.id === 'city'
+      ? '#BCC07E'
+      : groundTint ?? (theme.id === 'candy' ? '#ffb3de' : '#ffffff')
 
   const follow = useRef<THREE.Group>(null)
   const leftPosts = useRef<(THREE.Mesh | null)[]>([])

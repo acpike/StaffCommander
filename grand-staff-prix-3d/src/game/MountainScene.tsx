@@ -206,15 +206,15 @@ export function MountainScene() {
   const { geo, mat } = assets
   return (
     <>
-      <instancedMesh ref={trunkRef} args={[geo.trunk, mat.trunkMat, N_PINE]} castShadow />
-      <instancedMesh ref={c1Ref} args={[geo.c1, mat.foliageMat, N_PINE]} castShadow />
-      <instancedMesh ref={c2Ref} args={[geo.c2, mat.foliageMat, N_PINE]} castShadow />
-      <instancedMesh ref={c3Ref} args={[geo.c3, mat.foliageMat, N_PINE]} castShadow />
-      <instancedMesh ref={capRef} args={[geo.cap, mat.snowCapMat, N_PINE]} />
-      <instancedMesh ref={rockRef} args={[geo.rock, mat.rockMat, N_ROCK]} castShadow />
-      <instancedMesh ref={bushRef} args={[geo.bush, mat.bushMat, N_BUSH]} castShadow />
-      <instancedMesh ref={snowRef} args={[geo.snow, mat.snowMat, N_SNOW]} receiveShadow />
-      <instancedMesh ref={logRef} args={[geo.log, mat.logMat, N_LOG]} castShadow />
+      <instancedMesh frustumCulled={false} ref={trunkRef} args={[geo.trunk, mat.trunkMat, N_PINE]} castShadow />
+      <instancedMesh frustumCulled={false} ref={c1Ref} args={[geo.c1, mat.foliageMat, N_PINE]} castShadow />
+      <instancedMesh frustumCulled={false} ref={c2Ref} args={[geo.c2, mat.foliageMat, N_PINE]} castShadow />
+      <instancedMesh frustumCulled={false} ref={c3Ref} args={[geo.c3, mat.foliageMat, N_PINE]} castShadow />
+      <instancedMesh frustumCulled={false} ref={capRef} args={[geo.cap, mat.snowCapMat, N_PINE]} />
+      <instancedMesh frustumCulled={false} ref={rockRef} args={[geo.rock, mat.rockMat, N_ROCK]} castShadow />
+      <instancedMesh frustumCulled={false} ref={bushRef} args={[geo.bush, mat.bushMat, N_BUSH]} castShadow />
+      <instancedMesh frustumCulled={false} ref={snowRef} args={[geo.snow, mat.snowMat, N_SNOW]} receiveShadow />
+      <instancedMesh frustumCulled={false} ref={logRef} args={[geo.log, mat.logMat, N_LOG]} castShadow />
     </>
   )
 }

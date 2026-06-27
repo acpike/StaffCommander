@@ -78,21 +78,40 @@ function buildStrip(side: number, amplitude: number, capColor: string | null): T
   return g
 }
 
-export function Terrain({ themeId }: { themeId: string }) {
+// Per-theme terrain comes from envConfig, but any field can be overridden by a
+// caller (e.g. SFScene drives golden-green Marin-Headlands hills without editing
+// the shared config). `cap` is overridable to null, so we distinguish "omitted".
+export function Terrain({
+  themeId,
+  color,
+  amplitude,
+  cap,
+  roughness,
+}: {
+  themeId: string
+  color?: string
+  amplitude?: number
+  cap?: string | null
+  roughness?: number
+}) {
   const cfg = sceneryFor(themeId)
+  const tColor = color ?? cfg.terrain.color
+  const tAmplitude = amplitude ?? cfg.terrain.amplitude
+  const tCap = cap === undefined ? cfg.terrain.cap : cap
+  const tRoughness = roughness ?? cfg.terrain.roughness
 
   const { left, right, material } = useMemo(() => {
-    const left = buildStrip(-1, cfg.terrain.amplitude, cfg.terrain.cap)
-    const right = buildStrip(1, cfg.terrain.amplitude, cfg.terrain.cap)
+    const left = buildStrip(-1, tAmplitude, tCap)
+    const right = buildStrip(1, tAmplitude, tCap)
     const material = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(cfg.terrain.color),
+      color: new THREE.Color(tColor),
       vertexColors: true,
-      roughness: cfg.terrain.roughness,
+      roughness: tRoughness,
       metalness: 0,
       flatShading: true,
     })
     return { left, right, material }
-  }, [cfg.terrain.color, cfg.terrain.amplitude, cfg.terrain.roughness, cfg.terrain.cap])
+  }, [tColor, tAmplitude, tRoughness, tCap])
 
   // dispose on theme change / unmount
   useEffect(() => {

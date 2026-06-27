@@ -206,13 +206,13 @@ export function CandyScene() {
   const { geo, mat } = assets
   return (
     <>
-      <instancedMesh ref={stickRef} args={[geo.stick, mat.stickMat, N_POP]} castShadow />
-      <instancedMesh ref={discRef} args={[geo.disc, mat.candyMat, N_POP]} castShadow />
-      <instancedMesh ref={centerRef} args={[geo.center, mat.centerMat, N_POP]} />
-      <instancedMesh ref={canePoleRef} args={[geo.canePole, mat.caneMat, N_CANE]} castShadow />
-      <instancedMesh ref={caneHookRef} args={[geo.caneHook, mat.caneMat, N_CANE]} castShadow />
-      <instancedMesh ref={gumRef} args={[geo.gum, mat.gumMat, N_GUM]} castShadow />
-      <instancedMesh ref={mintRef} args={[geo.mint, mat.mintMat, N_MINT]} castShadow />
+      <instancedMesh frustumCulled={false} ref={stickRef} args={[geo.stick, mat.stickMat, N_POP]} castShadow />
+      <instancedMesh frustumCulled={false} ref={discRef} args={[geo.disc, mat.candyMat, N_POP]} castShadow />
+      <instancedMesh frustumCulled={false} ref={centerRef} args={[geo.center, mat.centerMat, N_POP]} />
+      <instancedMesh frustumCulled={false} ref={canePoleRef} args={[geo.canePole, mat.caneMat, N_CANE]} castShadow />
+      <instancedMesh frustumCulled={false} ref={caneHookRef} args={[geo.caneHook, mat.caneMat, N_CANE]} castShadow />
+      <instancedMesh frustumCulled={false} ref={gumRef} args={[geo.gum, mat.gumMat, N_GUM]} castShadow />
+      <instancedMesh frustumCulled={false} ref={mintRef} args={[geo.mint, mat.mintMat, N_MINT]} castShadow />
     </>
   )
 }

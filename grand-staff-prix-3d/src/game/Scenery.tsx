@@ -116,13 +116,14 @@ export function Scenery({ theme }: { theme: Theme }) {
       ) : theme.id === 'city' ? (
         <>
           <SFScene />
-          {/* flat painted SF skyline (LDR jpg) instead of the HDR skybox. The
-              painting is warm, but the track is the Golden Gate over the bay, so
-              we force a clear-day SF-bay BLUE horizon/sky instead of sampling the
-              warm image — the lower-edge feather follows scene.fog, so the
-              ground melts into the same blue. */}
+          {/* flat painted SF skyline (LDR jpg) instead of the HDR skybox. This is
+              now the Marin Headlands at golden hour — the city + Golden Gate sit
+              warm in the painted distance, so we drive the scene fog/sky with a
+              soft warm golden haze (not the old bay blue). The lower-edge feather
+              follows scene.fog, so the golden-green hills dissolve into the same
+              warm haze where they meet the painted sunset horizon. */}
           <Suspense fallback={null}>
-            <Backdrop image="/backdrops/city.jpg" fogColor="#6E9CC0" skyColor="#9DC4E2" offsetY={0.24} />
+            <Backdrop image="/backdrops/city.jpg" fogColor="#E3C79E" skyColor="#F1D9B2" offsetY={0.24} />
             <ImageEnvironment image="/backdrops/city.jpg" intensity={0.9} />
           </Suspense>
         </>

@@ -178,13 +178,13 @@ export function DesertScene() {
   const { geo, mat } = assets
   return (
     <>
-      <instancedMesh ref={trunkRef} args={[geo.trunk, mat.cactusMat, N_CACTUS]} castShadow />
-      <instancedMesh ref={aHLRef} args={[geo.armHL, mat.cactusMat, N_CACTUS]} castShadow />
-      <instancedMesh ref={aVLRef} args={[geo.armVL, mat.cactusMat, N_CACTUS]} castShadow />
-      <instancedMesh ref={aHRRef} args={[geo.armHR, mat.cactusMat, N_CACTUS]} castShadow />
-      <instancedMesh ref={aVRRef} args={[geo.armVR, mat.cactusMat, N_CACTUS]} castShadow />
-      <instancedMesh ref={rockRef} args={[geo.rock, mat.rockMat, N_ROCK]} castShadow />
-      <instancedMesh ref={brushRef} args={[geo.brush, mat.brushMat, N_BRUSH]} castShadow />
+      <instancedMesh frustumCulled={false} ref={trunkRef} args={[geo.trunk, mat.cactusMat, N_CACTUS]} castShadow />
+      <instancedMesh frustumCulled={false} ref={aHLRef} args={[geo.armHL, mat.cactusMat, N_CACTUS]} castShadow />
+      <instancedMesh frustumCulled={false} ref={aVLRef} args={[geo.armVL, mat.cactusMat, N_CACTUS]} castShadow />
+      <instancedMesh frustumCulled={false} ref={aHRRef} args={[geo.armHR, mat.cactusMat, N_CACTUS]} castShadow />
+      <instancedMesh frustumCulled={false} ref={aVRRef} args={[geo.armVR, mat.cactusMat, N_CACTUS]} castShadow />
+      <instancedMesh frustumCulled={false} ref={rockRef} args={[geo.rock, mat.rockMat, N_ROCK]} castShadow />
+      <instancedMesh frustumCulled={false} ref={brushRef} args={[geo.brush, mat.brushMat, N_BRUSH]} castShadow />
     </>
   )
 }

@@ -192,10 +192,10 @@ export function SpaceScene() {
   const { geo, mat } = assets
   return (
     <>
-      <instancedMesh ref={spireRef} args={[geo.spire, mat.crystalMat, N_CRYSTAL]} castShadow />
-      <instancedMesh ref={spire2Ref} args={[geo.spire2, mat.crystalMat, N_CRYSTAL]} castShadow />
-      <instancedMesh ref={rockRef} args={[geo.rock, mat.rockMat, N_ROCK]} castShadow />
-      <instancedMesh ref={shardRef} args={[geo.shard, mat.shardMat, N_SHARD]} />
+      <instancedMesh frustumCulled={false} ref={spireRef} args={[geo.spire, mat.crystalMat, N_CRYSTAL]} castShadow />
+      <instancedMesh frustumCulled={false} ref={spire2Ref} args={[geo.spire2, mat.crystalMat, N_CRYSTAL]} castShadow />
+      <instancedMesh frustumCulled={false} ref={rockRef} args={[geo.rock, mat.rockMat, N_ROCK]} castShadow />
+      <instancedMesh frustumCulled={false} ref={shardRef} args={[geo.shard, mat.shardMat, N_SHARD]} />
     </>
   )
 }
