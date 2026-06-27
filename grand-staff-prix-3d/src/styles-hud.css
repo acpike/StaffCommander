@@ -125,8 +125,11 @@
 .hudmenu .hudhero .loc h2{ font-family:var(--disp); font-weight:900; font-size:54px; line-height:.9; text-transform:uppercase; text-shadow:0 4px 24px rgba(0,0,0,.6); }
 
 /* car silhouette */
-.hudmenu .car{ position:absolute; left:50%; bottom:74px; transform:translateX(-50%); width:280px; max-width:60%; height:168px; z-index:2; filter:drop-shadow(0 18px 20px rgba(0,0,0,.6)); animation:hud-hover 3.4s ease-in-out infinite; pointer-events:none; display:grid; place-items:center; }
-.hudmenu .car img{ width:100%; height:100%; object-fit:contain; }
+/* The car sits IN the scene: no float/bob, a soft ground contact shadow, and a
+   slight tone-down so it doesn't read as a pasted-on cutout. */
+.hudmenu .car{ position:absolute; left:50%; bottom:104px; transform:translateX(-50%); width:300px; max-width:62%; height:172px; z-index:2; pointer-events:none; display:grid; place-items:center; }
+.hudmenu .car::before{ content:""; position:absolute; left:50%; bottom:2px; transform:translateX(-50%); width:66%; height:30px; background:radial-gradient(ellipse at center, rgba(0,0,0,.62), rgba(0,0,0,0) 68%); filter:blur(5px); z-index:-1; }
+.hudmenu .car img{ width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 8px 7px rgba(0,0,0,.5)) saturate(.95) brightness(.96); }
 @keyframes hud-hover{ 50%{ transform:translateX(-50%) translateY(-6px); } }
 .hudmenu .speedlines{ position:absolute; left:0; right:0; bottom:140px; height:80px; z-index:1; overflow:hidden; pointer-events:none; }
 .hudmenu .speedlines i{ position:absolute; height:2px; right:-30%; background:linear-gradient(90deg,transparent,var(--livery)); opacity:0; animation:hud-zoom 1.4s linear infinite; }
@@ -157,8 +160,49 @@
 .hudmenu .gforce .gv em{ font-style:normal; color:var(--papaya); font-size:18px; }
 .hudmenu .gforce .gl{ font-family:var(--data); font-size:9px; letter-spacing:2px; color:var(--mute); }
 
-/* ---- RIGHT COLUMN ---- */
-.hudmenu .side{ display:flex; flex-direction:column; gap:14px; }
+/* ---- COLUMNS ---- */
+.hudmenu .side,
+.hudmenu .colL,
+.hudmenu .colR{ display:flex; flex-direction:column; gap:14px; }
+.hudmenu .colL .duo{ margin-top:0; }
+
+/* ---- PROFILE TILE (top of right column) ---- */
+.hudmenu .profiletile{
+  display:block; width:100%; text-align:left; cursor:pointer; color:var(--ink);
+  background:linear-gradient(255deg, var(--carbon-2), var(--carbon-1));
+  border:1px solid var(--carbon-3); border-top:3px solid var(--purple);
+  padding:14px 16px 13px; transition:.16s;
+  clip-path:polygon(0 0,100% 0,100% 100%,16px 100%,0 calc(100% - 16px));
+}
+.hudmenu .profiletile:hover{ border-color:#3a4a59; transform:translateY(-2px); }
+.hudmenu .profiletile .pthead{ display:flex; align-items:center; gap:14px; }
+.hudmenu .profiletile .ptwho{ display:flex; flex-direction:column; gap:5px; flex:1; min-width:0; }
+.hudmenu .profiletile .ptname{ font-family:var(--disp); font-weight:800; font-size:24px; text-transform:uppercase; letter-spacing:.5px; line-height:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hudmenu .profiletile .ptrank{ font-family:var(--data); font-size:11px; letter-spacing:1.5px; color:var(--purple); text-transform:uppercase; }
+.hudmenu .profiletile .ptgems{ display:flex; flex-direction:column; align-items:flex-end; gap:3px; flex:none; }
+.hudmenu .profiletile .ptgems .amt{ font-family:var(--data); font-weight:700; font-size:22px; color:var(--amber); display:flex; align-items:center; gap:6px; }
+.hudmenu .profiletile .ptgems .amt::before{ content:""; width:14px; height:14px; background:conic-gradient(var(--amber),#fff5cf,var(--amber)); clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%); }
+.hudmenu .profiletile .ptgems .ccap{ font-family:var(--data); font-size:9px; letter-spacing:1.5px; color:var(--mute); }
+.hudmenu .profiletile .ptxpbar{ margin-top:13px; height:11px; background:#080b0e; border:1px solid var(--carbon-3); position:relative; overflow:hidden; clip-path:polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%); }
+.hudmenu .profiletile .ptxpbar i{ position:absolute; inset:0; right:auto; background-color:var(--purple); background-image:repeating-linear-gradient(90deg,#ffffff22 0 2px,transparent 2px 8px); }
+.hudmenu .profiletile .ptfoot{ display:flex; align-items:center; justify-content:space-between; margin-top:9px; gap:10px; }
+.hudmenu .profiletile .ptfoot .sw{ font-family:var(--data); font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--mute); cursor:pointer; display:inline-flex; align-items:center; gap:5px; }
+.hudmenu .profiletile .ptfoot .sw::before{ content:"⇄"; color:var(--livery); }
+.hudmenu .profiletile .ptfoot .sw:hover{ color:var(--livery); }
+.hudmenu .profiletile .ptfoot .ptxptx{ font-family:var(--data); font-size:10px; letter-spacing:.5px; color:var(--mute); text-align:right; }
+
+/* ---- DRIVER CHIP (in the hero, top-right) ---- */
+.hudmenu .driver{
+  position:absolute; top:44px; right:16px; z-index:3; display:flex; align-items:center; gap:11px;
+  background:linear-gradient(255deg, rgba(17,22,29,.92), rgba(10,14,18,.8));
+  border:1px solid var(--carbon-3); padding:7px 14px 7px 8px;
+  clip-path:polygon(12px 0,100% 0,100% 100%,0 100%,0 12px);
+}
+.hudmenu .driver .face{ width:42px; height:42px; border-radius:50%; overflow:hidden; flex:none; border:2px solid var(--papaya); box-shadow:0 0 12px rgba(255,94,43,.35); background:#0e141a; }
+.hudmenu .driver .face img{ width:100%; height:100%; object-fit:cover; display:block; }
+.hudmenu .driver .dtx{ display:flex; flex-direction:column; gap:3px; line-height:1; }
+.hudmenu .driver .dl{ font-family:var(--data); font-size:9px; letter-spacing:2px; color:var(--papaya); text-transform:uppercase; }
+.hudmenu .driver .dn{ font-family:var(--disp); font-weight:800; font-size:19px; text-transform:uppercase; letter-spacing:.4px; max-width:190px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .hudmenu .panel{ background:linear-gradient(180deg,var(--carbon-2),var(--carbon-1)); border:1px solid var(--carbon-3); position:relative; }
 .hudmenu .panel > .ph{ display:flex; align-items:center; justify-content:space-between; padding:11px 16px; border-bottom:1px solid var(--carbon-3); background:linear-gradient(90deg,#ffffff06,transparent); }
 .hudmenu .panel > .ph h3{ font-family:var(--disp); font-weight:800; font-size:18px; letter-spacing:1.5px; text-transform:uppercase; display:flex; align-items:center; gap:9px; }

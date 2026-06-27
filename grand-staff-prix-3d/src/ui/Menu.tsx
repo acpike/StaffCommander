@@ -440,6 +440,7 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
   // ── derived display values (ALL real data) ──────────────────────────
   const initial = (profile?.name ?? 'P').slice(0, 1).toUpperCase()
   const car = carById(profile?.carId ?? settings.carId)
+  const composer = composerById(profile?.composerId ?? settings.composerId)
   const heroImg = BACKDROP_TINT_SRC[settings.themeId] ?? ''
   const [heroNameA, ...heroRest] = activeTheme.name.split(' ')
   const heroNameB = heroRest.join(' ')
@@ -477,28 +478,13 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
               <div className="tag">Note-Reading <b>Racing</b>{r ? ` · ${r.name}` : ''}</div>
             </div>
           </div>
-          <button className="hudchip" onClick={onProfile}>
-            <div className="avatar">{initial}<div className="lvtab">LV {r?.level ?? 1}</div></div>
-            <div className="who">
-              <div className="nm">{profile?.name ?? 'Player'}</div>
-              <span
-                className="sw"
-                role="button"
-                onClick={(e) => { e.stopPropagation(); onSwitch() }}
-              >
-                Switch profile
-              </span>
-            </div>
-            <div className="curr">
-              <div className="amt">{(profile?.gems ?? 0).toLocaleString()}</div>
-              <div className="ccap">GEMS</div>
-            </div>
-          </button>
         </header>
 
         {/* ===== MAIN GRID ===== */}
         <div className="grid">
 
+          {/* LEFT: telemetry hero + Garage/Stats */}
+          <div className="colL">
           {/* HERO TELEMETRY PANEL (selected circuit) */}
           <section className="hudhero">
             <div className="bg" style={{ backgroundImage: heroImg ? `url(${heroImg})` : undefined }} />
@@ -510,6 +496,12 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
             <div className="loc">
               <div className="lbl">Circuit · Now on Grid</div>
               <h2>{heroNameA}<br />{heroNameB}</h2>
+            </div>
+
+            {/* the student's chosen driver (composer) */}
+            <div className="driver">
+              <span className="face"><img src={`/thumbs/composer_${composer.id}.png`} alt={composer.name} /></span>
+              <span className="dtx"><span className="dl">Driver</span><span className="dn">{composer.name}</span></span>
             </div>
 
             <div className="speedlines"><i /><i /><i /></div>
@@ -539,8 +531,7 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
             </div>
           </section>
 
-          {/* RIGHT COLUMN */}
-          <div className="side">
+            {/* Garage / Stats fill the space under the telemetry window */}
             <div className="duo">
               <button className="nav garage" onClick={onGarage}>
                 <div className="ic">🔧</div>
@@ -551,6 +542,25 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
                 <div className="tx"><div className="t">Stats</div><div className="s">Rank · Challenges</div></div>
               </button>
             </div>
+          </div>
+
+          {/* RIGHT: profile card + level calendar */}
+          <div className="colR">
+            <button className="profiletile" onClick={onProfile}>
+              <div className="pthead">
+                <div className="avatar">{initial}<div className="lvtab">LV {r?.level ?? 1}</div></div>
+                <div className="ptwho">
+                  <div className="ptname">{profile?.name ?? 'Player'}</div>
+                  <div className="ptrank">{r?.name ?? 'Rookie'}</div>
+                </div>
+                <div className="ptgems"><span className="amt">{gems.toLocaleString()}</span><span className="ccap">GEMS</span></div>
+              </div>
+              <div className="ptxpbar"><i style={{ width: `${xpPct}%` }} /></div>
+              <div className="ptfoot">
+                <span className="sw" role="button" onClick={(e) => { e.stopPropagation(); onSwitch() }}>Switch profile</span>
+                <span className="ptxptx">{r && r.xpForNext !== Infinity ? `${r.xpInto}/${r.xpForNext} XP${r.nextName ? ` → ${r.nextName}` : ''}` : `${profile?.xp ?? 0} XP · MAX`}</span>
+              </div>
+            </button>
 
             <section className="panel">
               <div className="ph">
