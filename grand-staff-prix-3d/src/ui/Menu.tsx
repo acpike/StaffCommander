@@ -437,20 +437,33 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
     startGame()
   }
 
-  // ── derived display values (real data, HUD framing) ─────────────────
+  // ── derived display values (ALL real data) ──────────────────────────
   const initial = (profile?.name ?? 'P').slice(0, 1).toUpperCase()
+  const car = carById(profile?.carId ?? settings.carId)
   const heroImg = BACKDROP_TINT_SRC[settings.themeId] ?? ''
   const [heroNameA, ...heroRest] = activeTheme.name.split(' ')
   const heroNameB = heroRest.join(' ')
   const selectedLevel =
     NOTE_SETS.find((s) => s.id === settings.levelId) ?? customLevels.find((s) => s.id === settings.levelId)
-  const pctMastered = NOTE_SETS.length ? Math.round((mastered.size / NOTE_SETS.length) * 100) : 0
+  // real progress across the visible track list
+  const visibleTracks = NOTE_SETS.filter(
+    (s) => settings.showCClefs || (s.group !== 'alto' && s.group !== 'tenor'),
+  )
+  const totalTracks = visibleTracks.length
+  const masteredCount = visibleTracks.filter((s) => mastered.has(s.id)).length
+  const unlockedCount = visibleTracks.filter((s) => s.tier === 1 || unlocked.has(s.id)).length
+  const pctMastered = totalTracks ? Math.round((masteredCount / totalTracks) * 100) : 0
+  const pctUnlocked = totalTracks ? Math.round((unlockedCount / totalTracks) * 100) : 0
+  // rank/XP gauge (real)
+  const xpPct = r ? (r.xpForNext === Infinity ? 100 : Math.round((r.xpInto / r.xpForNext) * 100)) : 0
+  const tealArc = Math.round((xpPct / 100) * 235) // teal fill over the 235-unit gauge arc
+  const gems = profile?.gems ?? 0
   // 3 sector-delta micro-bars per level, tied to real progress
   const deltaBars = (isUnlocked: boolean, isMastered: boolean, hasBest: boolean): string[] =>
     isMastered ? ['on', 'on', 'on'] : hasBest ? ['on', 'on', 'amber'] : isUnlocked ? ['amber', '', ''] : ['', '', '']
 
   return (
-    <div className="hud">
+    <div className="hudmenu">
       <div className="hudBg" />
       <div className="hudApp">
         {creating && <LevelCreator onClose={() => setCreating(false)} />}
@@ -492,7 +505,7 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
             <div className="scrim" />
             <div className="topstrip">
               <span className="live"><span className="dot" />LIVE TELEMETRY</span>
-              <span>{selectedLevel ? selectedLevel.name.toUpperCase() : 'SELECT EVENT'}</span>
+              <span>{selectedLevel ? selectedLevel.name.toUpperCase() : 'SELECT AN EVENT'} · {masteredCount}/{totalTracks} MASTERED</span>
             </div>
             <div className="loc">
               <div className="lbl">Circuit · Now on Grid</div>
@@ -500,44 +513,28 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
             </div>
 
             <div className="speedlines"><i /><i /><i /></div>
-            <svg className="car" viewBox="0 0 300 90" aria-hidden>
-              <defs>
-                <linearGradient id="hudCarBody" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stopColor="#13e7c7" /><stop offset="1" stopColor="#0a9f88" />
-                </linearGradient>
-              </defs>
-              <ellipse cx="80" cy="74" rx="30" ry="14" fill="#0a0e12" />
-              <ellipse cx="228" cy="74" rx="30" ry="14" fill="#0a0e12" />
-              <circle cx="80" cy="72" r="15" fill="#1a222c" stroke="#00e5c4" strokeWidth="2" />
-              <circle cx="228" cy="72" r="15" fill="#1a222c" stroke="#00e5c4" strokeWidth="2" />
-              <rect x="2" y="46" width="34" height="9" rx="2" fill="#27313d" />
-              <rect x="266" y="20" width="30" height="8" rx="2" fill="#27313d" />
-              <rect x="284" y="20" width="6" height="38" fill="#27313d" />
-              <path d="M30 62 L70 52 Q120 42 150 30 Q175 20 210 24 L268 40 L286 56 L60 64 Z" fill="url(#hudCarBody)" />
-              <path d="M150 30 Q175 20 210 24 L235 30 L150 40 Z" fill="#0a3a33" />
-              <circle cx="158" cy="34" r="11" fill="#0a0e12" />
-              <path d="M138 36 Q158 12 182 32" fill="none" stroke="#0a0e12" strokeWidth="5" />
-              <path d="M60 60 L120 50 L118 56 L60 64 Z" fill="#ff5e2b" />
-              <text x="100" y="60" fontFamily="JetBrains Mono" fontSize="11" fontWeight="700" fill="#04181a">07</text>
-            </svg>
+            {/* the student's actual chosen car */}
+            <div className="car">
+              <img src={`/thumbs/car_${car.id}.png`} alt={car.name} />
+            </div>
 
             <div className="dash">
               <div className="gauge">
                 <svg width="118" height="118" viewBox="0 0 118 118">
                   <circle cx="59" cy="59" r="50" fill="none" stroke="#0b1014" strokeWidth="9" />
                   <circle cx="59" cy="59" r="50" fill="none" stroke="#27313d" strokeWidth="9" strokeDasharray="235 314" strokeLinecap="round" />
-                  <circle cx="59" cy="59" r="50" fill="none" stroke="#00e5c4" strokeWidth="9" strokeDasharray="176 314" strokeLinecap="round" />
+                  <circle cx="59" cy="59" r="50" fill="none" stroke="#00e5c4" strokeWidth="9" strokeDasharray={`${tealArc} 314`} strokeLinecap="round" />
                 </svg>
-                <div className="read"><div className="v">182</div><div className="u">KM/H</div></div>
+                <div className="read"><div className="v">{r?.level ?? 1}</div><div className="u">LEVEL</div></div>
               </div>
               <div className="sectors">
-                <div className="secrow s1"><span className="sl">S1</span><span className="secbar"><i /></span><span className="st">+0.04</span></div>
-                <div className="secrow s2"><span className="sl">S2</span><span className="secbar"><i /></span><span className="st">−0.21</span></div>
-                <div className="secrow s3"><span className="sl">S3</span><span className="secbar"><i /></span><span className="st">+0.11</span></div>
+                <div className="secrow s1"><span className="sl">MSTR</span><span className="secbar"><i style={{ width: `${pctMastered}%` }} /></span><span className="st">{masteredCount}/{totalTracks}</span></div>
+                <div className="secrow s2"><span className="sl">OPEN</span><span className="secbar"><i style={{ width: `${pctUnlocked}%` }} /></span><span className="st">{unlockedCount}/{totalTracks}</span></div>
+                <div className="secrow s3"><span className="sl">XP</span><span className="secbar"><i style={{ width: `${xpPct}%` }} /></span><span className="st">{xpPct}%</span></div>
               </div>
               <div className="gforce">
-                <div className="gv">{pctMastered}<em>%</em></div>
-                <div className="gl">Tracks Mastered</div>
+                <div className="gv">{gems.toLocaleString()}</div>
+                <div className="gl">Gems</div>
               </div>
             </div>
           </section>
