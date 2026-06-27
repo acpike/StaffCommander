@@ -32,8 +32,8 @@ function mulberry32(seed: number): () => number {
   }
 }
 
-const N_CRYSTAL = 70
-const N_ROCK = 110
+const N_CRYSTAL = 95
+const N_ROCK = 140
 
 interface Item {
   x: number
@@ -56,12 +56,13 @@ export function SpaceScene() {
   const { crystals, rocks } = useMemo(() => {
     const rng = mulberry32(0x5face)
     const side = () => (rng() < 0.5 ? -1 : 1)
-    // X grows away from the lane, biased dense near the shoulder (pow > 1). The
-    // gap keeps everything clear of the lane path so it never blocks gameplay.
+    // In open space there's no "shoulder", so spread EVENLY across a wide band on
+    // each side (no near-lane bias) instead of bunching by the lane. The gap keeps
+    // everything clear of the lane path so it never blocks gameplay.
     const scatterX = (reach: number, gap = 3) =>
-      side() * (TRACK_HALF + gap + Math.pow(rng(), 1.7) * reach)
-    // Y floats above AND below the lane — a true 3D field, not a horizon line.
-    const scatterY = () => -28 + rng() * 56
+      side() * (TRACK_HALF + gap + rng() * reach)
+    // Y floats above AND below the lane across the whole view — a true 3D field.
+    const scatterY = () => -42 + rng() * 84
     // A full random 3D orientation (static): reads as a drifting tumble field.
     const spin3 = () => rng() * Math.PI * 2
 
@@ -73,7 +74,7 @@ export function SpaceScene() {
       new THREE.Color().setHSL(0.72, 0.08 + rng() * 0.12, 0.16 + rng() * 0.12)
 
     const crystals: Item[] = Array.from({ length: N_CRYSTAL }, () => ({
-      x: scatterX(92),
+      x: scatterX(135),
       y: scatterY(),
       zL: rng() * PERIOD,
       s: 0.7 + rng() * 1.6,
@@ -81,7 +82,7 @@ export function SpaceScene() {
       tint: crystalTone(),
     }))
     const rocks: Item[] = Array.from({ length: N_ROCK }, () => ({
-      x: scatterX(100, 2),
+      x: scatterX(150, 2),
       y: scatterY(),
       zL: rng() * PERIOD,
       s: 0.3 + rng() * 2.4, // pebbles → boulders

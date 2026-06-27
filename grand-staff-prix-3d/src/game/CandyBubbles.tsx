@@ -44,16 +44,18 @@ export function CandyBubbles() {
       const idx = bubbles.findIndex((b) => !b.active)
       if (idx >= 0) {
         const b = bubbles[idx]
-        const sx = (Math.random() - 0.5) * 0.5
-        b.x = carState.x + sx
-        b.y = CAR_Y - 0.05 + Math.random() * 0.2
+        // emit from the rear CORNERS (not the centre) so the bubbles clear the
+        // road's centre line, and drift OUTWARD to the sides where they're visible
+        const sideSign = Math.random() < 0.5 ? -1 : 1
+        b.x = carState.x + sideSign * (0.42 + Math.random() * 0.18)
+        b.y = CAR_Y - 0.02 + Math.random() * 0.25
         b.z = carState.z + REAR_Z + Math.random() * 0.3
-        b.vx = sx * 0.6 + (Math.random() - 0.5) * 0.3
-        b.vy = 0.5 + Math.random() * 0.5
-        b.vz = 0.5 + Math.random() * 0.8 // drift backward (+Z)
-        b.ttl = 1.4 + Math.random() * 1.3
+        b.vx = sideSign * (0.35 + Math.random() * 0.45) // outward toward the sides
+        b.vy = 0.26 + Math.random() * 0.26 // slower rise
+        b.vz = 0.22 + Math.random() * 0.5 // slower backward drift (they linger)
+        b.ttl = 2.6 + Math.random() * 1.8 // live much longer so they're easy to see
         b.life = b.ttl
-        b.size = 0.12 + Math.random() * 0.18
+        b.size = 0.17 + Math.random() * 0.22 // a bit bigger
         b.active = true
         const grp = refs.current[idx]
         if (grp) {
