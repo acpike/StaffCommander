@@ -319,7 +319,7 @@
 .hudmenu .tile img{ width:100%; height:100%; object-fit:cover; transition:transform .35s; filter:saturate(.9) brightness(.85); display:block; }
 .hudmenu .tile:hover{ transform:translateY(-3px); border-color:#46586a; }
 .hudmenu .tile:hover img{ transform:scale(1.08); filter:saturate(1.05) brightness(1); }
-.hudmenu .tile .nm{ position:absolute; left:0; right:0; bottom:0; padding:14px 8px 7px; font-family:var(--disp); font-weight:700; font-size:13px; letter-spacing:.4px; text-transform:uppercase; line-height:1.05; background:linear-gradient(transparent,rgba(6,9,12,.92)); z-index:2; text-align:left; }
+.hudmenu .tile .nm{ position:absolute; left:0; right:0; bottom:0; padding:20px 8px 8px 11px; font-family:var(--disp); font-weight:800; font-size:14px; letter-spacing:.4px; text-transform:uppercase; line-height:1.05; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.9); background:linear-gradient(transparent, rgba(6,9,12,.55) 38%, rgba(6,9,12,.97)); border-left:3px solid var(--tileAccent, var(--livery)); z-index:2; text-align:left; }
 .hudmenu .tile .px{ position:absolute; top:6px; left:6px; z-index:2; font-family:var(--data); font-size:9px; letter-spacing:1px; color:var(--ink); background:#0a0e12cc; border:1px solid var(--carbon-3); padding:1px 5px; }
 .hudmenu .tile.selected{ border-color:var(--livery); box-shadow:0 0 0 1px var(--livery), 0 10px 22px rgba(0,229,196,.22); }
 .hudmenu .tile.selected img{ filter:saturate(1.1) brightness(1.02); }
@@ -346,9 +346,16 @@
 .hudmenu .start .pre{ font-family:var(--data); font-size:11px; letter-spacing:2px; opacity:.7; align-self:flex-start; margin-top:-2px; text-align:left; }
 
 @media (max-width:1180px){
-  .hudmenu .grid{ grid-template-columns:1fr; }
-  .hudmenu .hudtop{ flex-direction:column; }
-  .hudmenu .hudchip{ min-width:0; }
+  /* single column, with the PROFILE stacked ABOVE the telemetry:
+     header → profile → telemetry → garage/stats → level calendar. Columns become
+     display:contents so their children order directly within the grid. */
+  .hudmenu .grid{ display:flex; flex-direction:column; gap:14px; }
+  .hudmenu .colL, .hudmenu .colR{ display:contents; }
+  .hudmenu .hudtop{ order:1; flex-direction:column; }
+  .hudmenu .profiletile{ order:2; }
+  .hudmenu .hudhero{ order:3; }
+  .hudmenu .duo{ order:4; }
+  .hudmenu .colR .panel{ order:5; }
 }
 @media (max-width:680px){
   .hudmenu .scenes{ grid-template-columns:repeat(2,1fr); }

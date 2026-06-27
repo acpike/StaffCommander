@@ -27,6 +27,16 @@ const CLEF_BADGE: Record<string, string> = {
   tenor: String.fromCharCode(0xe05c),
 }
 
+// Per-circuit accent colour for the scenery-tile name stripe (identity without
+// hurting legibility — the name itself stays uniform white).
+const TILE_ACCENT: Record<string, string> = {
+  mountain: '#00e5c4',
+  city: '#ffc23d',
+  desert: '#ff8a3d',
+  candy: '#ff6fb0',
+  space: '#8b7bff',
+}
+
 type View = 'select' | 'create' | 'play' | 'garage' | 'profile' | 'leaderboard'
 
 function Hero() {
@@ -706,6 +716,7 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
                 <button
                   key={t.id}
                   className={`tile${sel ? ' selected' : ''}`}
+                  style={{ ['--tileAccent' as string]: TILE_ACCENT[t.id] ?? '#00e5c4' }}
                   onClick={() => setTheme(t.id)}
                   aria-label={t.name}
                 >
