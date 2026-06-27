@@ -2893,16 +2893,18 @@ body {
 .placePrev {
   background: #fbfbfd;
   border-radius: 8px;
-  padding: 6px 4px;
-  min-height: 64px;
+  padding: 8px 14px;
+  height: 130px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
+/* definite box + the SVG's preserveAspectRatio="meet" scales the whole staff to
+   fit inside it (no clipping, no collapse) */
 .placePrev .tapStaff {
-  max-height: 84px;
-  width: auto;
-  max-width: 100%;
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 .sheet .placeGo {
   font-family: var(--data);
