@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { useGame, activeProfile } from '../state/store'
 import { avatarById, type AvatarSpec } from '../data/avatars'
 import { carById, CAR_MODEL_PATHS } from '../data/cars'
+import { visibleBox } from './RealCar'
 
 /**
  * RealCarModel — a drop-in replacement for CarModel with the SAME public API:
@@ -103,6 +104,16 @@ function GltfBody({
       // Everything else is treated as paintable bodywork.
       mesh.material = paint.clone()
     })
+
+    // Auto-ground: centre on x/z and drop the lowest visible point (wheels) to
+    // y = 0 so the model rests on the road no matter where its GLB origin sits.
+    // The outer group's `yOffset` then nudges from that grounded baseline.
+    const box = visibleBox(root)
+    const ctr = new THREE.Vector3()
+    box.getCenter(ctr)
+    root.position.x -= ctr.x
+    root.position.z -= ctr.z
+    root.position.y -= box.min.y
     return root
   }, [scene, color, accent])
 

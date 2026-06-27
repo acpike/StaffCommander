@@ -9,6 +9,7 @@ import { isTouchDevice } from '../util/device'
 import { SFScene } from './SFScene'
 import { MountainScene } from './MountainScene'
 import { DesertScene } from './DesertScene'
+import { SpaceScene } from './SpaceScene'
 import { Backdrop, ImageEnvironment } from './Backdrop'
 
 // Deep Space: a painted galaxy backdrop (flat quad, same as the other themes) +
@@ -101,7 +102,9 @@ export function Scenery({ theme }: { theme: Theme }) {
 
       {theme.id === 'space' ? (
         <>
-          {/* painted galaxy backdrop; planets + stars stream in front for depth */}
+          {/* painted galaxy backdrop; planets + stars stream in front for depth,
+              plus a scattered crystal/asteroid field flanking the road */}
+          <SpaceScene />
           <Planet tex="/tex/planet_jupiter.jpg" size={34} dir={[-0.24, 0.12, -0.96]} spin={0.04} />
           <Planet tex="/tex/planet_mars.jpg" size={12} dir={[0.3, 0.09, -0.95]} spin={0.06} />
           <FollowStars />

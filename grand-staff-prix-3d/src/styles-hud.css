@@ -189,13 +189,27 @@
 .hudmenu .profiletile .ptgems .amt{ font-family:var(--data); font-weight:700; font-size:22px; color:var(--amber); display:flex; align-items:center; gap:6px; }
 .hudmenu .profiletile .ptgems .amt::before{ content:""; width:14px; height:14px; background:conic-gradient(var(--amber),#fff5cf,var(--amber)); clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%); }
 .hudmenu .profiletile .ptgems .ccap{ font-family:var(--data); font-size:9px; letter-spacing:1.5px; color:var(--mute); }
-.hudmenu .profiletile .ptxpbar{ margin-top:13px; height:11px; background:#080b0e; border:1px solid var(--carbon-3); position:relative; overflow:hidden; clip-path:polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%); }
+.hudmenu .profiletile .avatar.lg{ width:54px; height:54px; font-size:26px; }
+.hudmenu .profiletile .ptxpwrap{ margin-top:14px; }
+.hudmenu .profiletile .ptxpbar{ height:11px; background:#080b0e; border:1px solid var(--carbon-3); position:relative; overflow:hidden; clip-path:polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%); }
 .hudmenu .profiletile .ptxpbar i{ position:absolute; inset:0; right:auto; background-color:var(--purple); background-image:repeating-linear-gradient(90deg,#ffffff22 0 2px,transparent 2px 8px); }
-.hudmenu .profiletile .ptfoot{ display:flex; align-items:center; justify-content:space-between; margin-top:9px; gap:10px; }
+.hudmenu .profiletile .ptxptx{ font-family:var(--data); font-size:10px; letter-spacing:.5px; color:var(--mute); margin-top:6px; }
+/* the competitive stat grid — big, scannable, scoreboard-y */
+.hudmenu .profiletile .ptstats{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:14px; }
+.hudmenu .profiletile .ptstat{ background:#0c1218; border:1px solid var(--carbon-3); border-top:2px solid var(--carbon-3); padding:10px 6px 8px; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.hudmenu .profiletile .ptstat .psv{ font-family:var(--data); font-weight:700; font-size:19px; line-height:1; }
+.hudmenu .profiletile .ptstat .psk{ font-family:var(--data); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--mute); }
+.hudmenu .profiletile .ptstat.amber{ border-top-color:var(--amber); } .hudmenu .profiletile .ptstat.amber .psv{ color:var(--amber); }
+.hudmenu .profiletile .ptstat.livery{ border-top-color:var(--livery); } .hudmenu .profiletile .ptstat.livery .psv{ color:var(--livery); }
+.hudmenu .profiletile .ptstat.purple{ border-top-color:var(--purple); } .hudmenu .profiletile .ptstat.purple .psv{ color:var(--purple); }
+.hudmenu .profiletile .ptstat.papaya{ border-top-color:var(--papaya); } .hudmenu .profiletile .ptstat.papaya .psv{ color:var(--papaya); }
+.hudmenu .profiletile .ptfoot{ display:flex; align-items:center; justify-content:space-between; margin-top:13px; gap:10px; }
 .hudmenu .profiletile .ptfoot .sw{ font-family:var(--data); font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--mute); cursor:pointer; display:inline-flex; align-items:center; gap:5px; }
 .hudmenu .profiletile .ptfoot .sw::before{ content:"⇄"; color:var(--livery); }
 .hudmenu .profiletile .ptfoot .sw:hover{ color:var(--livery); }
-.hudmenu .profiletile .ptfoot .ptxptx{ font-family:var(--data); font-size:10px; letter-spacing:.5px; color:var(--mute); text-align:right; }
+.hudmenu .profiletile .ptfoot .ptview{ font-family:var(--data); font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--livery); }
+/* brand header now lives at the top of the left column */
+.hudmenu .colL .hudtop{ margin-bottom:0; }
 
 /* ---- DRIVER CHIP (in the hero, top-right) ---- */
 .hudmenu .driver{

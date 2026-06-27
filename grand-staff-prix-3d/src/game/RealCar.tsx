@@ -12,6 +12,30 @@ useGLTF.preload('/models/user_sportscar.glb')
 
 const TARGET_LEN = 4.2 // world units, front-to-back
 
+/**
+ * Axis-aligned bounding box over only the VISIBLE meshes of a subtree.
+ *
+ * THREE.Box3.setFromObject() includes meshes whose `visible` flag is false, so
+ * once we cull a model's hidden interior (floor pans, cages, undercarriage) the
+ * stock box still counts that hidden geometry. When such geometry hangs lower
+ * than the wheels it drags min.y down and the car floats above the road — and
+ * because each GLB hides different parts, the error differs per model. Measuring
+ * the visible body only makes every car ground on its real wheel line.
+ */
+export function visibleBox(root: THREE.Object3D): THREE.Box3 {
+  const box = new THREE.Box3()
+  const tmp = new THREE.Box3()
+  root.updateWorldMatrix(true, true)
+  root.traverse((o) => {
+    const mesh = o as THREE.Mesh
+    if (!mesh.isMesh || !mesh.visible || !mesh.geometry) return
+    if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox()
+    tmp.copy(mesh.geometry.boundingBox as THREE.Box3).applyMatrix4(mesh.matrixWorld)
+    box.union(tmp)
+  })
+  return box
+}
+
 export function RealCar({
   color,
   modelUrl = DEFAULT_MODEL,
@@ -49,12 +73,15 @@ export function RealCar({
       mesh.material = Array.isArray(mesh.material) ? mesh.material.map(tint) : tint(mesh.material)
     })
 
-    // auto-fit: scale so the longest horizontal axis == TARGET_LEN, drop to ground, centre
-    const box = new THREE.Box3().setFromObject(c)
+    // auto-fit over the VISIBLE body only (hidden interior geometry would skew
+    // the box and ground the car wrong): scale so the longest horizontal axis ==
+    // TARGET_LEN, centre on x/z, then drop the lowest visible point (wheels) to
+    // y = 0 so every model rests on the road regardless of its GLB origin.
+    const box = visibleBox(c)
     const size = new THREE.Vector3()
     box.getSize(size)
     c.scale.setScalar(TARGET_LEN / Math.max(size.x, size.z))
-    const box2 = new THREE.Box3().setFromObject(c)
+    const box2 = visibleBox(c)
     const ctr = new THREE.Vector3()
     box2.getCenter(ctr)
     c.position.x -= ctr.x

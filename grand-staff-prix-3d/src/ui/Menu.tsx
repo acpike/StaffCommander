@@ -459,6 +459,8 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
   const xpPct = r ? (r.xpForNext === Infinity ? 100 : Math.round((r.xpInto / r.xpForNext) * 100)) : 0
   const tealArc = Math.round((xpPct / 100) * 235) // teal fill over the 235-unit gauge arc
   const gems = profile?.gems ?? 0
+  const achCount = profile?.achievements.length ?? 0
+  const achTotal = ACHIEVEMENTS.length
   // 3 sector-delta micro-bars per level, tied to real progress
   const deltaBars = (isUnlocked: boolean, isMastered: boolean, hasBest: boolean): string[] =>
     isMastered ? ['on', 'on', 'on'] : hasBest ? ['on', 'on', 'amber'] : isUnlocked ? ['amber', '', ''] : ['', '', '']
@@ -469,22 +471,20 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
       <div className="hudApp">
         {creating && <LevelCreator onClose={() => setCreating(false)} />}
 
-        {/* ===== TOP BAR ===== */}
-        <header className="hudtop">
-          <div className="brand">
-            <div className="marque"><span>G</span></div>
-            <div>
-              <h1>Grand Staff <em>Prix</em></h1>
-              <div className="tag">Note-Reading <b>Racing</b>{r ? ` · ${r.name}` : ''}</div>
-            </div>
-          </div>
-        </header>
-
         {/* ===== MAIN GRID ===== */}
         <div className="grid">
 
-          {/* LEFT: telemetry hero + Garage/Stats */}
+          {/* LEFT: brand + telemetry hero + Garage/Stats */}
           <div className="colL">
+          <header className="hudtop">
+            <div className="brand">
+              <div className="marque"><span>G</span></div>
+              <div>
+                <h1>Grand Staff <em>Prix</em></h1>
+                <div className="tag">Note-Reading <b>Racing</b>{r ? ` · ${r.name}` : ''}</div>
+              </div>
+            </div>
+          </header>
           {/* HERO TELEMETRY PANEL (selected circuit) */}
           <section className="hudhero">
             <div className="bg" style={{ backgroundImage: heroImg ? `url(${heroImg})` : undefined }} />
@@ -548,17 +548,27 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
           <div className="colR">
             <button className="profiletile" onClick={onProfile}>
               <div className="pthead">
-                <div className="avatar">{initial}<div className="lvtab">LV {r?.level ?? 1}</div></div>
+                <div className="avatar lg">{initial}<div className="lvtab">LV {r?.level ?? 1}</div></div>
                 <div className="ptwho">
                   <div className="ptname">{profile?.name ?? 'Player'}</div>
                   <div className="ptrank">{r?.name ?? 'Rookie'}</div>
                 </div>
-                <div className="ptgems"><span className="amt">{gems.toLocaleString()}</span><span className="ccap">GEMS</span></div>
               </div>
-              <div className="ptxpbar"><i style={{ width: `${xpPct}%` }} /></div>
+              <div className="ptxpwrap">
+                <div className="ptxpbar"><i style={{ width: `${xpPct}%` }} /></div>
+                <div className="ptxptx">
+                  {r && r.xpForNext !== Infinity ? `${r.xpInto} / ${r.xpForNext} XP → ${r.nextName ?? ''}` : `${(profile?.xp ?? 0).toLocaleString()} XP · MAX RANK`}
+                </div>
+              </div>
+              <div className="ptstats">
+                <div className="ptstat amber"><span className="psv">{gems.toLocaleString()}</span><span className="psk">Gems</span></div>
+                <div className="ptstat livery"><span className="psv">{masteredCount}/{totalTracks}</span><span className="psk">Mastered</span></div>
+                <div className="ptstat purple"><span className="psv">{achCount}/{achTotal}</span><span className="psk">Badges</span></div>
+                <div className="ptstat papaya"><span className="psv">{pctMastered}%</span><span className="psk">Complete</span></div>
+              </div>
               <div className="ptfoot">
                 <span className="sw" role="button" onClick={(e) => { e.stopPropagation(); onSwitch() }}>Switch profile</span>
-                <span className="ptxptx">{r && r.xpForNext !== Infinity ? `${r.xpInto}/${r.xpForNext} XP${r.nextName ? ` → ${r.nextName}` : ''}` : `${profile?.xp ?? 0} XP · MAX`}</span>
+                <span className="ptview">Full Stats ›</span>
               </div>
             </button>
 
