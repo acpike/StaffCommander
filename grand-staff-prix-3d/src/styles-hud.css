@@ -128,8 +128,14 @@
 /* The car sits IN the scene: no float/bob, a soft ground contact shadow, and a
    slight tone-down so it doesn't read as a pasted-on cutout. */
 .hudmenu .car{ position:absolute; left:50%; bottom:104px; transform:translateX(-50%); width:300px; max-width:62%; height:172px; z-index:2; pointer-events:none; display:grid; place-items:center; }
-.hudmenu .car::before{ content:""; position:absolute; left:50%; bottom:2px; transform:translateX(-50%); width:66%; height:30px; background:radial-gradient(ellipse at center, rgba(0,0,0,.62), rgba(0,0,0,0) 68%); filter:blur(5px); z-index:-1; }
-.hudmenu .car img{ width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 8px 7px rgba(0,0,0,.5)) saturate(.95) brightness(.96); }
+/* The car bobs, but the ground shadow stays anchored and shrinks/fades as the
+   car lifts (and grows/darkens as it settles) — so the float reads as a hover
+   that belongs in the scene, not a detached cutout. Both animations share the
+   same 3.4s ease-in-out timing so they stay in sync. */
+.hudmenu .car img{ width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 6px 6px rgba(0,0,0,.45)) saturate(.95) brightness(.96); animation:hud-carfloat 3.4s ease-in-out infinite; }
+.hudmenu .car::before{ content:""; position:absolute; left:50%; bottom:0; width:66%; height:28px; transform:translateX(-50%); background:radial-gradient(ellipse at center, rgba(0,0,0,.62), rgba(0,0,0,0) 68%); filter:blur(5px); z-index:-1; animation:hud-carshadow 3.4s ease-in-out infinite; }
+@keyframes hud-carfloat{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-9px); } }
+@keyframes hud-carshadow{ 0%,100%{ transform:translateX(-50%) scale(1); opacity:.65; } 50%{ transform:translateX(-50%) scale(.78); opacity:.4; } }
 @keyframes hud-hover{ 50%{ transform:translateX(-50%) translateY(-6px); } }
 .hudmenu .speedlines{ position:absolute; left:0; right:0; bottom:140px; height:80px; z-index:1; overflow:hidden; pointer-events:none; }
 .hudmenu .speedlines i{ position:absolute; height:2px; right:-30%; background:linear-gradient(90deg,transparent,var(--livery)); opacity:0; animation:hud-zoom 1.4s linear infinite; }
