@@ -498,16 +498,17 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
               <h2>{heroNameA}<br />{heroNameB}</h2>
             </div>
 
-            {/* the student's chosen driver (composer) */}
-            <div className="driver">
+            {/* the student's chosen driver (composer) — tap to swap in the Garage */}
+            <div className="driver" role="button" aria-label="Change driver in Garage" onClick={onGarage}>
               <span className="face"><img src={`/thumbs/composer_${composer.id}.png`} alt={composer.name} /></span>
-              <span className="dtx"><span className="dl">Driver</span><span className="dn">{composer.name}</span></span>
+              <span className="dtx"><span className="dl">Driver · Tap to swap</span><span className="dn">{composer.name}</span></span>
             </div>
 
             <div className="speedlines"><i /><i /><i /></div>
-            {/* the student's actual chosen car */}
-            <div className="car">
+            {/* the student's actual chosen car — tap to swap in the Garage */}
+            <div className="car" role="button" aria-label="Change car in Garage" onClick={onGarage}>
               <img src={`/thumbs/car_${car.id}.png`} alt={car.name} />
+              <span className="swaphint">⇄ Garage</span>
             </div>
 
             <div className="dash">

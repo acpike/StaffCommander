@@ -127,7 +127,10 @@
 /* car silhouette */
 /* The car sits IN the scene: no float/bob, a soft ground contact shadow, and a
    slight tone-down so it doesn't read as a pasted-on cutout. */
-.hudmenu .car{ position:absolute; left:50%; bottom:104px; transform:translateX(-50%); width:300px; max-width:62%; height:172px; z-index:2; pointer-events:none; display:grid; place-items:center; }
+.hudmenu .car{ position:absolute; left:50%; bottom:104px; transform:translateX(-50%); width:300px; max-width:62%; height:172px; z-index:2; pointer-events:auto; cursor:pointer; display:grid; place-items:center; }
+.hudmenu .car .swaphint{ position:absolute; bottom:-4px; left:50%; transform:translateX(-50%); font-family:var(--data); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--livery); background:#0a0e12cc; border:1px solid var(--livery); padding:2px 8px; opacity:0; transition:opacity .15s; white-space:nowrap; pointer-events:none; }
+.hudmenu .car:hover .swaphint{ opacity:1; }
+.hudmenu .car:hover img{ filter:drop-shadow(0 8px 7px rgba(0,0,0,.5)) saturate(1.05) brightness(1.05); }
 /* The car bobs, but the ground shadow stays anchored and shrinks/fades as the
    car lifts (and grows/darkens as it settles) — so the float reads as a hover
    that belongs in the scene, not a detached cutout. Both animations share the
@@ -215,9 +218,10 @@
 .hudmenu .driver{
   position:absolute; top:44px; right:16px; z-index:3; display:flex; align-items:center; gap:11px;
   background:linear-gradient(255deg, rgba(17,22,29,.92), rgba(10,14,18,.8));
-  border:1px solid var(--carbon-3); padding:7px 14px 7px 8px;
+  border:1px solid var(--carbon-3); padding:7px 14px 7px 8px; cursor:pointer; transition:border-color .15s, transform .15s;
   clip-path:polygon(12px 0,100% 0,100% 100%,0 100%,0 12px);
 }
+.hudmenu .driver:hover{ border-color:var(--papaya); transform:translateY(-1px); }
 .hudmenu .driver .face{ width:42px; height:42px; border-radius:50%; overflow:hidden; flex:none; border:2px solid var(--papaya); box-shadow:0 0 12px rgba(255,94,43,.35); background:#0e141a; }
 .hudmenu .driver .face img{ width:100%; height:100%; object-fit:cover; display:block; }
 .hudmenu .driver .dtx{ display:flex; flex-direction:column; gap:3px; line-height:1; }
