@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLoader } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
@@ -518,6 +518,17 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
   const currentStageId = currentStage?.id
   const modeLabelOf = (s: NoteSet): string => (s.mode === 'find' ? 'Find' : s.mode === 'mix' ? 'Mix' : 'Name')
 
+  // auto-scroll the journey list so the current milestone stays in view (the chain
+  // advances itself as stages unlock — keep "you are here" visible without scrolling)
+  const jbodyRef = useRef<HTMLDivElement>(null)
+  const activeRegionRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const cont = jbodyRef.current
+    const reg = activeRegionRef.current
+    if (!cont || !reg) return
+    cont.scrollTop += reg.getBoundingClientRect().top - cont.getBoundingClientRect().top - 14
+  }, [currentStageId])
+
   return (
     <div className="hudmenu">
       <div className="hudBg" />
@@ -663,7 +674,7 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
                 <h3>Learning Journey</h3>
                 <span className="hint">{journeyMastered}/{JOURNEY_STAGES.length} Stages · {currentStage ? `On ${currentStage.name}` : 'Complete'}</span>
               </div>
-              <div className="jbody">
+              <div className="jbody" ref={jbodyRef}>
                 {REGIONS.map((region) => {
                   const stages = JOURNEY_STAGES.filter((s) => s.id.startsWith(`r${region.n}-`))
                   const masteredHere = stages.filter((s) => mastered.has(s.id)).length
@@ -672,7 +683,7 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
                   const allDone = masteredHere === stages.length
                   const rcls = hasCurrent ? ' active' : allDone ? ' done' : !regionUnlocked ? ' locked' : ''
                   return (
-                    <div key={region.n} className={`region${rcls}`}>
+                    <div key={region.n} className={`region${rcls}`} ref={hasCurrent ? activeRegionRef : undefined}>
                       <div className="rhead">
                         <span className="rnode">{region.n}</span>
                         <div className="rmeta">
@@ -718,7 +729,6 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
                               disabled={!isUnlocked}
                               onClick={() => isUnlocked && setLevel(s.id)}
                             >
-                              {isCurrent && <span className="jhere">You are here</span>}
                               <div className="jtop">
                                 <span className="jicon" aria-hidden>{isMastered ? '✓' : !isUnlocked ? '🔒' : ml.slice(0, 1)}</span>
                                 <span className="jmode">{ml}</span>

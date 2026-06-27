@@ -102,9 +102,16 @@
 
 /* ---- HERO TELEMETRY PANEL ---- */
 .hudmenu .hudhero{
-  position:relative; border:1px solid var(--carbon-3); overflow:hidden;
-  clip-path:polygon(0 0,100% 0,100% calc(100% - 26px),calc(100% - 26px) 100%,0 100%);
-  background:var(--carbon-1); min-height:430px;
+  position:relative; border:1px solid var(--carbon-3);
+  /* DEFINITE width AND height: every child is absolutely positioned, so the hero has
+     no intrinsic size — WebKit/iPad collapses BOTH dimensions to ~0 (the content then
+     crams against the left edge and percentage-positioned bits fly off-screen). Pin
+     the size so the children lay out correctly. */
+  background:var(--carbon-1); width:100%; height:430px;
+  /* NO overflow:hidden — iOS Safari refuses to paint absolutely-positioned children
+     of an overflow-clipped box (space reserved, content invisible). Children are
+     inset:0 so nothing overflows at rest anyway. */
+  overflow:visible; isolation:isolate;
 }
 .hudmenu .hudhero .bg{ position:absolute; inset:0; background-size:cover; background-position:center; transition:transform .6s ease; }
 .hudmenu .hudhero:hover .bg{ transform:scale(1.04); }
@@ -135,7 +142,9 @@
    car lifts (and grows/darkens as it settles) — so the float reads as a hover
    that belongs in the scene, not a detached cutout. Both animations share the
    same 3.4s ease-in-out timing so they stay in sync. */
-.hudmenu .car img{ width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 6px 6px rgba(0,0,0,.45)) saturate(.95) brightness(.96); animation:hud-carfloat 3.4s ease-in-out infinite; }
+/* no drop-shadow filter: iOS Safari won't paint a filtered transparent PNG inside an
+   absolutely-positioned box. The .car::before radial shadow already grounds it. */
+.hudmenu .car img{ width:100%; height:100%; object-fit:contain; animation:hud-carfloat 3.4s ease-in-out infinite; }
 .hudmenu .car::before{ content:""; position:absolute; left:50%; bottom:0; width:66%; height:28px; transform:translateX(-50%); background:radial-gradient(ellipse at center, rgba(0,0,0,.62), rgba(0,0,0,0) 68%); filter:blur(5px); z-index:-1; animation:hud-carshadow 3.4s ease-in-out infinite; }
 @keyframes hud-carfloat{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-9px); } }
 @keyframes hud-carshadow{ 0%,100%{ transform:translateX(-50%) scale(1); opacity:.65; } 50%{ transform:translateX(-50%) scale(.78); opacity:.4; } }
@@ -222,8 +231,10 @@
   clip-path:polygon(12px 0,100% 0,100% 100%,0 100%,0 12px);
 }
 .hudmenu .driver:hover{ border-color:var(--papaya); transform:translateY(-1px); }
-.hudmenu .driver .face{ width:42px; height:42px; border-radius:50%; overflow:hidden; flex:none; border:2px solid var(--papaya); box-shadow:0 0 12px rgba(255,94,43,.35); background:#0e141a; }
-.hudmenu .driver .face img{ width:100%; height:100%; object-fit:cover; display:block; }
+/* clip the avatar via the IMG's own border-radius, not the parent's overflow:hidden
+   (iOS Safari can fail to paint an image clipped by a parent's overflow) */
+.hudmenu .driver .face{ width:42px; height:42px; border-radius:50%; flex:none; border:2px solid var(--papaya); box-shadow:0 0 12px rgba(255,94,43,.35); background:#0e141a; }
+.hudmenu .driver .face img{ width:100%; height:100%; object-fit:cover; display:block; border-radius:50%; }
 .hudmenu .driver .dtx{ display:flex; flex-direction:column; gap:3px; line-height:1; }
 .hudmenu .driver .dl{ font-family:var(--data); font-size:9px; letter-spacing:2px; color:var(--papaya); text-transform:uppercase; }
 .hudmenu .driver .dn{ font-family:var(--disp); font-weight:800; font-size:19px; text-transform:uppercase; letter-spacing:.4px; max-width:190px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -364,7 +375,16 @@
 /* The 21-stage chain as a path: 7 region milestones, each with its 3 mode steps
    (Name → Find → Mix). A stage reads as mastered ✓ / current "you are here" /
    ready / locked; the live frontier is highlighted in amber, front-and-centre. */
-.hudmenu .journey .jbody{ padding:12px 13px 14px; display:flex; flex-direction:column; gap:11px; }
+.hudmenu .journey .jbody{
+  padding:12px 13px 14px; display:flex; flex-direction:column; gap:11px;
+  /* contained, scrollable list (auto-scrolls to "you are here") — saves the page
+     from a wall of 21 stages */
+  max-height:min(70vh, 540px); overflow-y:auto; overscroll-behavior:contain;
+  scrollbar-width:thin; scrollbar-color:#2b3744 transparent;
+}
+.hudmenu .journey .jbody::-webkit-scrollbar{ width:8px; }
+.hudmenu .journey .jbody::-webkit-scrollbar-thumb{ background:#26323e; border-radius:4px; }
+.hudmenu .journey .jbody::-webkit-scrollbar-track{ background:transparent; }
 .hudmenu .region{
   position:relative; border:1px solid var(--carbon-3); background:#0d1218; padding:10px 12px 12px;
   clip-path:polygon(0 0,100% 0,100% 100%,12px 100%,0 calc(100% - 12px)); transition:.15s;
@@ -418,11 +438,9 @@
 .hudmenu .jstep.current{ border-color:var(--amber); background:linear-gradient(90deg, rgba(255,194,61,.15), #0c1116 62%); box-shadow:inset 3px 0 0 var(--amber); }
 .hudmenu .jstep.current .jicon{ background:var(--amber); color:#221700; border-color:var(--amber); }
 .hudmenu .jstep.current .jstate{ color:var(--amber); font-weight:700; }
-.hudmenu .jhere{
-  position:absolute; top:-9px; left:7px; z-index:2; font-family:var(--data); font-weight:700; font-size:8px;
-  letter-spacing:1px; text-transform:uppercase; color:#221700; background:var(--amber); padding:2px 7px;
-  clip-path:polygon(0 0,100% 0,100% 100%,4px 100%,0 calc(100% - 4px)); box-shadow:0 0 10px rgba(255,194,61,.45);
-}
+/* (the "you are here" floating pill was removed — it overflowed the card top and got
+   clipped by the region's clip-path; the amber card + "You are here" state label is
+   the indicator now) */
 /* selected step (the level Start Race will launch) */
 .hudmenu .jstep.selected{ border-color:var(--livery); box-shadow:inset 3px 0 0 var(--livery), 0 0 0 1px rgba(0,229,196,.3); }
 .hudmenu .jstep.selected.current{ box-shadow:inset 3px 0 0 var(--livery), 0 0 0 1px rgba(255,194,61,.4); }
@@ -437,7 +455,15 @@
 /* Visually distinct from the journey (purple accent) so it reads as optional/extra. */
 .hudmenu .sidequests{ border-top:3px solid var(--purple); }
 .hudmenu .sidequests > .ph h3::before{ background:var(--purple); }
-.hudmenu .sqbody{ padding:13px 14px; display:grid; grid-template-columns:repeat(auto-fill,minmax(232px,1fr)); gap:9px; }
+.hudmenu .sqbody{
+  padding:13px 14px; display:grid; grid-template-columns:repeat(auto-fill,minmax(232px,1fr)); gap:9px;
+  /* compact: show ~2 rows then scroll, so optional drills don't eat the page */
+  max-height:232px; overflow-y:auto; overscroll-behavior:contain;
+  scrollbar-width:thin; scrollbar-color:#2b3744 transparent;
+}
+.hudmenu .sqbody::-webkit-scrollbar{ width:8px; }
+.hudmenu .sqbody::-webkit-scrollbar-thumb{ background:#26323e; border-radius:4px; }
+.hudmenu .sqbody::-webkit-scrollbar-track{ background:transparent; }
 .hudmenu .sqcard{
   position:relative; display:flex; align-items:center; gap:11px; padding:10px 12px; cursor:pointer;
   text-align:left; color:var(--ink); font:inherit;
@@ -497,7 +523,9 @@
   .hudmenu .colL, .hudmenu .colR{ display:contents; }
   .hudmenu .hudtop{ order:1; flex-direction:column; }
   .hudmenu .profiletile{ order:2; }
-  .hudmenu .hudhero{ order:3; }
+  /* explicit height (not just min-height): iPad/iOS Safari collapses a flex item to
+     0 height when its content is all absolutely-positioned + it only has min-height */
+  .hudmenu .hudhero{ order:3; height:420px; flex:none; }
   .hudmenu .duo{ order:4; }
   .hudmenu .colL .standings{ order:5; }
   .hudmenu .colR .panel{ order:6; }
@@ -512,4 +540,21 @@
   .hudmenu .jstep{ padding:8px 8px; }
   .hudmenu .jstep .jmode{ font-size:14px; }
   .hudmenu .sqbody{ grid-template-columns:1fr; }
+}
+/* The telemetry hero is sized for a wide desktop panel; shrink its overlaid content
+   on narrow screens so the circuit name / driver / car / gauge stop colliding. */
+@media (max-width:760px){
+  .hudmenu .hudhero{ height:362px; }
+  .hudmenu .hudhero .topstrip{ font-size:9px; letter-spacing:1px; padding:9px 12px; }
+  .hudmenu .hudhero .topstrip span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .hudmenu .hudhero .loc{ top:33px; left:13px; right:120px; }
+  .hudmenu .hudhero .loc .lbl{ font-size:9px; letter-spacing:2px; }
+  .hudmenu .hudhero .loc h2{ font-size:28px; }
+  .hudmenu .driver{ top:33px; right:12px; }
+  .hudmenu .driver .dn{ font-size:14px; max-width:100px; }
+  .hudmenu .driver .dl{ font-size:8px; }
+  .hudmenu .car{ bottom:120px; width:206px; height:116px; }
+  .hudmenu .dash{ padding:11px 12px; gap:9px; }
+  .hudmenu .gauge, .hudmenu .gauge svg{ width:90px; height:90px; }
+  .hudmenu .gauge .read .v{ font-size:22px; }
 }
