@@ -2001,19 +2001,24 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   padding: 10px 6px;
-  background: var(--surf);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  color: var(--dim);
+  background: linear-gradient(180deg, #1a222c, #11161d);
+  border: 1px solid #27313d;
+  border-bottom: 3px solid #27313d;
+  color: #8a99a8;
   cursor: pointer;
   font-family: inherit;
+  transition: .15s;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 10px 100%, 0 calc(100% - 10px));
 }
+.clefBtn:hover, .modeBtn:hover { border-bottom-color: #00e5c4; color: #e8eef3; transform: translateY(-1px); }
 .clefBtn.on, .modeBtn.on {
-  background: var(--acc-soft);
-  border-color: var(--acc-line);
-  color: var(--txt);
+  background: linear-gradient(180deg, rgba(0,229,196,.16), #11161d 70%);
+  border-color: #00e5c4;
+  border-bottom-color: #00e5c4;
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(0,229,196,.3);
 }
 .clefIconWrap {
   height: 52px;
@@ -2025,15 +2030,15 @@ body {
   height: 52px;
   width: auto;
 }
-.clefLabel { font-size: 12px; font-weight: 600; }
+.clefLabel { font-family: "Saira Condensed", sans-serif; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; }
 .modeIcon {
   height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.modeLetter { font-size: 30px; font-weight: 800; line-height: 1; }
-.modeLabel { font-size: 13px; font-weight: 700; }
+.modeLetter { font-family: "Saira Condensed", sans-serif; font-size: 30px; font-weight: 900; line-height: 1; }
+.modeLabel { font-family: "Saira Condensed", sans-serif; font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; }
 .modeSub { font-size: 10px; color: var(--faint); text-align: center; }
 
 /* ── clef-grouped level list ── */
@@ -2074,15 +2079,17 @@ body {
   z-index: 1;
 }
 .createHead { display: flex; align-items: center; gap: 12px; }
-.createTitle { font-weight: 800; font-size: clamp(16px, 4.5vw, 22px); white-space: nowrap; color: var(--txt); }
+.createTitle { font-family: "Saira Condensed", sans-serif; font-weight: 900; font-size: clamp(18px, 4.5vw, 24px); text-transform: uppercase; letter-spacing: .6px; white-space: nowrap; color: #e8eef3; display: flex; align-items: center; gap: 9px; }
+.createTitle::before { content: ""; width: 4px; height: 20px; background: #00e5c4; transform: skewX(-12deg); flex: none; }
 .createName { flex: 1; min-width: 0; }
 .createBlock { display: flex; flex-direction: column; gap: 6px; }
 .miniLabel {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--dim);
+  color: #8a99a8;
 }
 .createStaffArea { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
 .createStaffArea .tapStaffWrap {
@@ -2091,6 +2098,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(180deg, #11161d, #0c1117);
+  border: 1px solid #27313d;
 }
 .createStaffArea .tapStaff { width: 100%; height: 100%; }
 .createActions { display: flex; gap: 12px; }
