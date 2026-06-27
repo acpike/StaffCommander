@@ -55,6 +55,7 @@ export function LevelCreator({ onClose }: { onClose: () => void }) {
     <div className="overlay createOverlay">
       <div className="createSheet">
         <div className="createHead">
+          <button className="backbtn" onClick={onClose}>{Icon.back} Back</button>
           <div className="createTitle">New Level</div>
           <input
             className="input createName"
@@ -62,10 +63,15 @@ export function LevelCreator({ onClose }: { onClose: () => void }) {
             placeholder="Level name"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            enterKeyHint="done"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') e.currentTarget.blur()
+            }}
           />
         </div>
 
-        <div className="createBlock">
+        <div className="createPickers">
+        <div className="createBlock clefPick">
           <div className="miniLabel">Clef</div>
           <div className="clefRow">
             {CLEF_OPTS.filter((o) => !o.optional || showCClefs).map((o) => (
@@ -99,6 +105,7 @@ export function LevelCreator({ onClose }: { onClose: () => void }) {
             </button>
           </div>
         </div>
+        </div>
 
         <div className="createStaffArea">
           <div className="miniLabel">Tap or drag the staff · {selected.size} chosen</div>
@@ -108,7 +115,6 @@ export function LevelCreator({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="createActions">
-          <button className="btn ghost" onClick={onClose}>Cancel</button>
           <button className="btn" disabled={!canSave} onClick={save}>
             {Icon.play} {!name.trim() ? 'Name your level' : selected.size < 2 ? 'Pick 2+ notes' : 'Create'}
           </button>

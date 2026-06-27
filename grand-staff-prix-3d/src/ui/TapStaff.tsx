@@ -11,7 +11,8 @@ const CLEF_REG_FROM_TOP: Record<Clef, number> = { treble: 3, bass: 1, alto: 2, t
 const G = 16 // staff space, px
 const COLW = 27
 const NOTES_START = 58
-const INK = '#14121c'
+const INK = '#14121c' // clefs, noteheads, ledgers, barline/brace — the dark focus elements
+const LINE = '#c8cdd7' // the 5 staff lines: faint + thin (matches RangePreview's clean look)
 
 /**
  * Interactive staff picker. Notes sit at their true positions (diatonic math).
@@ -48,7 +49,13 @@ export function TapStaff({
   const topD = Math.max(...lines, ...noteDs) + 1
   const botD = Math.min(...lines, ...noteDs) - 1
   const yStep = G / 2
-  const yOf = (d: number) => 18 + (topD - d) * yStep
+  // grand staff: split treble + bass apart at middle C with a gap (the classic grand-staff
+  // spacing, same as RangePreview) so the two staves + their clefs read clearly instead of
+  // colliding into a jumble. Single-clef staves are unaffected (GAP = 0).
+  const GAP = clef === 'grand' ? G * 1.5 : 0
+  const dMid = diatonicOfName('C4')
+  const splitOf = (d: number) => (GAP ? (d > dMid ? -GAP : d < dMid ? GAP : 0) : 0)
+  const yOf = (d: number) => 18 + GAP + (topD - d) * yStep + splitOf(d)
   const height = yOf(botD) + 18
   const width = NOTES_START + notes.length * COLW + 16
   const staffTopY = yOf(Math.max(...lines))
@@ -104,9 +111,9 @@ export function TapStaff({
       aria-label={`${clef} staff picker`}
     >
       {lines.map((d, i) => (
-        <line key={i} x1={8} y1={yOf(d)} x2={width - 8} y2={yOf(d)} stroke={INK} strokeWidth={1.7} strokeLinecap="round" />
+        <line key={i} x1={8} y1={yOf(d)} x2={width - 8} y2={yOf(d)} stroke={LINE} strokeWidth={1.4} />
       ))}
-      <line x1={8} y1={staffTopY} x2={8} y2={staffBotY} stroke={INK} strokeWidth={2.2} />
+      <line x1={8} y1={staffTopY} x2={8} y2={staffBotY} stroke={INK} strokeWidth={1.8} />
       {clef === 'grand' && <rect x={2} y={staffTopY} width={4} height={staffBotY - staffTopY} rx={2} fill={INK} />}
       {clefs.map((c) => (
         <text key={c} x={14} y={yOf(bottomLineDiatonic(c) + CLEF_LINE_STEP[c])} fontFamily="Bravura" fontSize={4 * G} fill={INK}>
@@ -145,33 +152,37 @@ export function TapStaff({
   )
 }
 
-/** Small clef-on-a-staff icon for the clef selector (properly positioned, unlike a bare glyph). */
+/** Small clef-on-a-staff icon for the clef selector. The clef sits ON the staff (its
+ *  baseline registers on the correct line) instead of floating off in the margin. */
 export function ClefIcon({ kind }: { kind: StaffKind }) {
-  const g = 7
-  const staffH = 4 * g
+  const g = 6 // staff space
+  const staffH = 4 * g // staff height = font em (SMuFL: 4 spaces = 1em)
   const staves: Clef[] = kind === 'grand' ? ['treble', 'bass'] : [kind]
-  const between = kind === 'grand' ? g * 1.5 : 0
-  const padY = 16
-  const x0 = 17
-  const width = 50
+  const between = kind === 'grand' ? g * 1.6 : 0
+  const padY = g * 2 // room for the treble tail / clef extensions above + below
+  const braceX = 3 // left barline for the grand staff
+  const lineL = kind === 'grand' ? 7 : 4 // staff lines start here; the clef overlaps from here
+  const width = 40
+  const lineR = width - 4
   const height = staves.length * staffH + (staves.length - 1) * between + padY * 2
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="clefIconSvg" aria-hidden>
-      {kind === 'grand' && <rect x={3} y={padY} width={3} height={height - padY * 2} rx={1.5} fill="currentColor" />}
+      {kind === 'grand' && (
+        <line x1={braceX} y1={padY} x2={braceX} y2={height - padY} stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" />
+      )}
       {staves.map((c, si) => {
         const top = padY + si * (staffH + between)
         return (
           <g key={c}>
             {[0, 1, 2, 3, 4].map((i) => (
-              <line key={i} x1={x0} y1={top + i * g} x2={width - 3} y2={top + i * g} stroke="currentColor" strokeWidth={0.9} />
+              <line key={i} x1={lineL} y1={top + i * g} x2={lineR} y2={top + i * g} stroke="currentColor" strokeWidth={0.9} />
             ))}
-            <text x={x0 - 14} y={top + CLEF_REG_FROM_TOP[c] * g} fontFamily="Bravura" fontSize={staffH} fill="currentColor">
+            <text x={lineL} y={top + CLEF_REG_FROM_TOP[c] * g} fontFamily="Bravura" fontSize={staffH} fill="currentColor">
               {String.fromCharCode(CLEF_GLYPH[c])}
             </text>
           </g>
         )
       })}
-      {kind === 'grand' && <line x1={x0} y1={padY} x2={x0} y2={height - padY} stroke="currentColor" strokeWidth={1.2} />}
     </svg>
   )
 }

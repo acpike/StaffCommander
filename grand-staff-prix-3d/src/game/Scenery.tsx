@@ -99,6 +99,9 @@ export function Scenery({ theme }: { theme: Theme }) {
       <ambientLight intensity={0.3} color={theme.ambient} />
       <hemisphereLight args={[theme.skyTop, theme.ground, 0.35]} />
       <Sun theme={theme} />
+      {/* neutral white fill so cars keep their TRUE paint colour (only a slight theme hue from
+          the themed sun / ambient / hemisphere / env) — fixes black cars in Space + pink in Candy */}
+      <directionalLight color="#ffffff" intensity={0.55} position={[-5, 9, 12]} />
 
       {theme.id === 'space' ? (
         <>

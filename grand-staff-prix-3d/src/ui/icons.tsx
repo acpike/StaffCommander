@@ -63,4 +63,18 @@ export const Icon = {
       <rect x="7" y="3" width="10" height="18" rx="2" transform="rotate(15 12 12)" />
     </svg>
   ),
+  // side quests — a pennant flag on a pole
+  quest: (
+    <svg className="ico" viewBox="0 0 24 24">
+      <path d="M6 21V4" />
+      <path d="M6 5h11l-2.5 3.5L17 12H6z" />
+    </svg>
+  ),
+  // create-a-level — a pencil
+  create: (
+    <svg className="ico" viewBox="0 0 24 24">
+      <path d="M4 20h4L19 9a2 2 0 0 0-3-3L5 17z" />
+      <path d="M14 7l3 3" />
+    </svg>
+  ),
 }

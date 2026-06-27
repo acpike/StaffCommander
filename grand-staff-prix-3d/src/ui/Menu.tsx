@@ -118,7 +118,7 @@ function Leaderboard({ onBack }: { onBack: () => void }) {
   return (
     <div className="sheet">
       <div className="topbar">
-        <button className="chip ghost" onClick={onBack}>{Icon.back} Back</button>
+        <button className="backbtn" onClick={onBack}>{Icon.back} Back</button>
         <div className="chip head">Class {classCode}</div>
       </div>
       <div className="card sec lbCard">
@@ -277,6 +277,9 @@ function Garage({ onDone, isSetup }: { onDone: () => void; isSetup?: boolean }) 
   return (
     <div className="sheet">
       <div className="topbar">
+        {!isSetup && (
+          <button className="backbtn" onClick={onDone}>{Icon.back} Back</button>
+        )}
         <div className="chip ghost head">{isSetup ? 'Set up your ride' : 'Garage'}</div>
       </div>
       <div className="garageGrid">
@@ -289,17 +292,18 @@ function Garage({ onDone, isSetup }: { onDone: () => void; isSetup?: boolean }) 
           <ComposerPicker />
         </div>
       </div>
-      <div className="startWrap">
-        <button className="btn" onClick={onDone}>
-          {isSetup ? <>{Icon.play} Let's Race</> : <>{Icon.play} Done</>}
-        </button>
-      </div>
+      {/* setup is a forward step (Let's Race); the normal Garage returns via the Back chevron above */}
+      {isSetup && (
+        <div className="startWrap">
+          <button className="btn" onClick={onDone}>{Icon.play} Let's Race</button>
+        </div>
+      )}
     </div>
   )
 }
 
 // ───────────────────────── Profile / stats screen ─────────────────────────
-function ProfileScreen({ onBack }: { onBack: () => void }) {
+function ProfileScreen({ onBack, onSwitch, onLeaderboard }: { onBack: () => void; onSwitch: () => void; onLeaderboard: () => void }) {
   const profile = useGame(activeProfile)
   const settings = useGame((s) => s.settings)
   const toggleMusic = useGame((s) => s.toggleMusic)
@@ -317,10 +321,12 @@ function ProfileScreen({ onBack }: { onBack: () => void }) {
   return (
     <div className="sheet">
       <div className="topbar">
-        <button className="chip ghost" onClick={onBack}>
+        <button className="backbtn" onClick={onBack}>
           {Icon.back} Back
         </button>
         <div className="chip head">{profile.name}</div>
+        <button className="chip ghost" onClick={onLeaderboard}>{Icon.trophy} Leaderboard</button>
+        <button className="chip ghost" onClick={onSwitch}>⇄ Switch</button>
       </div>
 
       <div className="rankStrip card">
@@ -406,8 +412,43 @@ function ProfileScreen({ onBack }: { onBack: () => void }) {
   )
 }
 
+/** 7 region pips, each split into the region's 3 sublevels (Name / Find / Mix). A segment
+ *  fills teal as that sublevel is mastered, glows amber for the one you're on now. Shared
+ *  by the HUD centre and the journey drawer so the progress reads identically in both. */
+function JourneyPips({ currentStageId, mastered, onPick, picked }: { currentStageId?: string; mastered: Set<string>; onPick?: (n: number) => void; picked?: number }) {
+  return (
+    <div className={`jpips${onPick ? ' clickable' : ''}`}>
+      {REGIONS.map((region) => {
+        const rs = JOURNEY_STAGES.filter((s) => s.id.startsWith(`r${region.n}-`))
+        const allDone = rs.every((s) => mastered.has(s.id))
+        const here = rs.some((s) => s.id === currentStageId)
+        const cls = `jpipwrap${allDone ? ' done' : here ? ' here' : ''}${picked === region.n ? ' picked' : ''}`
+        const inner = (
+          <>
+            <div className="jpip">
+              {rs.map((s) => (
+                <span key={s.id} className={`jseg${mastered.has(s.id) ? ' done' : s.id === currentStageId ? ' here' : ''}`} />
+              ))}
+            </div>
+            <span className="jpipn">{allDone ? '✓' : region.n}</span>
+          </>
+        )
+        return onPick ? (
+          <button key={region.n} type="button" className={cls} title={region.name} onClick={() => onPick(region.n)}>
+            {inner}
+          </button>
+        ) : (
+          <div key={region.n} className={cls} title={region.name}>
+            {inner}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ───────────────────────── Play menu (level + scenery + start) ─────────────────────────
-function PlayMenu({ onSwitch, onGarage, onProfile, onLeaderboard }: { onSwitch: () => void; onGarage: () => void; onProfile: () => void; onLeaderboard: () => void }) {
+function PlayMenu({ onGarage, onProfile }: { onGarage: () => void; onProfile: () => void }) {
   const profile = useGame(activeProfile)
   const settings = useGame((s) => s.settings)
   const setLevel = useGame((s) => s.setLevel)
@@ -435,6 +476,11 @@ function PlayMenu({ onSwitch, onGarage, onProfile, onLeaderboard }: { onSwitch: 
   // Resilient: leaderboard() already swallows cloud errors and returns []; an
   // empty class code or empty roster falls back to the local-only friendly state.
   const [classRows, setClassRows] = useState<CloudPlayer[]>([])
+  const [drawer, setDrawer] = useState<null | 'journey' | 'sidequests'>(null)
+  const [circuitPick, setCircuitPick] = useState(false)
+  // which region the journey drawer is previewing (tap a pip to look ahead at locked regions);
+  // null = follow the current region
+  const [pickedRegion, setPickedRegion] = useState<number | null>(null)
   useEffect(() => {
     let alive = true
     leaderboard(settings.classCode)
@@ -476,8 +522,6 @@ function PlayMenu({ onSwitch, onGarage, onProfile, onLeaderboard }: { onSwitch: 
   const heroImg = BACKDROP_TINT_SRC[settings.themeId] ?? ''
   const [heroNameA, ...heroRest] = activeTheme.name.split(' ')
   const heroNameB = heroRest.join(' ')
-  const selectedLevel =
-    NOTE_SETS.find((s) => s.id === settings.levelId) ?? customLevels.find((s) => s.id === settings.levelId)
   // real progress across the visible track list
   const visibleTracks = NOTE_SETS.filter(
     (s) => settings.showCClefs || (s.group !== 'alto' && s.group !== 'tenor'),
@@ -500,6 +544,11 @@ function PlayMenu({ onSwitch, onGarage, onProfile, onLeaderboard }: { onSwitch: 
   const journeyMastered = JOURNEY_STAGES.filter((s) => mastered.has(s.id)).length
   const currentStage = JOURNEY_STAGES.find((s) => isJUnlocked(s) && !mastered.has(s.id))
   const currentStageId = currentStage?.id
+  // centre HUD: where you are in the journey (region X of 7 + tier name) and the range you're on
+  const stageNo = currentStage?.tier ?? JOURNEY_STAGES.length
+  const regionNo = Math.ceil(stageNo / 3)
+  const tierName = currentStage?.band ? currentStage.band[0].toUpperCase() + currentStage.band.slice(1) : 'Complete'
+  const [stageRegionName, stageModeLabel] = currentStage ? currentStage.name.split(' · ') : ['Journey Complete', '']
   const modeLabelOf = (s: NoteSet): string => (s.mode === 'find' ? 'Find' : s.mode === 'mix' ? 'Mix' : 'Name')
 
   // auto-scroll the journey list so the current milestone stays in view (the chain
@@ -516,8 +565,9 @@ function PlayMenu({ onSwitch, onGarage, onProfile, onLeaderboard }: { onSwitch: 
   return (
     <div className="hudmenu">
       <div className="hudBg" />
-      <div className="hudApp">
+      <div className={`hudApp${drawer ? ` drawer-open dr-${drawer}` : ''}`}>
         {creating && <LevelCreator onClose={() => setCreating(false)} />}
+        {drawer && <div className="drawerscrim" onClick={() => setDrawer(null)} />}
 
         {/* ===== MAIN GRID ===== */}
         <div className="grid">
@@ -537,27 +587,39 @@ function PlayMenu({ onSwitch, onGarage, onProfile, onLeaderboard }: { onSwitch: 
           <section className="hudhero">
             <div className="bg" style={{ backgroundImage: heroImg ? `url(${heroImg})` : undefined }} />
             <div className="scrim" />
-            <div className="topstrip">
-              <span className="live"><span className="dot" />LIVE TELEMETRY</span>
-              <span>{selectedLevel ? selectedLevel.name.toUpperCase() : 'SELECT AN EVENT'} · {masteredCount}/{totalTracks} MASTERED</span>
-            </div>
             <div className="loc">
               <div className="lbl">Circuit · Now on Grid</div>
-              <h2>{heroNameA}<br />{heroNameB}</h2>
+              <h2>{heroNameA}<br />{heroNameB} <button className="locarrow" onClick={() => setCircuitPick(true)} aria-label="Change circuit">›</button></h2>
             </div>
 
-            {/* the student's chosen driver (composer) — tap to swap in the Garage */}
-            <div className="driver" role="button" aria-label="Change driver in Garage" onClick={onGarage}>
-              <span className="face"><img src={`/thumbs/composer_${composer.id}.png`} alt={composer.name} /></span>
-              <span className="dtx"><span className="dl">Driver · Tap to swap</span><span className="dn">{composer.name}</span></span>
+            {/* the student's profile in the driver chip's spot + STYLING — tap → full profile
+                stats + leaderboard. Always visible so nobody plays on the wrong profile. */}
+            <div className="driver" role="button" aria-label="Profile — full stats & leaderboard" onClick={onProfile}>
+              <span className="face init">{initial}</span>
+              <span className="dtx"><span className="dl">{r?.name ?? 'Rookie'}</span><span className="dn">{profile?.name ?? 'Player'}</span></span>
+              <span className="dchev">›</span>
+            </div>
+            {/* car + driver as small labels under the profile (right side) — tap → Garage */}
+            <div className="rig" role="button" aria-label="Change car & driver in Garage" onClick={onGarage}>
+              <span className="rigitems">
+                <span className="rigit"><span className="rigk">Driver</span><img className="rigface" src={`/thumbs/composer_${composer.id}.png`} alt={composer.name} /></span>
+                <span className="rigit"><span className="rigk">Wheels</span><img className="rigcar" src={`/thumbs/car_${car.id}.png`} alt={car.name} /></span>
+              </span>
+              <span className="rigchev">›</span>
             </div>
 
             <div className="speedlines"><i /><i /><i /></div>
-            {/* the student's actual chosen car — tap to swap in the Garage */}
-            <div className="car" role="button" aria-label="Change car in Garage" onClick={onGarage}>
-              <img src={`/thumbs/car_${car.id}.png`} alt={car.name} />
-              <span className="swaphint">⇄ Garage</span>
-            </div>
+            {/* CENTRE — the hero: where you are in the journey + the note range you're on.
+                Tap → the full journey drawer. */}
+            <button className="levelcenter" onClick={() => setDrawer((d) => (d === 'journey' ? null : 'journey'))}>
+              <div className="lcvhead">Region <b>{regionNo}</b> of {REGIONS.length} · {tierName}</div>
+              <JourneyPips currentStageId={currentStageId} mastered={mastered} />
+              <div className="lcvstaffwrap">
+                <div className="lcvstaff">{currentStage?.ladder ? <RangePreview ladder={currentStage.ladder} /> : null}</div>
+                {stageModeLabel ? <div className="lcvmode">{stageModeLabel} Mode</div> : null}
+              </div>
+              <div className="lcvcap">{stageRegionName} — tap for your full journey ›</div>
+            </button>
 
             <div className="dash">
               <div className="gauge">
@@ -580,32 +642,26 @@ function PlayMenu({ onSwitch, onGarage, onProfile, onLeaderboard }: { onSwitch: 
             </div>
           </section>
 
-            {/* (Class Standings widget removed — the Leaderboard link now lives on the
-                profile card; per-stage class records still show on each journey/side-quest row) */}
+          {/* two side-by-side options below the HUD — each opens a slide drawer */}
+          <div className="hudnav">
+            <button className="hudnavbtn" onClick={() => setDrawer((d) => (d === 'sidequests' ? null : 'sidequests'))}>
+              <span className="hnico">{Icon.quest}</span>
+              <span className="hntx"><span className="hnt">Side Quests</span><span className="hns">Optional drills</span></span>
+              <span className="hnchev">›</span>
+            </button>
+            <button className="hudnavbtn" onClick={() => setCreating(true)}>
+              <span className="hnico">{Icon.create}</span>
+              <span className="hntx"><span className="hnt">Create Your Own Level</span><span className="hns">Pick a clef + your notes</span></span>
+              <span className="hnchev">›</span>
+            </button>
+          </div>
+
           </div>
 
           {/* RIGHT: profile card + level calendar */}
           <div className="colR">
-            <button className="profiletile" onClick={onProfile}>
-              <div className="pthead">
-                <div className="avatar lg">{initial}<div className="lvtab">LV {r?.level ?? 1}</div></div>
-                <div className="ptwho">
-                  <div className="ptname">{profile?.name ?? 'Player'}</div>
-                  <div className="ptrank">{r?.name ?? 'Rookie'}</div>
-                </div>
-                <span className="ptswitch" role="button" onClick={(e) => { e.stopPropagation(); onSwitch() }}>⇄ Switch</span>
-              </div>
-              <div className="ptxpwrap">
-                <div className="ptxpbar"><i style={{ width: `${xpPct}%` }} /></div>
-                <div className="ptxptx">
-                  {r && r.xpForNext !== Infinity ? `${r.xpInto} / ${r.xpForNext} XP → ${r.nextName ?? ''}` : `${(profile?.xp ?? 0).toLocaleString()} XP · MAX RANK`}
-                </div>
-              </div>
-              <div className="ptfoot">
-                <span className="sw" role="button" onClick={(e) => { e.stopPropagation(); onLeaderboard() }}>{Icon.trophy} Leaderboard</span>
-                <span className="ptview">Full Stats ›</span>
-              </div>
-            </button>
+            {/* collapse chevron — shrink the drawer back to the full HUD */}
+            <button className="backbtn" onClick={() => setDrawer(null)} aria-label="Back to HUD">{Icon.back} Back</button>
 
             {/* LEARNING JOURNEY — 7 regions × Name/Find/Mix, the 21-stage chain */}
             <section className="panel journey">
@@ -614,25 +670,11 @@ function PlayMenu({ onSwitch, onGarage, onProfile, onLeaderboard }: { onSwitch: 
                 <span className="hint">{journeyMastered}/{JOURNEY_STAGES.length} Stages · {currentStage ? `On ${currentStage.name}` : 'Complete'}</span>
               </div>
               <div className="jbody" ref={jbodyRef}>
-                {/* progress map — the 7 milestones; the path is guided/linear, so there's no
-                    scrollable list of locked levels, just where you are + how far you've come */}
-                <div className="jmap">
-                  {REGIONS.map((region) => {
-                    const rs = JOURNEY_STAGES.filter((s) => s.id.startsWith(`r${region.n}-`))
-                    const done = rs.every((s) => mastered.has(s.id))
-                    const here = rs.some((s) => s.id === currentStageId)
-                    return (
-                      <span key={region.n} className={`jmapdot${done ? ' done' : here ? ' here' : ''}`} title={region.name}>
-                        {done ? '✓' : region.n}
-                      </span>
-                    )
-                  })}
-                </div>
-                {/* only the CURRENT region's card (or the last region if the whole journey is mastered) */}
-                {REGIONS.filter((region) => {
-                  const rs = JOURNEY_STAGES.filter((s) => s.id.startsWith(`r${region.n}-`))
-                  return currentStageId ? rs.some((s) => s.id === currentStageId) : region.n === REGIONS.length
-                }).map((region) => {
+                {/* progress map — the 7 milestones, each split into its 3 sublevels. Tap any pip
+                    (even locked ones) to look ahead at that region's range + sublevels. */}
+                <JourneyPips currentStageId={currentStageId} mastered={mastered} onPick={setPickedRegion} picked={pickedRegion ?? regionNo} />
+                {/* the card for the region you're previewing (defaults to your current region) */}
+                {REGIONS.filter((region) => region.n === (pickedRegion ?? regionNo)).map((region) => {
                   const stages = JOURNEY_STAGES.filter((s) => s.id.startsWith(`r${region.n}-`))
                   const masteredHere = stages.filter((s) => mastered.has(s.id)).length
                   const regionUnlocked = stages.some(isJUnlocked)
@@ -781,35 +823,41 @@ function PlayMenu({ onSwitch, onGarage, onProfile, onLeaderboard }: { onSwitch: 
         </div>
 
         {/* ===== SCENERY (CIRCUIT PADDOCK) ===== */}
-        <section className="panel" style={{ marginTop: 14 }}>
-          <div className="ph">
-            <h3>Circuit Paddock</h3>
-            <span className="hint">{THEMES.length} Circuits · Tap to Put on Grid</span>
+        {/* CIRCUIT PICKER POPUP — opened by the ⌄ chevron next to the circuit name in the HUD
+            (replaces the always-on paddock; click a circuit or outside / ✕ to close) */}
+        {circuitPick && (
+          <div className="circpop" onClick={(e) => { if (e.target === e.currentTarget) setCircuitPick(false) }}>
+            <div className="circpopcard">
+              <div className="ph">
+                <h3>Choose Your Circuit</h3>
+                <button className="phlink" onClick={() => setCircuitPick(false)}>✕ Close</button>
+              </div>
+              <div className="scenes">
+                {THEMES.map((t, i) => {
+                  const img = BACKDROP_TINT_SRC[t.id]
+                  const sel = settings.themeId === t.id
+                  return (
+                    <button
+                      key={t.id}
+                      className={`tile${sel ? ' selected' : ''}`}
+                      style={{ ['--tileAccent' as string]: TILE_ACCENT[t.id] ?? '#00e5c4' }}
+                      onClick={() => { setTheme(t.id); setCircuitPick(false) }}
+                      aria-label={t.name}
+                    >
+                      <span className="px">C{i + 1}</span>
+                      {img ? (
+                        <img src={img} alt={t.name} />
+                      ) : (
+                        <span style={{ position: 'absolute', inset: 0, background: `linear-gradient(${t.skyTop}, ${t.skyBottom})` }} />
+                      )}
+                      <div className="nm">{t.name}</div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           </div>
-          <div className="scenes">
-            {THEMES.map((t, i) => {
-              const img = BACKDROP_TINT_SRC[t.id]
-              const sel = settings.themeId === t.id
-              return (
-                <button
-                  key={t.id}
-                  className={`tile${sel ? ' selected' : ''}`}
-                  style={{ ['--tileAccent' as string]: TILE_ACCENT[t.id] ?? '#00e5c4' }}
-                  onClick={() => setTheme(t.id)}
-                  aria-label={t.name}
-                >
-                  <span className="px">C{i + 1}</span>
-                  {img ? (
-                    <img src={img} alt={t.name} />
-                  ) : (
-                    <span style={{ position: 'absolute', inset: 0, background: `linear-gradient(${t.skyTop}, ${t.skyBottom})` }} />
-                  )}
-                  <div className="nm">{t.name}</div>
-                </button>
-              )
-            })}
-          </div>
-        </section>
+        )}
 
         {/* ===== FOOTER / CTA ===== */}
         <footer className="foot">
@@ -876,15 +924,13 @@ export function Menu() {
       )
       break
     case 'profile':
-      screen = <ProfileScreen onBack={() => setView('play')} />
+      screen = <ProfileScreen onBack={() => setView('play')} onSwitch={() => setView('select')} onLeaderboard={() => setView('leaderboard')} />
       break
     default:
       screen = (
         <PlayMenu
-          onSwitch={() => setView('select')}
           onGarage={() => setView('garage')}
           onProfile={() => setView('profile')}
-          onLeaderboard={() => setView('leaderboard')}
         />
       )
   }

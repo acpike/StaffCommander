@@ -73,12 +73,10 @@ export function HUD() {
         (noteMode === 'find' ? (
           <div className="noteCard letterCard">
             <div className="bigLetter">{note.letter}</div>
-            <div className="cap">Find this note</div>
           </div>
         ) : (
           <div className="noteCard">
             <canvas ref={canvas} />
-            <div className="cap">Name this note</div>
           </div>
         ))}
 

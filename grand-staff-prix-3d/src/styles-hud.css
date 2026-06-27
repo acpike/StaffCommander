@@ -98,7 +98,31 @@
 .hudmenu .curr .ccap{ font-family:var(--data); font-size:9px; letter-spacing:1.5px; color:var(--mute); }
 
 /* ============ MAIN GRID ============ */
-.hudmenu .grid{ display:grid; grid-template-columns:1.32fr 1fr; gap:14px; align-items:start; }
+/* ===== FULL-WIDTH HUD + SLIDE-IN DRAWER (journey / side quests) ===== */
+.hudmenu .grid{ display:block; }            /* HUD spans the full width */
+.hudmenu .colL{ display:block; }
+.hudmenu .colR{
+  position:fixed; top:0; right:0; bottom:0; z-index:46;
+  width:min(440px,94vw); transform:translateX(101%); transition:transform .28s ease;
+  overflow-y:auto; -webkit-overflow-scrolling:touch;
+  background:linear-gradient(180deg,var(--carbon-1),var(--carbon-0));
+  border-left:1px solid var(--carbon-3); box-shadow:-22px 0 50px rgba(0,0,0,.55);
+  padding:16px; padding-bottom:calc(20px + env(safe-area-inset-bottom));
+  display:flex; flex-direction:column; gap:14px;
+}
+.hudmenu .hudApp.drawer-open .colR{ transform:translateX(0); }
+.hudmenu .drawerscrim{ position:fixed; inset:0; z-index:45; background:rgba(4,6,9,.55); }
+/* the profile stays at the top of the drawer; show only the tapped section below it */
+.hudmenu .colR .journey, .hudmenu .colR .sidequests{ display:none; }
+.hudmenu .hudApp.dr-journey .colR .journey{ display:block; }
+.hudmenu .hudApp.dr-sidequests .colR .sidequests{ display:flex; flex-direction:column; flex:1; min-height:0; }
+/* the two tabs that open the drawer (sit under the HUD, full-width) */
+.hudmenu .drawertabs{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px; }
+.hudmenu .drtab{ display:flex; flex-direction:column; align-items:flex-start; gap:5px; text-align:left; padding:12px 16px; cursor:pointer; color:var(--ink); font:inherit; background:linear-gradient(180deg,var(--carbon-2),var(--carbon-1)); border:1px solid var(--carbon-3); border-bottom:3px solid var(--carbon-3); clip-path:polygon(0 0,100% 0,100% 100%,12px 100%,0 calc(100% - 12px)); transition:.15s; }
+.hudmenu .drtab:hover{ border-bottom-color:var(--livery); transform:translateY(-2px); }
+.hudmenu .drtab.on{ border-color:var(--livery); border-bottom-color:var(--livery); background:linear-gradient(180deg,rgba(0,229,196,.12),var(--carbon-1)); }
+.hudmenu .drtabt{ font-family:var(--disp); font-weight:800; font-size:18px; letter-spacing:.5px; text-transform:uppercase; line-height:1; }
+.hudmenu .drtabsub{ font-family:var(--data); font-size:10px; letter-spacing:1px; color:var(--mute); text-transform:uppercase; }
 
 /* ---- HERO TELEMETRY PANEL ---- */
 .hudmenu .hudhero{
@@ -117,8 +141,12 @@
 .hudmenu .hudhero:hover .bg{ transform:scale(1.04); }
 .hudmenu .hudhero .scrim{ position:absolute; inset:0;
   background:
-    linear-gradient(180deg, rgba(8,12,16,.15) 0%, rgba(8,12,16,.05) 40%, rgba(8,12,16,.85) 100%),
-    linear-gradient(75deg, rgba(8,12,16,.78) 0%, transparent 52%);
+    /* soft darkening right behind the centre level block so its text/pips pop on any backdrop */
+    radial-gradient(ellipse 48% 54% at 50% 47%, rgba(8,12,16,.5), transparent 72%),
+    /* heavier top + bottom (circuit / profile / dash zones), lighter through the middle scenery */
+    linear-gradient(180deg, rgba(8,12,16,.34) 0%, rgba(8,12,16,.16) 42%, rgba(8,12,16,.9) 100%),
+    /* left side (circuit name) */
+    linear-gradient(75deg, rgba(8,12,16,.8) 0%, transparent 58%);
 }
 .hudmenu .hudhero .topstrip{
   position:absolute; top:0; left:0; right:0; display:flex; justify-content:space-between; align-items:center;
@@ -127,8 +155,8 @@
 .hudmenu .hudhero .topstrip .live{ display:flex; align-items:center; gap:8px; color:var(--livery); font-weight:700; }
 .hudmenu .hudhero .topstrip .live .dot{ width:8px; height:8px; border-radius:50%; background:var(--papaya); box-shadow:0 0 8px var(--papaya); animation:hud-blink 1.1s steps(1) infinite; }
 @keyframes hud-blink{ 50%{opacity:.25;} }
-.hudmenu .hudhero .loc{ position:absolute; top:42px; left:16px; z-index:3; }
-.hudmenu .hudhero .loc .lbl{ font-family:var(--data); font-size:11px; letter-spacing:3px; color:var(--livery); text-transform:uppercase; }
+.hudmenu .hudhero .loc{ position:absolute; top:22px; left:16px; z-index:3; }
+.hudmenu .hudhero .loc .lbl{ font-family:var(--data); font-size:11px; letter-spacing:3px; color:var(--livery); text-transform:uppercase; text-shadow:0 1px 6px rgba(0,0,0,.9); }
 .hudmenu .hudhero .loc h2{ font-family:var(--disp); font-weight:900; font-size:54px; line-height:.9; text-transform:uppercase; text-shadow:0 4px 24px rgba(0,0,0,.6); }
 
 /* car silhouette */
@@ -137,14 +165,83 @@
 .hudmenu .car{ position:absolute; left:50%; bottom:104px; transform:translateX(-50%); width:300px; max-width:62%; height:172px; z-index:2; pointer-events:auto; cursor:pointer; display:grid; place-items:center; }
 .hudmenu .car .swaphint{ position:absolute; bottom:-4px; left:50%; transform:translateX(-50%); font-family:var(--data); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--livery); background:#0a0e12cc; border:1px solid var(--livery); padding:2px 8px; opacity:0; transition:opacity .15s; white-space:nowrap; pointer-events:none; }
 .hudmenu .car:hover .swaphint{ opacity:1; }
-.hudmenu .car:hover img{ filter:drop-shadow(0 8px 7px rgba(0,0,0,.5)) saturate(1.05) brightness(1.05); }
+.hudmenu .car:hover .carbody{ filter:drop-shadow(0 8px 7px rgba(0,0,0,.5)) saturate(1.05) brightness(1.05); }
 /* The car bobs, but the ground shadow stays anchored and shrinks/fades as the
    car lifts (and grows/darkens as it settles) — so the float reads as a hover
    that belongs in the scene, not a detached cutout. Both animations share the
    same 3.4s ease-in-out timing so they stay in sync. */
 /* no drop-shadow filter: iOS Safari won't paint a filtered transparent PNG inside an
    absolutely-positioned box. The .car::before radial shadow already grounds it. */
-.hudmenu .car img{ width:100%; height:100%; object-fit:contain; animation:hud-carfloat 3.4s ease-in-out infinite; }
+.hudmenu .car .carbody{ width:100%; height:100%; object-fit:contain; animation:hud-carfloat 3.4s ease-in-out infinite; }
+/* the composer "drives" the car — a face badge on it (tap the car → Garage to change either) */
+.hudmenu .car .cardriver{ position:absolute; top:6px; left:50%; transform:translateX(-50%); width:46px; height:46px; border-radius:50%; object-fit:cover; border:2px solid var(--papaya); box-shadow:0 3px 10px rgba(0,0,0,.55); background:#0e141a; z-index:2; animation:hud-carfloat 3.4s ease-in-out infinite; }
+
+/* the profile reuses the driver chip's exact styling (.driver / .face / .dtx) — just show the
+   avatar initial in the round face instead of an image; tap → full profile stats + leaderboard */
+.hudmenu .driver .face.init{ display:grid; place-items:center; font-family:var(--disp); font-weight:800; font-size:23px; color:var(--livery); border-color:var(--livery); }
+
+/* › arrow next to the circuit name → opens the circuit popup (same simple style as the
+   journey / side-quest tile arrows — just a chevron character, no box) */
+.hudmenu .loc h2 .locarrow{ font-family:var(--disp); font-weight:900; font-size:inherit; line-height:1; color:var(--livery); background:none; border:none; padding:0 0 0 8px; cursor:pointer; vertical-align:baseline; transition:color .15s; }
+.hudmenu .loc h2 .locarrow:hover{ color:#fff; }
+
+/* ‹ collapse the drawer back to the full HUD */
+.hudmenu .drawerclose{ align-self:flex-start; font-family:var(--data); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--livery); background:none; border:1px solid var(--carbon-3); padding:7px 13px; cursor:pointer; transition:.15s; clip-path:polygon(8px 0,100% 0,100% 100%,0 100%,0 8px); }
+.hudmenu .drawerclose:hover{ border-color:var(--livery); background:rgba(0,229,196,.08); }
+
+/* circuit picker popup (replaces the always-on paddock) */
+.hudmenu .circpop{ position:fixed; inset:0; z-index:60; background:rgba(4,6,9,.65); display:grid; place-items:center; padding:18px; }
+.hudmenu .circpopcard{ width:min(760px,94vw); max-height:88vh; overflow-y:auto; background:linear-gradient(180deg,var(--carbon-2),var(--carbon-1)); border:1px solid var(--carbon-3); }
+.hudmenu .circpopcard .ph{ display:flex; align-items:center; justify-content:space-between; padding:13px 16px; border-bottom:1px solid var(--carbon-3); }
+.hudmenu .circpopcard .ph h3{ font-family:var(--disp); font-weight:800; font-size:20px; letter-spacing:1.5px; text-transform:uppercase; }
+.hudmenu .circpopcard .ph .phlink{ font-family:var(--data); font-size:11px; font-weight:700; letter-spacing:1px; color:var(--mute); background:none; border:none; cursor:pointer; text-transform:uppercase; }
+.hudmenu .circpopcard .ph .phlink:hover{ color:var(--livery); }
+.hudmenu .circpopcard .scenes{ display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; padding:14px; max-height:none; overflow:visible; }
+
+/* car + driver as small labels under the profile (right side) — tap → Garage */
+.hudmenu .rig{ position:absolute; top:106px; right:16px; z-index:3; display:inline-flex; align-items:center; gap:10px; cursor:pointer; }
+.hudmenu .rig .rigitems{ display:inline-flex; flex-direction:column; gap:8px; }
+.hudmenu .rig .rigit{ display:inline-flex; align-items:center; gap:9px; }
+.hudmenu .rig .rigk{ font-family:var(--data); font-weight:700; font-size:10px; letter-spacing:1px; color:var(--ink); text-transform:uppercase; width:46px; text-align:left; text-shadow:0 1px 5px rgba(0,0,0,.95); }
+.hudmenu .rig .rigface{ width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid var(--papaya); background:#0e141a; transition:border-color .15s; }
+.hudmenu .rig .rigcar{ width:60px; height:38px; object-fit:contain; }
+/* one chevron for the whole rig (Driver + Wheels both open the Garage); neutral, not green */
+.hudmenu .rig .rigchev{ font-family:var(--disp); font-weight:900; font-size:24px; line-height:1; color:var(--ink); transition:color .15s; }
+.hudmenu .rig:hover .rigface{ border-color:var(--livery); }
+.hudmenu .rig:hover .rigchev{ color:var(--livery); }
+
+/* › click-affordance chevron on the profile chip (neutral, brightens to livery on hover) */
+.hudmenu .driver .dchev{ font-family:var(--disp); font-weight:900; font-size:20px; line-height:1; color:var(--ink); margin-left:3px; transition:color .15s; }
+.hudmenu .driver:hover .dchev{ color:var(--livery); }
+
+/* two side-by-side options below the HUD (Side Quests | Create Your Own) — each opens a drawer */
+.hudmenu .hudnav{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+.hudmenu .hudnavbtn{ display:flex; align-items:center; gap:13px; padding:14px 16px; background:linear-gradient(120deg,var(--carbon-2),var(--carbon-1)); border:1px solid var(--carbon-3); cursor:pointer; color:var(--ink); font:inherit; text-align:left; transition:border-color .15s, transform .15s; clip-path:polygon(0 0,100% 0,100% 100%,12px 100%,0 calc(100% - 12px)); }
+.hudmenu .hudnavbtn:hover{ border-color:var(--livery); transform:translateY(-1px); }
+.hudmenu .hnico{ flex:none; width:40px; height:40px; display:grid; place-items:center; color:var(--livery); background:#0c1117; border:1px solid var(--carbon-3); clip-path:polygon(50% 0,100% 28%,100% 72%,50% 100%,0 72%,0 28%); }
+.hudmenu .hnico .ico{ width:21px; height:21px; }
+.hudmenu .hntx{ display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; }
+.hudmenu .hnt{ font-family:var(--disp); font-weight:800; font-size:17px; letter-spacing:.4px; text-transform:uppercase; line-height:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hudmenu .hns{ font-family:var(--data); font-size:9px; letter-spacing:1px; color:var(--mute); text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hudmenu .hnchev{ flex:none; font-family:var(--disp); font-weight:900; font-size:22px; color:var(--mute); transition:color .15s; }
+.hudmenu .hudnavbtn:hover .hnchev{ color:var(--livery); }
+
+/* CENTRE — the hero: journey position (region/tier + segmented pips) + the note range you're on */
+.hudmenu .levelcenter{ position:absolute; left:50%; top:43%; transform:translate(-50%,-50%); z-index:3; width:min(520px,66%); display:block; padding:0; background:none; border:none; color:var(--ink); font:inherit; cursor:pointer; }
+.hudmenu .lcvhead{ text-align:center; font-family:var(--data); font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--livery); margin-bottom:9px; text-shadow:0 1px 6px rgba(0,0,0,.9); }
+.hudmenu .lcvhead b{ color:var(--ink); font-weight:700; }
+.hudmenu .levelcenter .jpips{ margin-bottom:12px; }
+.hudmenu .lcvstaffwrap{ position:relative; }
+.hudmenu .lcvstaff{ opacity:.55; }
+.hudmenu .lcvstaff .rangeStaff{ display:block; width:100%; height:auto; }
+.hudmenu .lcvstaff .rangeStaff line{ stroke:#e8eef3 !important; }
+.hudmenu .lcvstaff .rangeStaff line[stroke="#00a88f"]{ stroke:#00e5c4 !important; }
+.hudmenu .lcvstaff .rangeStaff rect,
+.hudmenu .lcvstaff .rangeStaff text,
+.hudmenu .lcvstaff .rangeStaff ellipse{ fill:#e8eef3 !important; }
+.hudmenu .lcvmode{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); font-family:var(--disp); font-weight:900; font-size:26px; letter-spacing:3px; text-transform:uppercase; color:var(--amber); white-space:nowrap; pointer-events:none; background:rgba(8,12,16,.82); padding:4px 16px; border:1px solid var(--carbon-3); border-radius:5px; box-shadow:0 3px 14px rgba(0,0,0,.55); }
+.hudmenu .lcvcap{ text-align:center; margin-top:9px; font-family:var(--data); font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--mute); transition:color .15s; text-shadow:0 1px 6px rgba(0,0,0,.9); }
+.hudmenu .levelcenter:hover .lcvcap{ color:var(--livery); }
 .hudmenu .car::before{ content:""; position:absolute; left:50%; bottom:0; width:66%; height:28px; transform:translateX(-50%); background:radial-gradient(ellipse at center, rgba(0,0,0,.62), rgba(0,0,0,0) 68%); filter:blur(5px); z-index:-1; animation:hud-carshadow 3.4s ease-in-out infinite; }
 @keyframes hud-carfloat{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-9px); } }
 @keyframes hud-carshadow{ 0%,100%{ transform:translateX(-50%) scale(1); opacity:.65; } 50%{ transform:translateX(-50%) scale(.78); opacity:.4; } }
@@ -228,19 +325,19 @@
 
 /* ---- DRIVER CHIP (in the hero, top-right) ---- */
 .hudmenu .driver{
-  position:absolute; top:44px; right:16px; z-index:3; display:flex; align-items:center; gap:11px;
-  background:linear-gradient(255deg, rgba(17,22,29,.92), rgba(10,14,18,.8));
-  border:1px solid var(--carbon-3); padding:7px 14px 7px 8px; cursor:pointer; transition:border-color .15s, transform .15s;
-  clip-path:polygon(12px 0,100% 0,100% 100%,0 100%,0 12px);
+  position:absolute; top:20px; right:16px; z-index:3; display:flex; align-items:center; gap:13px;
+  background:linear-gradient(255deg, rgba(17,22,29,.95), rgba(10,14,18,.84));
+  border:1px solid var(--carbon-3); padding:10px 18px 10px 10px; cursor:pointer; transition:border-color .15s, transform .15s;
+  clip-path:polygon(14px 0,100% 0,100% 100%,0 100%,0 14px);
 }
 .hudmenu .driver:hover{ border-color:var(--papaya); transform:translateY(-1px); }
 /* clip the avatar via the IMG's own border-radius, not the parent's overflow:hidden
    (iOS Safari can fail to paint an image clipped by a parent's overflow) */
-.hudmenu .driver .face{ width:42px; height:42px; border-radius:50%; flex:none; border:2px solid var(--papaya); box-shadow:0 0 12px rgba(255,94,43,.35); background:#0e141a; }
+.hudmenu .driver .face{ width:52px; height:52px; border-radius:50%; flex:none; border:2px solid var(--papaya); box-shadow:0 0 14px rgba(255,94,43,.4); background:#0e141a; font-size:24px; }
 .hudmenu .driver .face img{ width:100%; height:100%; object-fit:cover; display:block; border-radius:50%; }
 .hudmenu .driver .dtx{ display:flex; flex-direction:column; gap:3px; line-height:1; }
-.hudmenu .driver .dl{ font-family:var(--data); font-size:9px; letter-spacing:2px; color:var(--papaya); text-transform:uppercase; }
-.hudmenu .driver .dn{ font-family:var(--disp); font-weight:800; font-size:19px; text-transform:uppercase; letter-spacing:.4px; max-width:190px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hudmenu .driver .dl{ font-family:var(--data); font-size:10px; letter-spacing:2px; color:var(--papaya); text-transform:uppercase; }
+.hudmenu .driver .dn{ font-family:var(--disp); font-weight:800; font-size:23px; text-transform:uppercase; letter-spacing:.4px; max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .hudmenu .panel{ background:linear-gradient(180deg,var(--carbon-2),var(--carbon-1)); border:1px solid var(--carbon-3); position:relative; }
 .hudmenu .panel > .ph{ display:flex; align-items:center; justify-content:space-between; padding:11px 16px; border-bottom:1px solid var(--carbon-3); background:linear-gradient(90deg,#ffffff06,transparent); }
 .hudmenu .panel > .ph h3{ font-family:var(--disp); font-weight:800; font-size:18px; letter-spacing:1.5px; text-transform:uppercase; display:flex; align-items:center; gap:9px; }
@@ -385,10 +482,24 @@
 }
 /* progress map: the 7 region milestones as a row of pips (the path is guided, so no
    scrollable list of locked levels — just where you are and how far you've come) */
-.hudmenu .jmap{ display:flex; gap:5px; }
-.hudmenu .jmapdot{ flex:1; height:22px; display:grid; place-items:center; font-family:var(--data); font-weight:700; font-size:11px; color:var(--mute); background:#0c1117; border:1px solid var(--carbon-3); clip-path:polygon(7px 0,100% 0,calc(100% - 7px) 100%,0 100%); }
-.hudmenu .jmapdot.done{ background:var(--livery-dk); color:#04181a; border-color:var(--livery-dk); }
-.hudmenu .jmapdot.here{ background:var(--amber); color:#221700; border-color:var(--amber); box-shadow:0 0 9px rgba(255,194,61,.4); }
+/* 7 region pips, each split into its 3 sublevels (Name / Find / Mix) — a segment fills teal
+   as that sublevel is mastered, glows amber for the one you're on. Shared centre + drawer. */
+.hudmenu .jpips{ display:flex; gap:6px; }
+.hudmenu .jpipwrap{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
+.hudmenu .jpip{ width:100%; height:13px; display:flex; gap:2px; padding:2px; background:#0c1117; border:1px solid var(--carbon-3); clip-path:polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%); }
+/* skew each segment to the same angle as the pip's clip-path so the fills are slanted
+   parallelograms (parallel to the container edges), not vertical-edged rectangles */
+.hudmenu .jseg{ flex:1; background:#1a222c; transition:background .2s; transform:skewX(-21deg); }
+.hudmenu .jseg.done{ background:var(--livery-dk); }
+.hudmenu .jseg.here{ background:var(--amber); box-shadow:0 0 8px rgba(255,194,61,.55); }
+.hudmenu .jpipn{ font-family:var(--data); font-weight:700; font-size:10px; line-height:1; color:var(--mute); }
+.hudmenu .jpipwrap.done .jpipn{ color:var(--livery); }
+.hudmenu .jpipwrap.here .jpipn{ color:var(--amber); }
+/* in the drawer the pips are tappable — preview any region (even locked ones) */
+.hudmenu .jpips.clickable .jpipwrap{ background:none; border:none; padding:0; font:inherit; cursor:pointer; transition:transform .12s; }
+.hudmenu .jpips.clickable .jpipwrap:hover{ transform:translateY(-2px); }
+.hudmenu .jpipwrap.picked .jpip{ border-color:#e8eef3; box-shadow:0 0 0 1px rgba(232,238,243,.45); }
+.hudmenu .jpipwrap.picked .jpipn{ color:#e8eef3; }
 .hudmenu .region{
   position:relative; border:1px solid var(--carbon-3); background:#0d1218; padding:8px 11px 9px;
   clip-path:polygon(0 0,100% 0,100% 100%,12px 100%,0 calc(100% - 12px)); transition:.15s;
@@ -462,10 +573,9 @@
 .hudmenu .sidequests{ border-top:3px solid var(--purple); }
 .hudmenu .sidequests > .ph h3::before{ background:var(--purple); }
 .hudmenu .sqbody{
-  padding:10px 12px 0; display:grid; grid-template-columns:1fr; gap:8px;
-  /* one tile at a time, then scroll — keeps optional drills tiny (Create-a-Level is
-     pinned below the scroll in .sqfoot so it's always visible) */
-  max-height:98px; overflow-y:auto; overscroll-behavior:contain;
+  padding:10px 12px 0; display:grid; grid-template-columns:1fr; gap:8px; align-content:start;
+  /* fill the full drawer height now that side quests is its own slide-out drawer */
+  flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain;
   scrollbar-width:thin; scrollbar-color:#2b3744 transparent;
 }
 .hudmenu .sqbody::-webkit-scrollbar{ width:8px; }
@@ -525,18 +635,9 @@
 .hudmenu .start .pre{ font-family:var(--data); font-size:11px; letter-spacing:2px; opacity:.7; align-self:flex-start; margin-top:-2px; text-align:left; }
 
 @media (max-width:760px){
-  /* PHONES ONLY: single column, profile stacked above telemetry. Columns become
-     display:contents so their children order directly within the grid. Tablets keep
-     the 2-column layout (see the max-width:1180px block below). */
-  .hudmenu .grid{ display:flex; flex-direction:column; gap:14px; }
-  .hudmenu .colL, .hudmenu .colR{ display:contents; }
-  .hudmenu .hudtop{ order:1; flex-direction:column; }
-  .hudmenu .profiletile{ order:2; }
-  .hudmenu .hudhero{ order:3; flex:none; }
-  .hudmenu .duo{ order:4; }
-  .hudmenu .colL .standings{ order:5; }
-  .hudmenu .colR .panel{ order:6; }
-  .hudmenu .colR .sidequests{ order:7; }
+  /* phones: stack the brand; the full-width-HUD + drawer layout handles the rest */
+  .hudmenu .hudtop{ flex-direction:column; }
+  .hudmenu .drawertabs{ grid-template-columns:1fr; }
 }
 @media (max-width:680px){
   .hudmenu .foot{ grid-template-columns:1fr; }
@@ -567,17 +668,51 @@
   .hudmenu .tile{ aspect-ratio:1/1; }
   .hudmenu .tile .nm{ font-size:12px; padding:14px 5px 6px 8px; }
   .hudmenu .tile .px{ font-size:8px; padding:1px 4px; }
-  .hudmenu .hudhero{ height:370px; }
-  .hudmenu .hudhero .topstrip{ font-size:9px; letter-spacing:1px; padding:9px 12px; }
-  .hudmenu .hudhero .topstrip span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .hudmenu .hudhero .loc{ top:33px; left:13px; right:120px; }
+  /* HERO: KEEP the desktop overlay layout — just scale the overlaid content down so it fits
+     the narrower width without colliding (the centre block + mode were desktop-sized) */
+  .hudmenu .hudhero{ height:360px; }
+  .hudmenu .hudhero .loc{ top:16px; left:14px; max-width:44%; }
   .hudmenu .hudhero .loc .lbl{ font-size:9px; letter-spacing:2px; }
-  .hudmenu .hudhero .loc h2{ font-size:28px; }
-  .hudmenu .driver{ top:33px; right:12px; }
-  .hudmenu .driver .dn{ font-size:14px; max-width:100px; }
-  .hudmenu .driver .dl{ font-size:8px; }
-  .hudmenu .car{ bottom:120px; width:206px; height:116px; }
+  .hudmenu .hudhero .loc h2{ font-size:30px; }
+  .hudmenu .rig{ gap:9px; top:90px; right:12px; }
+  .hudmenu .rig .rigface{ width:34px; height:34px; }
+  .hudmenu .rig .rigcar{ width:50px; height:32px; }
+  .hudmenu .driver{ top:16px; right:12px; padding:8px 14px 8px 8px; gap:11px; }
+  .hudmenu .driver .face{ width:44px; height:44px; }
+  .hudmenu .driver .face.init{ font-size:20px; }
+  .hudmenu .driver .dn{ font-size:18px; max-width:100px; }
+  .hudmenu .driver .dl{ font-size:10px; }
+  /* the centre: narrower + smaller mode/staff so it sits between the corner chips, not over them */
+  .hudmenu .levelcenter{ width:min(330px,40%); top:46%; }
+  .hudmenu .lcvhead{ font-size:10px; letter-spacing:1.5px; margin-bottom:7px; }
+  .hudmenu .levelcenter .jpips{ margin-bottom:9px; }
+  .hudmenu .lcvmode{ font-size:17px; letter-spacing:2px; }
+  .hudmenu .lcvcap{ font-size:10px; margin-top:7px; }
+  .hudmenu .sqjump{ top:88px; right:12px; left:auto; bottom:auto; padding:6px 11px; }
+  .hudmenu .sqval{ font-size:13px; }
   .hudmenu .dash{ padding:11px 12px; gap:9px; }
-  .hudmenu .gauge, .hudmenu .gauge svg{ width:90px; height:90px; }
-  .hudmenu .gauge .read .v{ font-size:22px; }
+  .hudmenu .gauge, .hudmenu .gauge svg{ width:86px; height:86px; }
+  .hudmenu .gauge .read .v{ font-size:21px; }
+}
+/* PHONES: too narrow for a centre block BETWEEN the corner chips, so drop the centre BELOW
+   them (corners stay top-left / top-right; centre + dash fill the rest) — same layout, no overlap */
+@media (max-width:560px){
+  .hudmenu .hudhero{ height:430px; }
+  .hudmenu .hudhero .loc{ top:12px; max-width:48%; }
+  .hudmenu .hudhero .loc h2{ font-size:26px; }
+  .hudmenu .rig{ top:80px; right:12px; }
+  .hudmenu .rig .rigface{ width:30px; height:30px; }
+  .hudmenu .rig .rigcar{ width:44px; height:28px; }
+  .hudmenu .driver{ top:12px; }
+  .hudmenu .driver .face{ width:40px; height:40px; }
+  .hudmenu .driver .face.init{ font-size:18px; }
+  .hudmenu .driver .dn{ font-size:15px; max-width:88px; }
+  .hudmenu .levelcenter{ width:min(320px,84%); top:57%; }
+  .hudmenu .lcvmode{ font-size:18px; }
+  .hudmenu .jpipn{ font-size:9px; }
+  /* the two below-HUD buttons: stack icon-over-text so both still fit side-by-side on a phone */
+  .hudmenu .hudnav{ gap:8px; }
+  .hudmenu .hudnavbtn{ flex-direction:column; align-items:flex-start; gap:7px; padding:11px; }
+  .hudmenu .hnt{ font-size:13px; white-space:normal; line-height:1.05; }
+  .hudmenu .hns, .hudmenu .hnchev{ display:none; }
 }

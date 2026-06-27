@@ -333,6 +333,29 @@ body {
   font-weight: 500;
 }
 
+/* ── UNIFIED back button — visually identical on every slide-out drawer + overlay so the
+   user always knows exactly what to look for (replaces the mixed .drawerclose / .chip.ghost
+   treatments). Explicit colors, not palette vars, since HUD vs overlay use different vars. ── */
+.backbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #00e5c4;
+  background: rgba(10, 14, 18, 0.5);
+  border: 1px solid #2a3340;
+  border-left: 3px solid #00e5c4;
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.backbtn:hover { background: rgba(0, 229, 196, 0.12); border-color: #00e5c4; }
+.backbtn .ico { width: 16px; height: 16px; stroke: currentColor; fill: none; }
+
 /* ───────────────────────────── Level list ──────────────────────────────────── */
 .levelList {
   display: flex;
@@ -1836,82 +1859,87 @@ body {
   z-index: 30;
   pointer-events: none;
 }
-.touchCtl .steerPad,
+.touchCtl .steerWheel,
 .touchCtl .throttleBtn {
   pointer-events: auto;
   touch-action: none;
   -webkit-user-select: none;
   user-select: none;
 }
-.steerPad {
+/* rotating steering wheel — the art swaps per circuit and tints to the accent */
+.steerWheel {
   position: absolute;
   left: max(20px, env(safe-area-inset-left));
-  bottom: max(30px, env(safe-area-inset-bottom));
-  width: 168px;
-  height: 64px;
-  border-radius: 999px;
-  background: rgba(14, 13, 20, 0.32);
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  backdrop-filter: blur(16px) saturate(1.1);
-  -webkit-backdrop-filter: blur(16px) saturate(1.1);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 14px;
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  bottom: max(52px, env(safe-area-inset-bottom));
+  width: 152px;
+  height: 152px;
 }
-.steerChev {
-  width: 19px;
-  height: 19px;
-  color: rgba(255, 255, 255, 0.3);
-  transition: color 0.12s, filter 0.12s, transform 0.12s;
-}
-.steerChev.on {
-  color: var(--acc2);
-  filter: drop-shadow(0 0 7px rgba(255, 138, 61, 0.75));
-  transform: scale(1.2);
-}
-.steerKnob {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(214, 216, 226, 0.8));
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  box-shadow: 0 5px 13px rgba(0, 0, 0, 0.42), inset 0 2px 3px rgba(255, 255, 255, 0.85), inset 0 -3px 5px rgba(0, 0, 0, 0.12);
-  transition: transform 0.05s linear;
-}
+.wheelSpin { width: 100%; height: 100%; transition: transform 0.06s linear; }
+.wheelSvg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.45)); }
 .throttleBtn {
   position: absolute;
-  right: max(24px, env(safe-area-inset-right));
-  bottom: max(32px, env(safe-area-inset-bottom));
-  width: 84px;
-  height: 84px;
+  right: max(26px, env(safe-area-inset-right));
+  bottom: max(58px, env(safe-area-inset-bottom));
+  width: 124px;
+  height: 124px;
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(14, 13, 20, 0.32);
+  background: rgba(14, 13, 20, 0.34);
   backdrop-filter: blur(16px) saturate(1.1);
   -webkit-backdrop-filter: blur(16px) saturate(1.1);
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.78);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 1px;
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.07);
   transition: transform 0.08s, background 0.12s, color 0.12s, box-shadow 0.12s, border-color 0.12s;
 }
-.throttleIcon {
-  width: 32px;
-  height: 32px;
+/* sweeping rev-ring around the rim (hidden until held) */
+.revRing { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); opacity: 0; transition: opacity 0.15s; }
+.revRing .revTrack { fill: none; stroke: rgba(255, 255, 255, 0.1); stroke-width: 5; }
+.revRing .revFill { fill: none; stroke: var(--accent, #00e5c4); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 70 220; }
+/* speed chevrons flowing upward */
+.throttleChevs { width: 37px; height: 43px; z-index: 1; }
+.throttleChevs .ch { stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; opacity: 0.5; transform-box: fill-box; transform-origin: center; }
+.throttleGo { z-index: 1; font-family: "Saira Condensed", sans-serif; font-weight: 900; font-size: 18px; letter-spacing: 1.8px; line-height: 1; margin-top: 2px; }
+
+/* iPhone (narrow portrait): the lifted controls sit too high for short screens — bring them
+   back down near the bottom. iPad/desktop keep the higher placement (it reads fine there). */
+@media (max-width: 500px) {
+  .steerWheel { bottom: max(20px, env(safe-area-inset-bottom)); }
+  .throttleBtn { bottom: max(24px, env(safe-area-inset-bottom)); }
 }
 .throttleBtn.on {
   color: #fff;
-  background: radial-gradient(circle at 50% 38%, rgba(255, 138, 61, 0.95), rgba(255, 67, 38, 0.92));
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 10px 28px rgba(255, 67, 38, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  background: radial-gradient(circle at 50% 38%, var(--accent, #00e5c4), rgba(8, 10, 14, 0.66));
+  border-color: var(--accent, #00e5c4);
+  box-shadow: 0 8px 30px -2px var(--accent, #00e5c4), inset 0 2px 4px rgba(255, 255, 255, 0.35);
   transform: scale(0.96);
 }
+.throttleBtn.on .revRing { opacity: 1; animation: revSpin 0.8s linear infinite; }
+.throttleBtn.on .throttleChevs .ch { animation: chevFlow 0.6s ease-in-out infinite; }
+.throttleBtn.on .throttleChevs .ch1 { animation-delay: 0s; }
+.throttleBtn.on .throttleChevs .ch2 { animation-delay: 0.12s; }
+.throttleBtn.on .throttleChevs .ch3 { animation-delay: 0.24s; }
+@keyframes revSpin { to { transform: rotate(270deg); } }
+@keyframes chevFlow {
+  0% { opacity: 0.3; transform: translateY(2px); }
+  50% { opacity: 1; transform: translateY(-2px); }
+  100% { opacity: 0.3; transform: translateY(2px); }
+}
+/* themed throttle motifs (Space rocket / Candy star) — animate while held */
+.throttleArt { z-index: 1; color: rgba(255, 255, 255, 0.82); }
+.throttleArt.rocket { width: 34px; height: 40px; }
+.throttleArt.star { width: 36px; height: 36px; }
+.throttleBtn.on .throttleArt { color: #fff; }
+.throttleBtn.on .rocket { animation: rocketBob 0.5s ease-in-out infinite; }
+.throttleBtn.on .rocket .flame { transform-box: fill-box; transform-origin: center top; animation: flameFlick 0.16s steps(2) infinite; }
+.throttleBtn.on .star { transform-box: fill-box; transform-origin: center; animation: starSpin 1.1s linear infinite; }
+@keyframes rocketBob { 0%, 100% { transform: translateY(1px); } 50% { transform: translateY(-3px); } }
+@keyframes flameFlick { 0% { opacity: 0.55; transform: scaleY(0.8); } 100% { opacity: 1; transform: scaleY(1.18); } }
+@keyframes starSpin { to { transform: rotate(360deg); } }
 
 /* ── play-menu nav + player chip ── */
 .playerChip { display: inline-flex; align-items: center; gap: 8px; }
@@ -1995,14 +2023,20 @@ body {
 }
 
 /* ── visual clef + mode selectors (level creator) ── */
-.clefRow, .modeRow { display: flex; gap: 8px; }
+/* clef + mode pickers SIDE BY SIDE so they share one row instead of stacking — saves the
+   vertical space. Clef gets more width (5 tiles) than mode (3 tiles). */
+.createPickers { display: flex; gap: 16px; align-items: flex-start; max-width: 760px; }
+.createPickers > .createBlock { flex: 3; min-width: 0; }
+.createPickers > .clefPick { flex: 5; }
+.clefRow, .modeRow { display: flex; gap: 7px; flex-wrap: nowrap; }
 .clefBtn, .modeBtn {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 10px 6px;
+  gap: 2px;
+  padding: 6px 4px;
   background: linear-gradient(180deg, #1a222c, #11161d);
   border: 1px solid #27313d;
   border-bottom: 3px solid #27313d;
@@ -2021,24 +2055,24 @@ body {
   box-shadow: inset 0 0 0 1px rgba(0,229,196,.3);
 }
 .clefIconWrap {
-  height: 52px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .clefIconSvg {
-  height: 52px;
+  height: 38px;
   width: auto;
 }
-.clefLabel { font-family: "Saira Condensed", sans-serif; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; }
+.clefLabel { font-family: "Saira Condensed", sans-serif; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; }
 .modeIcon {
-  height: 34px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.modeLetter { font-family: "Saira Condensed", sans-serif; font-size: 30px; font-weight: 900; line-height: 1; }
-.modeLabel { font-family: "Saira Condensed", sans-serif; font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; }
+.modeLetter { font-family: "Saira Condensed", sans-serif; font-size: 23px; font-weight: 900; line-height: 1; }
+.modeLabel { font-family: "Saira Condensed", sans-serif; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; }
 .modeSub { font-size: 10px; color: var(--faint); text-align: center; }
 
 /* ── clef-grouped level list ── */
@@ -2066,7 +2100,9 @@ body {
 }
 
 /* ── level creator: fits the viewport, no scroll ── */
-.createOverlay { padding: 0; overflow: hidden; }
+/* sit above the fixed Start-Race footer (z-index 30) + drawer (46) so the creator fully covers
+   the menu — no Start Race poking through at the bottom */
+.createOverlay { padding: 0; overflow: hidden; z-index: 50; }
 .createSheet {
   width: min(760px, 100%);
   height: 100dvh;
@@ -2107,7 +2143,7 @@ body {
 .createActions { display: flex; gap: 12px; }
 .createActions .btn { flex: 1; }
 .modeBtn { padding: 8px 6px; gap: 2px; }
-.modeSvg { width: 40px; height: 26px; }
+.modeSvg { width: 32px; height: 21px; }
 
 /* clef glyph badge on each level row (difficulty-grouped list) */
 .clefBadge {
