@@ -568,10 +568,13 @@ function PlayMenu({ onSwitch, onGarage, onProfile }: { onSwitch: () => void; onG
               onClick={() => setTheme(t.id)}
               aria-label={t.name}
             >
-              <span className="sky" style={{ background: `linear-gradient(${t.skyTop}, ${t.skyBottom})` }} />
-              <span className="ground" style={{ background: t.ground }} />
-              <span className="road" style={{ background: t.road }} />
-              <span className="themeGlow" style={{ background: t.skyBottom }} />
+              {/* the actual painted backdrop as the tile; fall back to the sky
+                  gradient if a theme has no backdrop image */}
+              {BACKDROP_TINT_SRC[t.id] ? (
+                <span className="themeImg" style={{ backgroundImage: `url(${BACKDROP_TINT_SRC[t.id]})` }} />
+              ) : (
+                <span className="sky" style={{ background: `linear-gradient(${t.skyTop}, ${t.skyBottom})` }} />
+              )}
             </button>
           ))}
         </div>

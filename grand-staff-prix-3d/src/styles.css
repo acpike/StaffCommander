@@ -669,6 +669,12 @@ body {
   border-radius: 50%;
   pointer-events: none;
 }
+.themeTile .themeImg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center 58%; /* bias toward the horizon/landscape band */
+}
 .themeTile .sky {
   position: absolute;
   inset: 0;
